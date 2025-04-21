@@ -1,0 +1,32 @@
+---
+- name: Install packages
+  hosts: localhost
+  connection: local
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Install essential packages
+      ansible.builtin.apt:
+        name:
+          - curl
+          - git
+          - mise
+          - neovim
+          - wget
+          - vim
+          - stow
+          - tldr
+          - tmux
+          - tree
+          - zsh
+          - zsh-syntax-highlighting
+        state: present
+
+    - name: Remove useless packages from the cache
+      ansible.builtin.apt:
+        autoclean: yes
+
+    - name: Remove dependencies that are no longer required and purge their configuration files
+      ansible.builtin.apt:
+        autoremove: yes
+        purge: true
