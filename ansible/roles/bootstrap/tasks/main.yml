@@ -1,0 +1,34 @@
+- name: Install base packages (Debian/Ubuntu)
+  apt:
+    name:
+      - gnupg
+      - curl
+      - unzip
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Install yadm (Debian/Ubuntu)
+  apt:
+    name: yadm
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install Homebrew packages (macOS)
+  homebrew:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - yadm
+    - gnupg
+    - 1password-cli
+  when: ansible_os_family == "Darwin"
+
+- name: Install 1Password CLI (Linux)
+  become: yes
+  shell: |
+    curl -sS https://downloads.1password.com/linux/debian/amd64/stable/1password-cli.deb -o /tmp/op.deb
+    dpkg -i /tmp/op.deb
+    rm /tmp/op.deb
+  when: ansible_os_family == "Debian"
+  args:
+    creates: /usr/local/bin/op

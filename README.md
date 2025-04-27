@@ -1,1 +1,1 @@
-# bootstrap
+# dotfiles
