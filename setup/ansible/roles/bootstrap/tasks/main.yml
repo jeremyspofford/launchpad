@@ -1,0 +1,22 @@
+- name: Install Debian packages (Debian/Ubuntu)
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - gnupg
+    - curl
+    - unzip
+    - yadm
+    - 1password-cli
+  when: ansible_os_family == "Debian"
+
+- name: Install Homebrew packages (macOS)
+  homebrew:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - yadm
+    - gnupg
+    - 1password-cli
+  when: ansible_os_family == "Darwin"

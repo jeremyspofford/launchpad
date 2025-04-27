@@ -92,13 +92,8 @@ detect_os_and_install_ansible() {
       install_ansible_macos
       ;;
     Linux)
-      if grep -q Microsoft /proc/version 2>/dev/null; then
-        log "Detected WSL"
-        install_ansible_ubuntu
-      else
-        log "Detected Linux"
-        install_ansible_ubuntu
-      fi
+      log "Detected Linux"
+      install_ansible_ubuntu
       ;;
     *)
       echo "Unsupported OS: $(uname -s)"
