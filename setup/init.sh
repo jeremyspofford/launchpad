@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 log() { echo -e "\033[1;34m[INFO]\033[0m $1"; }
@@ -48,7 +49,9 @@ run_ansible_and_continue() {
 # Generate SSH key
 generate_ssh_key() {
     mkdir -p ~/.ssh
-    ssh-keygen -t ed25519 -C "23528024+jeremyspofford@users.noreply.github.com" -f ~/.ssh/personal_id_ed25519 -N ""
+    echo -n "GitHub email: "
+    read email
+    ssh-keygen -t ed25519 -C $email -f ~/.ssh/personal_id_ed25519 -N ""
     cat ~/.ssh/personal_id_ed25519.pub | xclip -selection clipboard
     eval "$(ssh-agent -s)"
     ssh-add ~/.ssh/personal_id_ed25519
@@ -79,9 +82,9 @@ main() {
   detect_os_and_install_ansible
   run_ansible_and_continue
   mise_install
-  if [[ ! ~/.ssh/personal_id_ed25519 ]]; then
+  # if [[ ! ~/.ssh/personal_id_ed25519 ]]; then
     generate_ssh_key
-  fi
+  # fi
 #  clone_dotfiles
   log "✅ Full bootstrap complete!"
 }
