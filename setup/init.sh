@@ -39,13 +39,13 @@ detect_os_and_install_ansible() {
 
 run_ansible_and_continue() {
   log "Running Ansible playbook..."
-  ansible-playbook ansible/playbook.yml
+  ansible-playbook ~/dotfiles/setup/ansible/playbook.yml
 
   log "Running remaining shell bootstrap (GPG, yadm, 1Password)..."
 #   ./bootstrap.sh
 }
 
-# # Generate SSH key
+# Generate SSH key
 generate_ssh_key() {
     mkdir -p ~/.ssh
     ssh-keygen -t ed25519 -C "23528024+jeremyspofford@users.noreply.github.com" -f ~/.ssh/personal_id_ed25519 -N ""
@@ -59,6 +59,14 @@ generate_ssh_key() {
     read -p "Press enter to continue"
 }
 
+# Install mise and tools
+mise_install() {
+    curl https://mise.run | sh
+    echo 'eval "$(/home/jeremy/.local/bin/mise activate bash)" >> ~/.bashrc'
+    # $HOME/.local/bin/mise install -y
+    mise install -y
+}
+
 clone_dotfiles() {
   log "Cloning dotfiles..."
   mkdir -p ~/dotfiles
@@ -70,8 +78,11 @@ clone_dotfiles() {
 main() {
   detect_os_and_install_ansible
   run_ansible_and_continue
-  generate_ssh_key
-  clone_dotfiles
+  mise_install
+  if [[ ! ~/.ssh/personal_id_ed25519 ]]; then
+    generate_ssh_key
+  fi
+#  clone_dotfiles
   log "✅ Full bootstrap complete!"
 }
 

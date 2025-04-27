@@ -9,7 +9,7 @@
     - unzip
     - yadm
     - xclip
-    - 1password-cli
+    - zsh
   when: ansible_os_family == "Debian"
 
 - name: Install Homebrew packages (macOS)
@@ -19,5 +19,4 @@
   loop:
     - yadm
     - gnupg
-    - 1password-cli
   when: ansible_os_family == "Darwin"
