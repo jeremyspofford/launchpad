@@ -1,0 +1,77 @@
+# [env]
+# MISE_SHELL = "/bin/zsh"
+
+[tools]
+ansible = "latest"
+awscli = "2.17.29"
+bat = "0.24.0"
+# chezmoi = "2.62.0"
+driftctl = "0.40.0" # https://docs.driftctl.com/0.40.0/usage
+fzf = "0.50.0"
+go = "1.23.1"
+gcloud = "484.0.0"
+# git = "latest"
+gitleaks = "8.24.3"
+glab = "1.45.0"
+hcl2json = "0.6.4"
+helm = "3.15.3"
+infracost = "0.10.38"
+jq = "1.7.1"
+# kubectl = "1.30.3"
+lazydocker = "0.24.1"
+lazygit = "0.48.0"
+liquibase = "4.28.0"
+minikube = "1.33.1"
+node = "18.20.4"
+op = "latest"
+opentofu = "1.8.0"
+pipx = "latest"
+pre-commit = "latest"
+python = ["3.11.3", "3.12.3"] # multiple versions can be specified
+ripgrep = "14.1.0"
+starship = "1.20.1"
+terraform = "1.7.4"
+terraform-docs = "0.19.0"
+terragrunt = "0.63.0"
+tflint = "0.53.0"
+tfsec = "1.28.10"
+tfstate-lookup = "1.3.2"
+# tmux = "3.4"
+# yamllint = "1.35.1"
+# yadm = "latest" # NOTE: Is yadm a package?
+yarn = "4.3.1"
+yq = "4.44.3"
+zoxide = "latest"
+
+# AI Specific
+# ollama = "latest"
+# poetry = "latest"
+
+[settings]
+experimental = true
+python_venv_auto_create = true
+
+# configure how frequently (in minutes) to fetch updated plugin repository changes
+# this is updated whenever a new runtime is installed
+# (note: this isn't currently implemented but there are plans to add it: https://github.com/jdx/mise/issues/128)
+plugin_autoupdate_last_check_duration = '1 week' # set to 0 to disable updates
+
+always_keep_install = false   # delete on failure by default
+not_found_auto_install = true # see MISE_NOT_FOUND_AUTO_INSTALL
+
+env_file = '.env' # load env vars from a dotenv file, see `MISE_ENV_FILE`
+
+trusted_config_paths = ["~/.config/mise/*", "~/workspace/*"]
+
+# [env]
+# _.python.venv = { path = ".venv", create = true }
+
+# driftctl = "latest" <-- even when installed, it doesn't appear to know the command
+# pulumi = "latest"
+# snyk = "latest"
+# terrascan = "latest" <-- errors on install
+# tmux = "latest" <-- errors on install
+# tldr = "latest" or tlrc???
+# terraform-validator = "latest" # https://terraform-validator.readthedocs.io/en/latest/configuration/layers.html
+# tf-summarize = "latest" # https://github.com/dineshba/tf-summarize
+# kustomize = "latest"
