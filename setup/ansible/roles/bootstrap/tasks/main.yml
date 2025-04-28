@@ -7,7 +7,8 @@
     - gnupg
     - curl
     - unzip
-    - yadm
+    # - yadm
+    - stow
     - xclip
     - zsh
   when: ansible_os_family == "Debian"
