@@ -76,15 +76,14 @@ generate_ssh_key() {
     read email
     ssh-keygen -t ed25519 -C $email -f ~/.ssh/personal_id_ed25519 -N ""
     cat ~/.ssh/personal_id_ed25519.pub | xclip -selection clipboard
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/personal_id_ed25519
 
     # Pause until user presses enter
     log "SSH key generated and copied to clipboard"
     log "Please add the key to GitHub and press enter to continue"
     read -p "Press enter to continue"
   fi
-
-  eval "$(ssh-agent -s)"
-  ssh-add ~/.ssh/personal_id_ed25519
 }
 
 # Install mise and tools
@@ -196,12 +195,12 @@ main() {
   done
 
   backup_dotfiles
-  generate_ssh_key
   detect_os_and_install_ansible
   run_ansible_and_continue
   mise_install
   install_oh_my_zsh
   stow_it
+  generate_ssh_key
   finalize
 
   log "✅ Full bootstrap complete!"
