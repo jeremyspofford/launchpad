@@ -1,4 +1,5 @@
 - name: Install Debian packages (Debian/Ubuntu)
+  hosts: localhost
   apt:
     name: "{{ item }}"
     state: present
@@ -7,17 +8,7 @@
     - gnupg
     - curl
     - unzip
-    # - yadm
     - stow
     - xclip
     - zsh
   when: ansible_os_family == "Debian"
-
-- name: Install Homebrew packages (macOS)
-  homebrew:
-    name: "{{ item }}"
-    state: present
-  loop:
-    - yadm
-    - gnupg
-  when: ansible_os_family == "Darwin"

@@ -116,8 +116,11 @@ fi
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-eval "$(/opt/homebrew/bin/brew shellenv)"
-eval "$(/opt/homebrew/bin/mise activate zsh)"
+if [[ command -v brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+  eval "$(/opt/homebrew/bin/mise activate zsh)"
+fi
+
 # eval "$(~/.local/bin/mise activate zsh)"
 eval "$(starship init zsh)"
 # eval "$(gh copilot alias -- zsh)"
@@ -136,7 +139,9 @@ autoload -Uz +X compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 zstyle ':completion:*' menu select
 
-source ~/.zshenv
+if [[ -f ~/.zshenv ]]; then
+  source ~/.zshenv
+fi
 
 autoload -U +X bashcompinit && bashcompinit
 
@@ -173,3 +178,5 @@ autoload -U +X bashcompinit && bashcompinit
 #     }
 #     "
 # done
+
+eval "$(/home/$(whoami)/.local/bin/mise activate zsh)"

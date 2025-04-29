@@ -15,7 +15,7 @@ install_ansible_macos() {
 
 install_ansible_ubuntu() {
   log "Installing Ansible via apt..."
-  sudo apt update
+  sudo apt update && sudo apt upgrade -y
   sudo apt install -y software-properties-common
   sudo apt-add-repository --yes --update ppa:ansible/ansible
   sudo apt install -y ansible
@@ -122,6 +122,23 @@ stow_it() {
   log "Dotfiles sync complete"
 }
 
+install_oh_my_zsh() {
+  log "Installing Oh My Zsh..."
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+}
+
+finalize() {
+  log "Finalizing setup..."
+  # Change default shell to zsh if not already set
+  if [[ "$SHELL" != "/bin/zsh" ]]; then
+    log "Changing default shell to zsh"
+    chsh -s $(which zsh)
+  fi
+
+  # Source the new dotfiles
+  source ~/.zshrc
+}
+
 main() {
   if [[ ! ~/.ssh/personal_id_ed25519 ]]; then
     generate_ssh_key
@@ -131,6 +148,8 @@ main() {
   mise_install
   backup_dotfiles
   stow_it
+  install_oh_my_zsh
+  finalize
   #  clone_dotfiles
 
   log "✅ Full bootstrap complete!"
