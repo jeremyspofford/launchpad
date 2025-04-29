@@ -65,8 +65,3 @@ chsh -s /bin/bash
 ## 🤝 Contributing
 
 Feel free to fork this repository and customize it for your needs. Pull requests for improvements are welcome!
-
-```bash
-git clone https://github.com/jeremyspofford/dotfiles.git
-./dotfiles/init.sh
-```
