@@ -115,4 +115,4 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# eval "$($HOME/.local/bin/mise activate bash)"
+eval "$($HOME/.local/bin/mise activate bash)"
