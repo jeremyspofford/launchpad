@@ -2,8 +2,9 @@
 
 set -euo pipefail
 
-log() { echo -e "\033[1;34m[INFO]\033[0m $1"; }
-warn() { echo -e "\033[1;33m[WARN]\033[0m $1"; }
+# ============================================================================ #
+# Constants and Configuration
+# ============================================================================ #
 
 files_to_backup=(
   .bash_aliases
@@ -21,6 +22,17 @@ files_to_backup=(
 ignore_stow_modules=(
   ansible
 )
+
+# ============================================================================ #
+# Utility Functions
+# ============================================================================ #
+
+log() { echo -e "\033[1;34m[INFO]\033[0m $1"; }
+warn() { echo -e "\033[1;33m[WARN]\033[0m $1"; }
+
+# ============================================================================ #
+# Package Management Functions
+# ============================================================================ #
 
 install_ansible_macos() {
   if ! command -v brew >/dev/null; then
@@ -46,68 +58,36 @@ install_ansible_ubuntu() {
 
 detect_os_and_install_ansible() {
   case "$(uname -s)" in
-  Darwin)
-    log "Detected macOS"
-    install_ansible_macos
-    ;;
-  Linux)
-    log "Detected Linux"
-    install_ansible_ubuntu
-    ;;
-  *)
-    echo "Unsupported OS: $(uname -s)"
-    exit 1
-    ;;
+    Darwin)
+      log "Detected macOS"
+      install_ansible_macos
+      ;;
+    Linux)
+      log "Detected Linux"
+      install_ansible_ubuntu
+      ;;
+    *)
+      echo "Unsupported OS: $(uname -s)"
+      exit 1
+      ;;
   esac
 }
 
-run_ansible_and_continue() {
-  if ! command -v ansible >/dev/null; then
-    log "Running Ansible playbook..."
-    ansible-playbook ~/dotfiles/setup/ansible/playbook.yml
-  fi
-}
-
-# Generate SSH key
-generate_ssh_key() {
-  if [[ ! -f ~/.ssh/personal_id_ed25519 ]]; then
-    mkdir -p ~/.ssh
-    echo -n "GitHub email: "
-    read email
-    ssh-keygen -t ed25519 -C $email -f ~/.ssh/personal_id_ed25519 -N ""
-    cat ~/.ssh/personal_id_ed25519.pub | xclip -selection clipboard
-    eval "$(ssh-agent -s)"
-    ssh-add ~/.ssh/personal_id_ed25519
-
-    # Pause until user presses enter
-    log "SSH key generated and copied to clipboard"
-    log "Please add the key to GitHub and press enter to continue"
-    read -p "Press enter to continue"
-  fi
-}
-
-# Install mise and tools
-mise_install() {
-  if ! command -v mise >/dev/null; then
-    log "Installing Mise"
-    curl https://mise.run | sh
-    mise install -y
-  fi
-}
+# ============================================================================ #
+# Core Setup Functions
+# ============================================================================ #
 
 backup_dotfiles() {
   if [[ "$backup" = true ]]; then
     log "Attempting to backup $HOME dotfiles"
     cd $HOME
 
-    # Create a timestamp for the unique backup forlder
     timestamp=$(date +"%Y%m%d_%H%M%S")
     backup_folder="backup_$timestamp"
 
-    # Loop through the array and move each file to the backup folder
     for file in "${files_to_backup[@]}"; do
       if [ -f "$file" ] && [ ! -L "$file" ]; then
-        mkdir -p "$backup_folder" # Create the backup folder if we get here.
+        mkdir -p "$backup_folder"
         log "Backing up $file"
         mv "$file" "$backup_folder/$file"
       else
@@ -123,14 +103,41 @@ stow_it() {
   log "Syncing dotfiles with GNU stow"
   cd $HOME/dotfiles/
   for dir in */; do
-    # Remove trailing slash for comparison
-    dir=${dir%/}
+    dir=${dir%/}  # Remove trailing slash
     if [[ ! " ${ignore_stow_modules[@]} " =~ " ${dir} " ]]; then
       log "Stowing $dir"
       stow --no-folding --ignore='.DS_Store' --target=$HOME --restow "$dir" 2>/dev/null
     fi
   done
   log "Dotfiles sync complete"
+}
+
+generate_ssh_key() {
+  if [[ ! -f ~/.ssh/personal_id_ed25519 ]]; then
+    mkdir -p ~/.ssh
+    echo -n "GitHub email: "
+    read email
+    ssh-keygen -t ed25519 -C $email -f ~/.ssh/personal_id_ed25519 -N ""
+    cat ~/.ssh/personal_id_ed25519.pub | xclip -selection clipboard
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/personal_id_ed25519
+
+    log "SSH key generated and copied to clipboard"
+    log "Please add the key to GitHub and press enter to continue"
+    read -p "Press enter to continue"
+  fi
+}
+
+# ============================================================================ #
+# Tool Installation Functions
+# ============================================================================ #
+
+mise_install() {
+  if ! command -v mise >/dev/null; then
+    log "Installing Mise"
+    curl https://mise.run | sh
+    mise install -y
+  fi
 }
 
 install_oh_my_zsh() {
@@ -140,12 +147,17 @@ install_oh_my_zsh() {
   fi
 }
 
+run_ansible_and_continue() {
+  if ! command -v ansible >/dev/null; then
+    log "Running Ansible playbook..."
+    ansible-playbook ~/dotfiles/setup/ansible/playbook.yml
+  fi
+}
+
 finalize() {
   log "Finalizing setup..."
-
   sudo apt autoremove -y
 
-  # Change default shell to zsh if not already set
   if [[ "$SHELL" != "/usr/bin/zsh" ]]; then
     log "Changing default shell to zsh"
     chsh -s $(which zsh)
@@ -153,8 +165,12 @@ finalize() {
   fi
 }
 
+# ============================================================================ #
+# Main Script Logic
+# ============================================================================ #
+
 main() {
-  # Check if enhanced getopt is available
+  # Check for enhanced getopt
   if ! getopt --test >/dev/null 2>&1; then
     if [[ "$OSTYPE" == "darwin"* ]]; then
       brew install gnu-getopt
@@ -166,11 +182,11 @@ main() {
     fi
   fi
 
+  # Parse command line options
   backup=false
   OPTIONS=n
   LONGOPTIONS=backup
-
-  # Parse options
+  
   PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTIONS --name "$0" -- "$@")
   if [[ $? -ne 0 ]]; then
     exit 1
@@ -179,21 +195,22 @@ main() {
 
   while true; do
     case "$1" in
-    -b | --backup)
-      backup=true
-      shift
-      ;;
-    --)
-      shift
-      break
-      ;;
-    *)
-      echo "Invalid option: $1" >&2
-      exit 1
-      ;;
+      -b | --backup)
+        backup=true
+        shift
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        echo "Invalid option: $1" >&2
+        exit 1
+        ;;
     esac
   done
 
+  # Execute setup steps
   backup_dotfiles
   detect_os_and_install_ansible
   run_ansible_and_continue
