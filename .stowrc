@@ -1,7 +1,2 @@
---ignore=.stowrc
 --ignore=DS_Store
 --ignore=.env
---ignore=setup.sh
---ignore=.gitignore
---ignore=README.md
---ignore=setup
