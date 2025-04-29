@@ -9,7 +9,7 @@ This is currently configured to setup the below modules and dotfile:
 - git
 - [stow](https://github.com/danielmiessler/fabric) (for dotfile symlinks )
 
-The following modules and dotfiles are optional (and possibly not ready yet)
+The following modules and dotfiles are optional (and possibly not ready yet). They'll be pulled, but not configured to be active.
 
 - bashrc (replaced by zsh, but you can change back to bash with `chsh -s /bin/bash`)
 - starship

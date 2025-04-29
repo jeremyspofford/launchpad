@@ -3,6 +3,24 @@
 set -euo pipefail
 
 log() { echo -e "\033[1;34m[INFO]\033[0m $1"; }
+warn() { echo -e "\033[1;33m[WARN]\033[0m $1"; }
+
+files_to_backup=(
+  .bash_aliases
+  .bash_profile
+  .bashrc
+  .gitconfig
+  .profile
+  .zshrc
+  .zshenv
+  .zsh_aliases
+  .zprofile
+  .vimrc
+)
+
+ignore_stow_modules=(
+  ansible
+)
 
 install_ansible_macos() {
   if ! command -v brew >/dev/null; then
@@ -48,9 +66,6 @@ run_ansible_and_continue() {
     log "Running Ansible playbook..."
     ansible-playbook ~/dotfiles/setup/ansible/playbook.yml
   fi
-
-  # log "Running remaining shell bootstrap (GPG, yadm, 1Password)..."
-  #   ./bootstrap.sh
 }
 
 # Generate SSH key
@@ -81,46 +96,39 @@ mise_install() {
 }
 
 backup_dotfiles() {
-  log "Backing up $HOME dotfiles"
-  cd $HOME
+  if [[ "$backup" = true ]]; then
+    log "Attempting to backup $HOME dotfiles"
+    cd $HOME
 
-  # Create a timestamp for the unique backup forlder
-  timestamp=$(date +"%Y%m%d_%H%M%S")
-  backup_folder="backup_$timestamp"
+    # Create a timestamp for the unique backup forlder
+    timestamp=$(date +"%Y%m%d_%H%M%S")
+    backup_folder="backup_$timestamp"
 
-  mkdir -p "$backup_folder"
+    # Loop through the array and move each file to the backup folder
+    for file in "${files_to_backup[@]}"; do
+      if [ -f "$file" ] && [ ! -L "$file" ]; then
+        mkdir -p "$backup_folder" # Create the backup folder if we get here.
+        log "Backing up $file"
+        mv "$file" "$backup_folder/$file"
+      else
+        warn "Skipping $file because it's a symlink"
+      fi
+    done
 
-  # Array of files to be backed up
-  files_to_backup=(
-    .bash_aliases
-    .bash_profile
-    .bashrc
-    .gitconfig
-    .profile
-    .zshrc
-    .zshenv
-    .zsh_aliases
-    .zprofile
-    .vimrc
-  )
-
-  # Loop through the array and move each file to the backup folder
-  for file in "${files_to_backup[@]}"; do
-    if [ -f "$file" ]; then
-      log "Backing up $file"
-      mv "$file" "$backup_folder/$file"
-    fi
-  done
-
-  log "Dotfiles backup complete"
+    log "Dotfiles backup complete"
+  fi
 }
 
 stow_it() {
   log "Syncing dotfiles with GNU stow"
   cd $HOME/dotfiles/
-  for dir in $(ls -d */); do
-    log "Stowing $dir"
-    # stow $dir
+  for dir in */; do
+    # Remove trailing slash for comparison
+    dir=${dir%/}
+    if [[ ! " ${ignore_stow_modules[@]} " =~ " ${dir} " ]]; then
+      log "Stowing $dir"
+      stow --no-folding --ignore='.DS_Store' --target=$HOME --restow "$dir" 2>/dev/null
+    fi
   done
   log "Dotfiles sync complete"
 }
@@ -138,7 +146,7 @@ finalize() {
   sudo apt autoremove -y
 
   # Change default shell to zsh if not already set
-  if [[ "$SHELL" != "/bin/zsh" ]]; then
+  if [[ "$SHELL" != "/usr/bin/zsh" ]]; then
     log "Changing default shell to zsh"
     chsh -s $(which zsh)
     log "Please log out and log back in for shell changes to take effect"
@@ -146,15 +154,54 @@ finalize() {
 }
 
 main() {
+  # Check if enhanced getopt is available
+  if ! getopt --test >/dev/null 2>&1; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      brew install gnu-getopt
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+      sudo apt install util-linux
+    else
+      echo "Unsupported OS: $OSTYPE" >&2
+      exit 1
+    fi
+  fi
+
+  backup=false
+  OPTIONS=n
+  LONGOPTIONS=backup
+
+  # Parse options
+  PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTIONS --name "$0" -- "$@")
+  if [[ $? -ne 0 ]]; then
+    exit 1
+  fi
+  eval set -- "$PARSED"
+
+  while true; do
+    case "$1" in
+    -b | --backup)
+      backup=true
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      echo "Invalid option: $1" >&2
+      exit 1
+      ;;
+    esac
+  done
+
+  backup_dotfiles
   generate_ssh_key
   detect_os_and_install_ansible
   run_ansible_and_continue
   mise_install
-  backup_dotfiles
   install_oh_my_zsh
   stow_it
   finalize
-  #  clone_dotfiles
 
   log "✅ Full bootstrap complete!"
 }
