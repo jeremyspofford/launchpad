@@ -1,5 +1,4 @@
 - name: Install Debian packages (Debian/Ubuntu)
-  hosts: localhost
   apt:
     name: "{{ item }}"
     state: present
