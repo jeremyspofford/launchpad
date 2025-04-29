@@ -1,0 +1,1 @@
+alias start="explorer.exe"

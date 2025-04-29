@@ -8,6 +8,6 @@ Expected prompts:
 
 ```bash
 git clone https://github.com/jeremyspofford/dotfiles.git
-./setup/init.sh
+./dotfiles/init.sh
 ```
 

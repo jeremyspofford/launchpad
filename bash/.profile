@@ -37,15 +37,6 @@ export PATH="$NVM_DIR/versions/node/*/bin:$PATH"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
 
-# Switch to node version in current directory, if an .nvmrc file is present.
-# cd() {
-#   builtin cd "$@"
-#   if [[ -f .nvmrc ]]; then
-#     nvm use >/dev/null
-#   fi
-# }
-# cd .
-#
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
