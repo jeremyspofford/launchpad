@@ -20,7 +20,11 @@ files_to_backup=(
 )
 
 ignore_stow_modules=(
+  .stowrc
   ansible
+  init.sh
+  inventory.ini
+  README.md
 )
 
 # ============================================================================ #
@@ -29,6 +33,7 @@ ignore_stow_modules=(
 
 log() { echo -e "\033[1;34m[INFO]\033[0m $1"; }
 warn() { echo -e "\033[1;33m[WARN]\033[0m $1"; }
+error() { echo -e "\033[1;31m[ERROR]\033[0m $1"; }
 
 # ============================================================================ #
 # Package Management Functions
@@ -36,7 +41,7 @@ warn() { echo -e "\033[1;33m[WARN]\033[0m $1"; }
 
 install_ansible_macos() {
   if ! command -v brew >/dev/null; then
-    echo "❌ Homebrew not found. Please install it from https://brew.sh"
+    error "❌ Homebrew not found. Please install it from https://brew.sh"
     exit 1
   fi
 
@@ -67,7 +72,7 @@ detect_os_and_install_ansible() {
       install_ansible_ubuntu
       ;;
     *)
-      echo "Unsupported OS: $(uname -s)"
+      error "Unsupported OS: $(uname -s)"
       exit 1
       ;;
   esac
@@ -91,7 +96,7 @@ backup_dotfiles() {
         log "Backing up $file"
         mv "$file" "$backup_folder/$file"
       else
-        warn "Skipping $file because it's a symlink"
+        warn "Skipping $file because it's a symlink or doesn't exist"
       fi
     done
 
@@ -101,12 +106,10 @@ backup_dotfiles() {
 
 stow_it() {
   log "Syncing dotfiles with GNU stow"
-  cd $HOME/dotfiles/
-  for dir in */; do
-    dir=${dir%/}  # Remove trailing slash
+  cd ~/dotfiles/
+  for dir in *; do
     if [[ ! " ${ignore_stow_modules[@]} " =~ " ${dir} " ]]; then
-      log "Stowing $dir"
-      stow --no-folding --ignore='.DS_Store' --target=$HOME --restow "$dir" 2>/dev/null
+      stow --target=$HOME --restow "$dir" 2>/dev/null
     fi
   done
   log "Dotfiles sync complete"
@@ -136,21 +139,15 @@ mise_install() {
   if ! command -v mise >/dev/null; then
     log "Installing Mise"
     curl https://mise.run | sh
-    mise install -y
   fi
-}
-
-install_oh_my_zsh() {
-  if [[ ! -d ~/.oh-my-zsh ]]; then
-    log "Installing Oh My Zsh..."
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-  fi
+  ~/.local/bin/mise install -y
+  source ~/.bashrc
 }
 
 run_ansible_and_continue() {
-  if ! command -v ansible >/dev/null; then
+  if command -v ansible >/dev/null; then
     log "Running Ansible playbook..."
-    ansible-playbook ~/dotfiles/setup/ansible/playbook.yml
+    ansible-playbook -i ~/dotfiles/ansible/inventory.ini ~/dotfiles/ansible/playbook.yml
   fi
 }
 
@@ -158,11 +155,16 @@ finalize() {
   log "Finalizing setup..."
   sudo apt autoremove -y
 
-  if [[ "$SHELL" != "/usr/bin/zsh" ]]; then
-    log "Changing default shell to zsh"
-    chsh -s $(which zsh)
-    log "Please log out and log back in for shell changes to take effect"
+  # Prompt user about backup folder
+  if [[ -d "$HOME/backup_"* ]]; then
+    log "Backup folder found. Would you like to remove it? [y/N]"
+    read -r remove_backup
+    if [[ "$remove_backup" =~ ^[Yy]$ ]]; then
+      rm -rf "$HOME/backup_"*
+      log "Backup folder removed"
+    fi
   fi
+  zsh
 }
 
 # ============================================================================ #
@@ -177,15 +179,15 @@ main() {
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
       sudo apt install util-linux
     else
-      echo "Unsupported OS: $OSTYPE" >&2
+      error "Unsupported OS: $OSTYPE" >&2
       exit 1
     fi
   fi
 
   # Parse command line options
-  backup=false
+  backup=true
   OPTIONS=n
-  LONGOPTIONS=backup
+  LONGOPTIONS=no-backup
   
   PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTIONS --name "$0" -- "$@")
   if [[ $? -ne 0 ]]; then
@@ -195,8 +197,8 @@ main() {
 
   while true; do
     case "$1" in
-      -b | --backup)
-        backup=true
+      -n | --no-backup)
+        backup=false
         shift
         ;;
       --)
@@ -204,19 +206,19 @@ main() {
         break
         ;;
       *)
-        echo "Invalid option: $1" >&2
+        error "Invalid option: $1" >&2
         exit 1
         ;;
     esac
   done
 
   # Execute setup steps
+  rm -rf "$HOME/backup_"*
   backup_dotfiles
   detect_os_and_install_ansible
   run_ansible_and_continue
-  mise_install
-  install_oh_my_zsh
   stow_it
+  mise_install
   generate_ssh_key
   finalize
 

@@ -1,5 +1,7 @@
 # 🚀 dotfiles
 
+> UNDER DEVELOPMENT
+
 A modern dotfiles configuration for developers focused on Zsh, Neovim, and productivity tools.
 
 ## ✨ Core Features

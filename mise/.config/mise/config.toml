@@ -3,10 +3,9 @@
 
 [tools]
 awscli = "2.17.29"
-bat = "0.24.0"
-# chezmoi = "2.62.0"
+bat = "latest"
+chezmoi = "2.62.0"
 driftctl = "0.40.0" # https://docs.driftctl.com/0.40.0/usage
-fzf = "0.50.0"
 go = "1.23.1"
 gcloud = "484.0.0"
 # git = "latest"
@@ -14,7 +13,6 @@ gitleaks = "8.24.3"
 hcl2json = "0.6.4"
 helm = "3.15.3"
 infracost = "0.10.38"
-jq = "1.7.1"
 # kubectl = "1.30.3"
 lazydocker = "0.24.1"
 lazygit = "0.48.0"
@@ -26,7 +24,6 @@ op = "latest"
 opentofu = "1.8.0"
 pre-commit = "latest"
 python = ["3.11.3", "3.12.3"] # multiple versions can be specified
-ripgrep = "14.1.0"
 starship = "1.20.1"
 terraform = "1.7.4"
 terraform-docs = "0.19.0"
@@ -34,12 +31,10 @@ terragrunt = "0.63.0"
 tflint = "0.53.0"
 tfsec = "1.28.10"
 tfstate-lookup = "1.3.2"
-# tmux = "3.4"
 # yamllint = "1.35.1"
 # yadm = "latest" # NOTE: Is yadm a package?
 yarn = "4.3.1"
 yq = "4.44.3"
-zoxide = "latest"
 
 # AI Specific
 # ollama = "latest"

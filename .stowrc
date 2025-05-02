@@ -1,2 +1,5 @@
 --ignore=DS_Store
 --ignore=.env
+--ignore=README.md
+--ignore=init.sh
+--ignore=ansible
