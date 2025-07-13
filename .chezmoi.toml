@@ -1,0 +1,12 @@
+[data]
+    email = "{{ promptStringOnce . "email" "Email address" }}"
+    name = "{{ promptStringOnce . "name" "Full name" }}"
+    github_username = "{{ promptStringOnce . "github_username" "GitHub username" }}"
+
+[git]
+    autoCommit = false
+    autoPush = false
+
+[sourceDir]
+    # Chezmoi will look for dotfiles in the home/ subdirectory
+    path = "{{ .chezmoi.sourceDir }}/home"
