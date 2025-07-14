@@ -1,0 +1,34 @@
+[1;32m[2025-07-13 21:14:30] [SUCCESS] All dependencies are available[0m
+[1;34m[2025-07-13 21:14:30] [INFO] Select installation components:[0m
+[1;34m[2025-07-13 21:14:32] [INFO] Attempting to backup /home/jeremy dotfiles[0m
+[1;33m[2025-07-13 21:14:32] [WARN] Skipping .bash_aliases because it's a symlink or doesn't exist[0m
+[1;33m[2025-07-13 21:14:32] [WARN] Skipping .bash_profile because it's a symlink or doesn't exist[0m
+[1;33m[2025-07-13 21:14:32] [WARN] Skipping .bashrc because it's a symlink or doesn't exist[0m
+[1;33m[2025-07-13 21:14:32] [WARN] Skipping .gitconfig because it's a symlink or doesn't exist[0m
+[1;33m[2025-07-13 21:14:32] [WARN] Skipping .profile because it's a symlink or doesn't exist[0m
+[1;33m[2025-07-13 21:14:32] [WARN] Skipping .zshrc because it's a symlink or doesn't exist[0m
+[1;33m[2025-07-13 21:14:32] [WARN] Skipping .zshenv because it's a symlink or doesn't exist[0m
+[1;33m[2025-07-13 21:14:32] [WARN] Skipping .zsh_aliases because it's a symlink or doesn't exist[0m
+[1;33m[2025-07-13 21:14:32] [WARN] Skipping .zprofile because it's a symlink or doesn't exist[0m
+[1;33m[2025-07-13 21:14:32] [WARN] Skipping .vimrc because it's a symlink or doesn't exist[0m
+[1;34m[2025-07-13 21:14:32] [INFO] No files needed backup[0m
+[1;34m[2025-07-13 21:14:32] [INFO] Detected Linux[0m
+[1;32m[2025-07-13 21:14:32] [SUCCESS] Ansible is available[0m
+[1;34m[2025-07-13 21:14:32] [INFO] Running Ansible playbook...[0m
+[1;32m[2025-07-13 21:15:01] [SUCCESS] Ansible playbook completed successfully[0m
+[1;34m[2025-07-13 21:15:01] [INFO] ✓ mise already installed[0m
+[1;32m[2025-07-13 21:15:01] [SUCCESS] mise installation complete[0m
+[1;34m[2025-07-13 21:15:01] [INFO] ✓ starship already installed[0m
+[1;32m[2025-07-13 21:15:01] [SUCCESS] starship installation complete[0m
+[1;34m[2025-07-13 21:15:01] [INFO] Setting up chezmoi dotfiles manager[0m
+[1;34m[2025-07-13 21:15:01] [INFO] Updating existing chezmoi configuration[0m
+[1;32m[2025-07-13 21:15:02] [SUCCESS] chezmoi setup complete[0m
+[1;34m[2025-07-13 21:15:02] [INFO] Finalizing setup...[0m
+[1;34m[2025-07-13 21:15:02] [INFO] Switching to zsh shell[0m
+[1;32m[2025-07-13 21:16:00] [SUCCESS] Shell configuration complete[0m
+[1;32m[2025-07-13 21:16:00] [SUCCESS] ✅ Full bootstrap complete with chezmoi![0m
+[1;34m[2025-07-13 21:16:00] [INFO] 📝 Installation log saved to: /home/jeremy/dotfiles/install.log[0m
+[1;34m[2025-07-13 21:16:00] [INFO] 🔧 Use 'chezmoi apply' to apply future changes[0m
+[1;34m[2025-07-13 21:16:00] [INFO] 📝 Use 'chezmoi edit <file>' to edit dotfiles[0m
+[1;34m[2025-07-13 21:16:00] [INFO] 🔄 Use 'chezmoi update' to pull and apply remote changes[0m
+[1;34m[2025-07-13 21:16:00] [INFO] 🐚 Restart your terminal or run 'exec zsh' to use the new shell[0m
