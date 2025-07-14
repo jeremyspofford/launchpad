@@ -102,7 +102,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y git curl build-essential
     
-    - name: Test system packages only
+    - name: Test without system packages
       run: |
         chmod +x install.sh
         ./install.sh --no-ansible --yes --no-backup
@@ -141,11 +141,12 @@ jobs:
     
     - name: Run Ansible playbook (check mode)
       run: |
-        ansible-playbook --check -i ansible/inventory.ini ansible/playbook.yml
+        ansible-playbook --check -i ansible/inventory.ini ansible/playbook.yml --become
     
     - name: Run Ansible playbook
       run: |
-        ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+        # Use --become to run with sudo privileges in CI
+        ansible-playbook -i ansible/inventory.ini ansible/playbook.yml --become
     
     - name: Verify installed packages
       run: |
