@@ -67,8 +67,8 @@ chezmoi update
 # Install/update tool versions via mise
 mise install -y
 
-# Run Ansible playbook manually
-ansible-playbook -i ~/dotfiles/ansible/inventory.ini ~/dotfiles/ansible/playbook.yml
+# Run Ansible playbook manually (requires sudo password)
+ansible-playbook -i ~/dotfiles/ansible/inventory.ini ~/dotfiles/ansible/playbook.yml --ask-become-pass
 
 # View current chezmoi status
 chezmoi status

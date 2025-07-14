@@ -300,7 +300,7 @@ run_ansible_and_continue() {
 
   if command_exists ansible; then
     log "Running Ansible playbook..."
-    if ansible-playbook -i "$SCRIPT_DIR/ansible/inventory.ini" "$SCRIPT_DIR/ansible/playbook.yml"; then
+    if ansible-playbook -i "$SCRIPT_DIR/ansible/inventory.ini" "$SCRIPT_DIR/ansible/playbook.yml" --ask-become-pass; then
       success "Ansible playbook completed successfully"
     else
       error "Ansible playbook encountered issues"
