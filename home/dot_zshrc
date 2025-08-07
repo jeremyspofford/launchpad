@@ -355,6 +355,42 @@ fi
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
 # ============================================================================ #
+# Automatic Chezmoi Updates
+# ============================================================================ #
+
+# Smart chezmoi auto-update function
+chezmoi_auto_update() {
+    if command -v chezmoi &>/dev/null; then
+        local update_file="$XDG_CACHE_HOME/chezmoi_last_update"
+        local current_time=$(date +%s)
+        local update_interval=86400  # 24 hours in seconds
+        
+        # Create cache directory if it doesn't exist
+        mkdir -p "$(dirname "$update_file")"
+        
+        # Check if we should update (first run or 24+ hours since last update)
+        if [[ ! -f "$update_file" ]] || [[ $((current_time - $(cat "$update_file" 2>/dev/null || echo 0))) -gt $update_interval ]]; then
+            echo "🔄 Checking for dotfiles updates..."
+            
+            # Run chezmoi update in background to not block terminal startup
+            {
+                if chezmoi update --apply=false 2>/dev/null; then
+                    local changes=$(chezmoi status 2>/dev/null | wc -l)
+                    if [[ $changes -gt 0 ]]; then
+                        echo "📋 Found $changes dotfile changes. Run 'chezmoi diff' to review or 'chezmoi apply' to apply them."
+                    else
+                        echo "✅ Dotfiles are up to date!"
+                    fi
+                else
+                    echo "⚠️  Could not check for dotfile updates (check network connection)"
+                fi
+                echo "$current_time" > "$update_file"
+            } &
+        fi
+    fi
+}
+
+# ============================================================================ #
 # Welcome Message
 # ============================================================================ #
 
@@ -362,4 +398,7 @@ if [[ -o interactive ]]; then
     echo "Welcome to $(hostname), $(whoami)!"
     echo "System: $(uname -s) $(uname -r) | Shell: $SHELL"
     echo "Type 'tldr <command>' for quick command help"
+    
+    # Run chezmoi auto-update check
+    chezmoi_auto_update
 fi
