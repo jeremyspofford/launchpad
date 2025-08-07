@@ -1,10 +1,11 @@
+---
 name: Test Dotfiles Installation
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   schedule:
     # Run tests weekly on Sundays at 02:00 UTC
     - cron: '0 2 * * 0'
@@ -17,245 +18,245 @@ jobs:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
       fail-fast: false
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Set up system
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git curl build-essential
-    
-    - name: Test minimal installation
-      run: |
-        chmod +x install.sh
-        export PATH="$HOME/.local/bin:$PATH"
-        ./install.sh --minimal --yes --no-backup
-    
-    - name: Run verification
-      run: |
-        chmod +x verify.sh
-        export PATH="$HOME/.local/bin:$PATH"
-        ./verify.sh --quick
-    
-    - name: Test chezmoi functionality
-      run: |
-        export PATH="$HOME/.local/bin:$PATH"
-        chezmoi --version
-        chezmoi status
-        chezmoi diff --no-pager
-    
-    - name: Upload logs on failure
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: installation-logs-${{ matrix.os }}
-        path: |
-          install.log
-          verification.log
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up system
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git curl build-essential
+
+      - name: Test minimal installation
+        run: |
+          chmod +x install.sh
+          export PATH="$HOME/.local/bin:$PATH"
+          ./install.sh --minimal --yes --no-backup
+
+      - name: Run verification
+        run: |
+          chmod +x verify.sh
+          export PATH="$HOME/.local/bin:$PATH"
+          ./verify.sh --quick
+
+      - name: Test chezmoi functionality
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          chezmoi --version
+          chezmoi status
+          chezmoi diff --no-pager
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installation-logs-${{ matrix.os }}
+          path: |
+            install.log
+            verification.log
 
   test-macos:
     name: Test on macOS
     runs-on: macos-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Install Homebrew dependencies
-      run: |
-        # Homebrew should already be installed on GitHub runners
-        brew install git curl
-    
-    - name: Test minimal installation
-      run: |
-        chmod +x install.sh
-        export PATH="$HOME/.local/bin:$PATH"
-        ./install.sh --minimal --yes --no-backup
-    
-    - name: Run verification
-      run: |
-        chmod +x verify.sh
-        export PATH="$HOME/.local/bin:$PATH"
-        ./verify.sh --quick
-    
-    - name: Test chezmoi functionality
-      run: |
-        export PATH="$HOME/.local/bin:$PATH"
-        chezmoi --version
-        chezmoi status
-        chezmoi diff --no-pager
-    
-    - name: Upload logs on failure
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: installation-logs-macos
-        path: |
-          install.log
-          verification.log
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Homebrew dependencies
+        run: |
+          # Homebrew should already be installed on GitHub runners
+          brew install git curl
+
+      - name: Test minimal installation
+        run: |
+          chmod +x install.sh
+          export PATH="$HOME/.local/bin:$PATH"
+          ./install.sh --minimal --yes --no-backup
+
+      - name: Run verification
+        run: |
+          chmod +x verify.sh
+          export PATH="$HOME/.local/bin:$PATH"
+          ./verify.sh --quick
+
+      - name: Test chezmoi functionality
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          chezmoi --version
+          chezmoi status
+          chezmoi diff --no-pager
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installation-logs-macos
+          path: |
+            install.log
+            verification.log
 
   test-components:
     name: Test Individual Components
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Set up system
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git curl build-essential
-    
-    - name: Test without system packages
-      run: |
-        chmod +x install.sh
-        export PATH="$HOME/.local/bin:$PATH"
-        ./install.sh --no-ansible --yes --no-backup
-    
-    - name: Test mise installation
-      run: |
-        # Install mise manually to test
-        curl https://mise.run | sh
-        export PATH="$HOME/.local/bin:$PATH"
-        mise --version
-    
-    - name: Test starship installation
-      run: |
-        # Install starship manually to test
-        curl -sS https://starship.rs/install.sh | sh -s -- --yes
-        export PATH="$HOME/.local/bin:$PATH"
-        starship --version
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up system
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git curl build-essential
+
+      - name: Test without system packages
+        run: |
+          chmod +x install.sh
+          export PATH="$HOME/.local/bin:$PATH"
+          ./install.sh --no-ansible --yes --no-backup
+
+      - name: Test mise installation
+        run: |
+          # Install mise manually to test
+          curl https://mise.run | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          mise --version
+
+      - name: Test starship installation
+        run: |
+          # Install starship manually to test
+          curl -sS https://starship.rs/install.sh | sh -s -- --yes
+          export PATH="$HOME/.local/bin:$PATH"
+          starship --version
 
   test-ansible-playbook:
     name: Test Ansible Playbook
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Install Ansible
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y software-properties-common
-        sudo apt-add-repository --yes --update ppa:ansible/ansible
-        sudo apt-get install -y ansible
-    
-    - name: Test Ansible playbook syntax
-      run: |
-        ansible-playbook --syntax-check -i ansible/inventory.ini ansible/playbook.yml
-    
-    - name: Run Ansible playbook (check mode)
-      run: |
-        ansible-playbook --check -i ansible/inventory.ini ansible/playbook.yml
-    
-    - name: Run Ansible playbook
-      run: |
-        # Use --become to run with sudo privileges in CI
-        ansible-playbook -i ansible/inventory.ini ansible/playbook.yml --become
-    
-    - name: Verify installed packages
-      run: |
-        # Check if key packages were installed (non-fatal)
-        command -v fzf || echo "fzf not found"
-        command -v rg || echo "ripgrep not found" 
-        command -v fd || command -v fdfind || echo "fd not found"
-        command -v bat || echo "bat not found"
-        command -v exa || echo "exa not found"
-        command -v zoxide || echo "zoxide not found"
-        command -v chezmoi || echo "chezmoi not found"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          sudo apt-add-repository --yes --update ppa:ansible/ansible
+          sudo apt-get install -y ansible
+
+      - name: Test Ansible playbook syntax
+        run: |
+          ansible-playbook --syntax-check -i ansible/inventory.ini ansible/playbook.yml
+
+      - name: Run Ansible playbook (check mode)
+        run: |
+          ansible-playbook --check -i ansible/inventory.ini ansible/playbook.yml
+
+      - name: Run Ansible playbook
+        run: |
+          # Use --become to run with sudo privileges in CI
+          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml --become
+
+      - name: Verify installed packages
+        run: |
+          # Check if key packages were installed (non-fatal)
+          command -v fzf || echo "fzf not found"
+          command -v rg || echo "ripgrep not found"
+          command -v fd || command -v fdfind || echo "fd not found"
+          command -v bat || echo "bat not found"
+          command -v exa || echo "exa not found"
+          command -v zoxide || echo "zoxide not found"
+          command -v chezmoi || echo "chezmoi not found"
 
   test-chezmoi-templates:
     name: Test chezmoi Templates
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Install chezmoi
-      run: |
-        curl -fsLS https://get.chezmoi.io | sh
-        sudo mv bin/chezmoi /usr/local/bin/
-    
-    - name: Test chezmoi init
-      run: |
-        # Create chezmoi data file for non-interactive setup
-        mkdir -p ~/.config/chezmoi
-        cat > ~/.config/chezmoi/chezmoi.toml << 'EOF'
-        [data]
-          email = "test@example.com"
-          name = "Test User"
-          github_username = "testuser"
-        EOF
-        
-        # Initialize chezmoi with test data
-        chezmoi init --apply ./
-    
-    - name: Verify template rendering
-      run: |
-        # Check if templates were rendered correctly
-        if [ -f ~/.gitconfig ]; then
-          grep "test@example.com" ~/.gitconfig
-          grep "Test User" ~/.gitconfig
-        fi
-    
-    - name: Test chezmoi commands
-      run: |
-        chezmoi status
-        chezmoi diff --no-pager
-        chezmoi verify
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install chezmoi
+        run: |
+          curl -fsLS https://get.chezmoi.io | sh
+          sudo mv bin/chezmoi /usr/local/bin/
+
+      - name: Test chezmoi init
+        run: |
+          # Create chezmoi data file for non-interactive setup
+          mkdir -p ~/.config/chezmoi
+          cat > ~/.config/chezmoi/chezmoi.toml << 'EOF'
+          [data]
+            email = "test@example.com"
+            name = "Test User"
+            github_username = "testuser"
+          EOF
+
+          # Initialize chezmoi with test data
+          chezmoi init --apply ./
+
+      - name: Verify template rendering
+        run: |
+          # Check if templates were rendered correctly
+          if [ -f ~/.gitconfig ]; then
+            grep "test@example.com" ~/.gitconfig
+            grep "Test User" ~/.gitconfig
+          fi
+
+      - name: Test chezmoi commands
+        run: |
+          chezmoi status
+          chezmoi diff --no-pager
+          chezmoi verify
 
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Run shellcheck on install script
-      run: |
-        sudo apt-get install -y shellcheck
-        shellcheck install.sh verify.sh || true
-    
-    - name: Check for secrets in repository
-      uses: trufflesecurity/trufflehog@main
-      with:
-        path: ./
-        base: main
-        head: HEAD
-        extra_args: --debug --only-verified
-      continue-on-error: true
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run shellcheck on install script
+        run: |
+          sudo apt-get install -y shellcheck
+          shellcheck install.sh verify.sh || true
+
+      - name: Check for secrets in repository
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+        continue-on-error: true
 
   lint-and-format:
     name: Lint and Format Check
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Check shell scripts with shellcheck
-      run: |
-        sudo apt-get install -y shellcheck
-        find . -name "*.sh" -exec shellcheck {} \; || true
-    
-    - name: Check YAML files
-      uses: ibiqlik/action-yamllint@v3
-      with:
-        file_or_dir: .github/workflows/
-        config_file: .yamllint.yml
-        strict: false
-    
-    - name: Check Markdown files
-      uses: DavidAnson/markdownlint-cli2-action@v16
-      with:
-        globs: '**/*.md'
-      continue-on-error: true
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check shell scripts with shellcheck
+        run: |
+          sudo apt-get install -y shellcheck
+          find . -name "*.sh" -exec shellcheck {} \; || true
+
+      - name: Check YAML files
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: .github/workflows/
+          config_file: .yamllint.yml
+          strict: false
+
+      - name: Check Markdown files
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: '**/*.md'
+        continue-on-error: true
 
   test-docker:
     name: Test in Docker Container
@@ -264,44 +265,47 @@ jobs:
       matrix:
         image: ['ubuntu:20.04', 'ubuntu:22.04', 'ubuntu:24.04']
       fail-fast: false
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Test installation in Docker
-      run: |
-        docker run --rm -v $PWD:/dotfiles -w /dotfiles ${{ matrix.image }} bash -c "
-          export DEBIAN_FRONTEND=noninteractive
-          apt-get update && apt-get install -y git curl sudo locales
-          locale-gen en_US.UTF-8
-          useradd -m -s /bin/bash testuser
-          sudo -u testuser bash -c 'export HOME=/home/testuser && cd /dotfiles && chmod +x install.sh && ./install.sh --minimal --yes --no-backup'
-        "
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test installation in Docker
+        run: |
+          docker run --rm -v $PWD:/dotfiles -w /dotfiles ${{ matrix.image }} \
+            bash -c "
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update && apt-get install -y git curl sudo locales
+              locale-gen en_US.UTF-8
+              useradd -m -s /bin/bash testuser
+              sudo -u testuser bash -c 'export HOME=/home/testuser && \
+                cd /dotfiles && chmod +x install.sh && \
+                ./install.sh --minimal --yes --no-backup'
+            "
 
   documentation-check:
     name: Documentation Check
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Check for broken links in documentation
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        use-quiet-mode: 'yes'
-        use-verbose-mode: 'yes'
-      continue-on-error: true
-    
-    - name: Verify documentation structure
-      run: |
-        # Check that key documentation files exist
-        test -f README.md
-        test -f CHANGELOG.md
-        test -f CLAUDE.md
-        test -f docs/installation.md
-        test -f docs/usage.md
-        test -f docs/troubleshooting.md
-        test -f docs/faq.md
-        echo "All required documentation files exist"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for broken links in documentation
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+        continue-on-error: true
+
+      - name: Verify documentation structure
+        run: |
+          # Check that key documentation files exist
+          test -f README.md
+          test -f CHANGELOG.md
+          test -f CLAUDE.md
+          test -f docs/installation.md
+          test -f docs/usage.md
+          test -f docs/troubleshooting.md
+          test -f docs/faq.md
+          echo "All required documentation files exist"
