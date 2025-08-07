@@ -186,11 +186,11 @@ jobs:
         # Create chezmoi data file for non-interactive setup
         mkdir -p ~/.config/chezmoi
         cat > ~/.config/chezmoi/chezmoi.toml << 'EOF'
-[data]
-  email = "test@example.com"
-  name = "Test User"
-  github_username = "testuser"
-EOF
+        [data]
+          email = "test@example.com"
+          name = "Test User"
+          github_username = "testuser"
+        EOF
         
         # Initialize chezmoi with test data
         chezmoi init --apply ./
