@@ -280,41 +280,32 @@ setup_neovim() {
     # Create .config directory if it doesn't exist
     mkdir -p "$(dirname "$nvim_config_dir")"
     
-    # Handle existing config more robustly
-    if [[ -e "$nvim_config_dir" ]]; then
-        if [[ -L "$nvim_config_dir" ]]; then
-            warn "Removing existing symlink at $nvim_config_dir"
-            rm "$nvim_config_dir"
-        elif [[ -d "$nvim_config_dir" ]]; then
-            warn "Backing up existing Neovim config..."
-            mv "$nvim_config_dir" "${nvim_config_dir}.backup.$(date +%Y%m%d_%H%M%S)"
-        elif [[ -f "$nvim_config_dir" ]]; then
-            warn "Removing existing file at $nvim_config_dir"
-            rm "$nvim_config_dir"
-        fi
+    # Handle existing config more robustly - check for ANY existing path
+    if [[ -L "$nvim_config_dir" ]]; then
+        # It's a symlink (broken or not)
+        warn "Removing existing symlink at $nvim_config_dir"
+        rm "$nvim_config_dir"
+    elif [[ -d "$nvim_config_dir" ]]; then
+        # It's a directory
+        warn "Backing up existing Neovim config..."
+        mv "$nvim_config_dir" "${nvim_config_dir}.backup.$(date +%Y%m%d_%H%M%S)"
+    elif [[ -f "$nvim_config_dir" ]]; then
+        # It's a regular file
+        warn "Removing existing file at $nvim_config_dir"
+        rm "$nvim_config_dir"
+    elif [[ -e "$nvim_config_dir" ]]; then
+        # Some other type of file system object
+        warn "Removing existing object at $nvim_config_dir"
+        rm -rf "$nvim_config_dir"
     fi
     
-    # Clone kickstart.nvim
-    if [[ ! -d "$nvim_config_dir" ]]; then
-        log "Installing kickstart.nvim..."
-        if git clone https://github.com/nvim-lua/kickstart.nvim.git "$nvim_config_dir"; then
-            success "kickstart.nvim installed successfully"
-        else
-            error "Failed to clone kickstart.nvim"
-            return 1
-        fi
-    elif [[ -f "$nvim_config_dir/init.lua" ]]; then
-        log "kickstart.nvim already installed"
+    # Clone kickstart.nvim (directory should be clear now)
+    log "Installing kickstart.nvim..."
+    if git clone https://github.com/nvim-lua/kickstart.nvim.git "$nvim_config_dir"; then
+        success "kickstart.nvim installed successfully"
     else
-        # Directory exists but may not be kickstart.nvim - backup and reinstall
-        log "Existing nvim config found, backing up and installing kickstart.nvim..."
-        mv "$nvim_config_dir" "${nvim_config_dir}.backup.$(date +%Y%m%d_%H%M%S)"
-        if git clone https://github.com/nvim-lua/kickstart.nvim.git "$nvim_config_dir"; then
-            success "kickstart.nvim installed successfully"
-        else
-            error "Failed to clone kickstart.nvim"
-            return 1
-        fi
+        error "Failed to clone kickstart.nvim"
+        return 1
     fi
     
     success "Neovim configured with kickstart.nvim"
