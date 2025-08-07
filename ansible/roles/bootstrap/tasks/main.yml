@@ -101,7 +101,18 @@
     
     # Dotfile management
     - chezmoi
+    
+    # Cloud CLI tools
+    - awscli
+    - azure-cli
   when: ansible_os_family == "Darwin"
+
+- name: Install Google Cloud SDK on macOS
+  homebrew_cask:
+    name: google-cloud-sdk
+    state: present
+  when: ansible_os_family == "Darwin"
+  ignore_errors: yes
 
 # Install tools not in standard repos
 - name: Install eza on Linux (modern ls replacement)
@@ -215,5 +226,43 @@
     - { repo: 'https://github.com/zsh-users/zsh-syntax-highlighting', dest: '/usr/share/zsh-syntax-highlighting' }
     - { repo: 'https://github.com/zsh-users/zsh-history-substring-search', dest: '/usr/share/zsh-history-substring-search' }
   become: yes
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes
+
+# Cloud CLI tools for Linux
+- name: Install AWS CLI v2 on Linux
+  shell: |
+    if ! command -v aws >/dev/null 2>&1; then
+      ARCH=$(uname -m)
+      cd /tmp
+      if [ "$ARCH" = "x86_64" ]; then
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      elif [ "$ARCH" = "aarch64" ]; then
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+      fi
+      unzip awscliv2.zip
+      sudo ./aws/install
+      rm -rf aws awscliv2.zip
+    fi
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes
+
+- name: Install Azure CLI on Linux
+  shell: |
+    if ! command -v az >/dev/null 2>&1; then
+      curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+    fi
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes
+
+- name: Install Google Cloud SDK on Linux
+  shell: |
+    if ! command -v gcloud >/dev/null 2>&1; then
+      # Add Google Cloud SDK repository
+      echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+      curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+      sudo apt-get update
+      sudo apt-get install google-cloud-cli -y
+    fi
   when: ansible_os_family == "Debian"
   ignore_errors: yes

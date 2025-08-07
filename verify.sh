@@ -66,6 +66,11 @@ main() {
         check_command "rg" "ripgrep" || ((failed++))
         check_command "bat" "bat" || ((failed++))
         check_command "eza" "eza" || ((failed++))
+        
+        # Cloud CLI tools (optional - don't fail if not installed)
+        check_command "aws" "AWS CLI" || log_warning "AWS CLI not found (optional)"
+        check_command "az" "Azure CLI" || log_warning "Azure CLI not found (optional)" 
+        check_command "gcloud" "Google Cloud CLI" || log_warning "Google Cloud CLI not found (optional)"
     fi
     
     if [[ $failed -eq 0 ]]; then

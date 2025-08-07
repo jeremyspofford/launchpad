@@ -137,6 +137,9 @@ install_essential_packages() {
                 # Linting tools for code quality
                 shellcheck
                 yamllint
+                # Cloud CLI tools
+                awscli
+                azure-cli
             )
             
             for pkg in "${packages[@]}"; do
@@ -147,6 +150,14 @@ install_essential_packages() {
                     brew install "$pkg"
                 fi
             done
+            
+            # Install Google Cloud SDK as a cask
+            if ! brew list --cask google-cloud-sdk &>/dev/null; then
+                log "Installing Google Cloud SDK..."
+                brew install --cask google-cloud-sdk
+            else
+                success "Google Cloud SDK already installed"
+            fi
             ;;
             
         linux|wsl)
@@ -199,6 +210,31 @@ install_essential_packages() {
                 && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
                 && sudo apt update \
                 && sudo apt install gh -y
+            fi
+            
+            # Install AWS CLI v2
+            if ! command_exists aws; then
+                log "Installing AWS CLI v2..."
+                cd /tmp
+                curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                unzip awscliv2.zip
+                sudo ./aws/install
+                rm -rf aws awscliv2.zip
+            fi
+            
+            # Install Azure CLI
+            if ! command_exists az; then
+                log "Installing Azure CLI..."
+                curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+            fi
+            
+            # Install Google Cloud SDK
+            if ! command_exists gcloud; then
+                log "Installing Google Cloud SDK..."
+                echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+                curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+                sudo apt-get update
+                sudo apt-get install google-cloud-cli -y
             fi
             ;;
     esac

@@ -46,6 +46,11 @@ claude chat
 
 # Neovim (kickstart.nvim)
 nvim  # Plugins auto-install on first run
+
+# Cloud CLI tools
+aws configure    # Setup AWS credentials
+az login         # Login to Azure
+gcloud auth login # Login to Google Cloud
 ```
 
 ## Architecture
@@ -64,6 +69,7 @@ nvim  # Plugins auto-install on first run
 5. **AI Integration**: Claude CLI pre-configured
 6. **Smart Git**: Directory-based email switching
 7. **Nerd Fonts**: JetBrainsMono automatically installed
+8. **Cloud CLI Tools**: AWS CLI, Azure CLI, Google Cloud SDK with prompt integration
 
 ### Configuration Files
 - **dot_zshrc**: Modern zsh with plugins and aliases
