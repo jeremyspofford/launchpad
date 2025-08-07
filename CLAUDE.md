@@ -4,108 +4,124 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a comprehensive dotfiles repository for developers focused on modern Unix-like environments. The setup uses chezmoi for cross-platform dotfile management and Ansible for automated system package installation. The repository has transitioned from using GNU Stow to chezmoi for enhanced cross-platform compatibility and templating capabilities.
+Modern, streamlined dotfiles repository using chezmoi for cross-platform management. Designed for immediate productivity with minimal configuration.
 
-## Core Architecture
+## Key Commands
 
-### Main Components
-
-- **install.sh**: Primary bootstrap script that orchestrates the entire setup process
-- **install.ps1**: Windows-specific setup script for installing applications via winget
-- **ansible/**: Automated package installation using Ansible playbooks
-  - `playbook.yml`: Main playbook that applies the bootstrap role
-  - `roles/bootstrap/tasks/main.yml`: Installs essential system packages (build-essential, curl, fzf, ripgrep, chezmoi, tmux, zsh, etc.)
-- **home/**: chezmoi-managed dotfiles directory
-  - All dotfiles are organized in chezmoi's naming convention (e.g., `dot_bashrc`, `dot_gitconfig.tmpl`)
-  - Configuration files are stored in `dot_config/` subdirectories
-  - Templates use chezmoi's templating system for cross-platform compatibility
-  - Contains extensive fabric configuration for AI-powered CLI tools in `dot_config/fabric/`
-- **.chezmoi.toml**: chezmoi configuration file with user prompts and settings
-- **.chezmoiroot**: Points chezmoi to use the `home/` directory as the source
-- **Legacy directories**: `bash/`, `git/`, `zsh/`, `nvim/`, etc. (kept for historical reference but migrated to `home/` structure)
-
-### chezmoi Management
-
-The repository uses chezmoi for advanced dotfile management with features like:
-- **Cross-platform compatibility**: Templates handle OS-specific configurations
-- **Secret management**: Secure handling of sensitive configuration data
-- **Templating**: Dynamic configuration based on user input and system detection
-- **Version control integration**: Direct integration with git repositories
-
-### Tool Configuration Included
-
-- **Fabric**: Extensive AI-powered CLI pattern library with 200+ patterns for various tasks
-- **Zsh**: Complete shell configuration with modern tools integration
-- **Git**: Template-based configuration for cross-platform compatibility
-- **Starship**: Modern shell prompt configuration
-- **mise**: Version management for development tools
-- **Various CLI tools**: fzf, ripgrep, bat, exa, zoxide, and more
-
-## Common Commands
-
-### Initial Setup
+### Installation
 ```bash
-# Clone and run full bootstrap
-git clone https://github.com/jeremyspofford/dotfiles.git
-./dotfiles/install.sh
+# Full installation
+./install-new.sh
 
-# Skip backup of existing dotfiles
-./install.sh --no-backup
+# Legacy installer (being phased out)
+./install.sh
 ```
 
-### Manual Operations
+### Daily Operations
 ```bash
-# Apply dotfile changes with chezmoi
+# Edit configs
+chezmoi edit ~/.zshrc
+
+# Apply changes
 chezmoi apply
 
-# Edit dotfiles with chezmoi (automatically manages templates)
-chezmoi edit ~/.bashrc
-
-# Update dotfiles from repository
+# Update from repo
 chezmoi update
 
-# Install/update tool versions via mise
-mise install -y
-
-# Run Ansible playbook manually (requires sudo password)
-ansible-playbook -i ~/dotfiles/ansible/inventory.ini ~/dotfiles/ansible/playbook.yml --ask-become-pass
-
-# View current chezmoi status
-chezmoi status
-
-# Add new files to chezmoi management
-chezmoi add ~/.newconfig
+# Sync changes
+chezmoi git add .
+chezmoi git commit -m "Update"
+chezmoi git push
 ```
 
-### Windows Setup
-```powershell
-# Run Windows application installer (installs development tools and Proton suite)
-./install.ps1
+### Development Tools
+```bash
+# Manage versions with mise
+mise use node@20
+mise use python@3.11
+
+# Claude CLI
+claude login
+claude chat
+
+# Neovim (kickstart.nvim)
+nvim  # Plugins auto-install on first run
 ```
 
-## Development Workflow
+## Architecture
 
-### Making Changes
-1. Edit configuration files using `chezmoi edit <file>` or directly in the `home/` directory
-2. Test changes with `chezmoi diff` to see what will change
-3. Apply changes with `chezmoi apply`
-4. Commit changes to the repository
+### Core Structure
+- **install-new.sh**: Streamlined installer with all essentials
+- **home/**: Chezmoi-managed dotfiles (dot_ prefix convention)
+- **ansible/**: Cross-platform package installation
+- **.chezmoi.toml.tmpl**: User configuration template
 
-### Adding New Tools
-1. Add configuration files to the `home/` directory using chezmoi naming convention
-2. Use `chezmoi add <file>` to automatically add existing system files
-3. For templates, use `.tmpl` extension and chezmoi templating syntax
-4. Update Ansible bootstrap role for any new system dependencies
+### Key Features
+1. **Single Command Setup**: Clone and run install-new.sh
+2. **Cross-Platform**: macOS (Homebrew), Linux/WSL2 (apt)
+3. **Modern Tools**: fzf, ripgrep, bat, eza, tldr, zoxide
+4. **Version Management**: mise for all language versions
+5. **AI Integration**: Claude CLI pre-configured
+6. **Smart Git**: Directory-based email switching
+7. **Nerd Fonts**: JetBrainsMono automatically installed
 
-### Migration Status
-- **Completed**: Migration from GNU Stow to chezmoi
-- **Legacy directories**: bash/, git/, zsh/, nvim/, etc. remain for reference but are not actively managed
-- **Active management**: All configuration now managed through the `home/` directory structure
+### Configuration Files
+- **dot_zshrc**: Modern zsh with plugins and aliases
+- **dot_gitconfig.tmpl**: Templated git with conditional includes
+- **dot_tmux.conf**: Sensible tmux configuration
+- **dot_config/starship/**: Minimal, clean prompt
 
-## System Requirements
+## Code Quality Standards
 
-- Git, curl (for bootstrap process)
-- Support for Unicode and Nerd Fonts
-- Platform support: macOS (via Homebrew), Ubuntu/Debian (via apt), Windows (via winget)
-- Ansible for automated package installation
-- chezmoi (installed automatically by bootstrap script)
+### File Standards (CRITICAL - Always Follow)
+- **🚨 ALL FILES MUST END WITH A BLANK LINE** - This is non-negotiable for ANY file you create or edit
+- **Remove trailing whitespace** from all lines
+- **Use UTF-8 encoding** and Unix line endings (LF)
+- **Use consistent indentation** (2 spaces for YAML, 4 for Python, etc.)
+
+### File Editing Rules (MANDATORY)
+Every time you edit a file:
+1. **Verify the file ends with a blank line** after your changes
+2. **Remove any trailing whitespace** you may have introduced
+3. **Maintain the file's existing indentation style**
+4. **Test your changes work correctly**
+
+### Linting Requirements
+- **Always run linters** before committing any file
+- **Shell scripts**: Use `shellcheck script.sh`
+- **YAML files**: Use `yamllint file.yaml` 
+- **Markdown**: Use `markdownlint file.md`
+- **Fix all linter warnings and errors**
+
+### Shell Script Standards
+- Use `#!/usr/bin/env bash` shebang
+- Include `set -euo pipefail` for error handling
+- Add header comments explaining script purpose
+- Quote all variables: `"$variable"`
+- Use `readonly` for constants
+- End all functions and scripts with blank line
+
+### Documentation Standards
+- Update README.md when adding features
+- Add inline comments for complex configurations
+- Include usage examples in script headers
+- Keep CLAUDE.md updated with new commands/workflows
+
+### Pre-commit Checklist
+Before committing ANY file:
+1. Run appropriate linter
+2. Ensure file ends with blank line
+3. Remove trailing whitespace
+4. Test functionality
+5. Check for no secrets/credentials
+
+See CODING_STANDARDS.md for complete guidelines.
+
+## Important Notes
+
+- Neovim uses kickstart.nvim (cloned separately to ~/.config/nvim)
+- Old nvim configs removed from home/dot_config/
+- Fabric patterns removed (2.7MB of unused configs)
+- Simplified from 10+ config directories to essentials only
+- Git automatically switches email based on directory (~/work/, ~/personal/)
+- All tools work immediately after installation

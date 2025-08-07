@@ -1,159 +1,99 @@
-# Starship configuration for beautiful shell prompts
-# https://starship.rs/config/
+# Starship prompt configuration - Clean and minimal
 
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Inserts a blank line between shell prompts
+add_newline = true
+
+# Clean, minimal prompt format
 format = """
-[](#9A348E)\
-$os\
-$username\
-[](bg:#DA627D fg:#9A348E)\
-$directory\
-[](fg:#DA627D bg:#FCA17D)\
-$git_branch\
-$git_status\
-[](fg:#FCA17D bg:#86BBD8)\
-$c\
-$elixir\
-$elm\
-$golang\
-$gradle\
-$haskell\
-$java\
-$julia\
-$nodejs\
-$nim\
-$rust\
-$scala\
-$python\
-[](fg:#86BBD8 bg:#06969A)\
-$docker_context\
-$kubernetes\
-[](fg:#06969A bg:#33658A)\
-$time\
-[ ](fg:#33658A)\
-$line_break$character"""
+$username$hostname$directory$git_branch$git_status
+$nodejs$python$rust$golang$docker_context$character """
 
-# Disable the blank line at the start of the prompt
-add_newline = false
+# Right-side prompt shows command duration and time
+right_format = """$cmd_duration"""
 
-# You can also replace your username with a neat symbol like   or disable it
+# Character module - prompt symbol
+[character]
+success_symbol = "[➜](bold green)"
+error_symbol = "[➜](bold red)"
+
+# Username
 [username]
-show_always = true
-style_user = "bg:#9A348E"
-style_root = "bg:#9A348E"
-format = '[$user ]($style)'
+style_user = "cyan bold"
+style_root = "red bold"
+format = "[$user]($style) "
+disabled = true  # Enable if you want to see username
+show_always = false
+
+# Hostname
+[hostname]
+ssh_only = true
+format = "[@$hostname](bold blue) "
 disabled = false
 
-# An alternative to the username module which displays a symbol that
-# represents the current operating system
-[os]
-style = "bg:#9A348E"
-disabled = true # Disabled by default
-
+# Directory
 [directory]
-style = "bg:#DA627D"
-format = "[ $path ]($style)"
+style = "purple bold"
+format = "[$path]($style) "
 truncation_length = 3
 truncation_symbol = "…/"
+truncate_to_repo = true
 
-# Here is how you can shorten some long paths by text replacement
-# similar to mapped_locations in Oh My Posh:
 [directory.substitutions]
 "Documents" = "󰈙 "
 "Downloads" = " "
 "Music" = " "
 "Pictures" = " "
-# Keep in mind that the order matters. For example:
-# "Important Documents" = " 󰈙 "
-# will not be replaced, because "Documents" was already substituted before.
-# So either put "Important Documents" before "Documents" or use the substituted version:
-# "Important 󰈙 " = " 󰈙 "
 
-[c]
-symbol = " "
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
-
-[docker_context]
-symbol = " "
-style = "bg:#06969A"
-format = '[ $symbol $context ]($style)'
-
-[elixir]
-symbol = " "
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
-
-[elm]
-symbol = " "
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
-
+# Git
 [git_branch]
-symbol = ""
-style = "bg:#FCA17D"
-format = '[ $symbol $branch ]($style)'
+symbol = " "
+style = "yellow bold"
+format = "[$symbol$branch]($style) "
 
 [git_status]
-style = "bg:#FCA17D"
-format = '[$all_status$ahead_behind ]($style)'
+style = "yellow bold"
+format = '([$all_status$ahead_behind]($style) )'
+conflicted = "="
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕"
+untracked = "?"
+stashed = "$"
+modified = "!"
+staged = "+"
+renamed = "»"
+deleted = "✘"
 
-[golang]
-symbol = " "
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
+# Command duration
+[cmd_duration]
+min_time = 2_000
+format = "[$duration](bold yellow) "
 
-[gradle]
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
-
-[haskell]
-symbol = " "
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
-
-[java]
-symbol = " "
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
-
-[julia]
-symbol = " "
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
-
+# Languages
 [nodejs]
-symbol = ""
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
-
-[nim]
-symbol = "󰆥 "
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
+symbol = " "
+style = "green bold"
+format = "[$symbol($version )]($style)"
 
 [rust]
-symbol = ""
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
-
-[scala]
 symbol = " "
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
+style = "red bold"
+format = "[$symbol($version )]($style)"
 
 [python]
 symbol = " "
-style = "bg:#86BBD8"
-format = '[ $symbol ($version) ]($style)'
+style = "yellow bold"
+format = '[${symbol}${pyenv_prefix}(${version} )(\($virtualenv\) )]($style)'
 
-[kubernetes]
-symbol = "☸ "
-style = "bg:#06969A"
-format = '[ $symbol $context ]($style)'
-disabled = false
+[golang]
+symbol = " "
+style = "cyan bold"
+format = "[$symbol($version )]($style)"
 
-[time]
-disabled = false
-time_format = "%R" # Hour:Minute Format
-style = "bg:#33658A"
-format = '[ ♥ $time ]($style)'
+[docker_context]
+symbol = " "
+style = "blue bold"
+format = "[$symbol$context]($style) "
+only_with_files = true
