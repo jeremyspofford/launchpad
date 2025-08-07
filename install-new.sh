@@ -277,16 +277,34 @@ setup_neovim() {
     
     local nvim_config_dir="$HOME/.config/nvim"
     
-    # Backup existing config if it exists
-    if [[ -d "$nvim_config_dir" ]] && [[ ! -L "$nvim_config_dir" ]]; then
-        warn "Backing up existing Neovim config..."
-        mv "$nvim_config_dir" "${nvim_config_dir}.backup.$(date +%Y%m%d_%H%M%S)"
+    # Create .config directory if it doesn't exist
+    mkdir -p "$(dirname "$nvim_config_dir")"
+    
+    # Handle existing config more robustly
+    if [[ -e "$nvim_config_dir" ]]; then
+        if [[ -L "$nvim_config_dir" ]]; then
+            warn "Removing existing symlink at $nvim_config_dir"
+            rm "$nvim_config_dir"
+        elif [[ -d "$nvim_config_dir" ]]; then
+            warn "Backing up existing Neovim config..."
+            mv "$nvim_config_dir" "${nvim_config_dir}.backup.$(date +%Y%m%d_%H%M%S)"
+        elif [[ -f "$nvim_config_dir" ]]; then
+            warn "Removing existing file at $nvim_config_dir"
+            rm "$nvim_config_dir"
+        fi
     fi
     
     # Clone kickstart.nvim
     if [[ ! -d "$nvim_config_dir" ]]; then
         log "Installing kickstart.nvim..."
-        git clone https://github.com/nvim-lua/kickstart.nvim.git "$nvim_config_dir"
+        if git clone https://github.com/nvim-lua/kickstart.nvim.git "$nvim_config_dir"; then
+            success "kickstart.nvim installed successfully"
+        else
+            error "Failed to clone kickstart.nvim"
+            return 1
+        fi
+    else
+        log "kickstart.nvim already installed"
     fi
     
     success "Neovim configured with kickstart.nvim"
