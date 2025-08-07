@@ -12,6 +12,52 @@ readonly LOG_FILE="${SCRIPT_DIR}/install.log"
 # Global CI mode flag
 CI_MODE=false
 
+# Security: Set secure umask
+umask 022
+
+# Error handling function
+cleanup() {
+    local exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        error "Installation failed with exit code $exit_code"
+        log "Check the log file for details: $LOG_FILE"
+    fi
+    # Clean up any temporary files
+    if [[ -n "${TEMP_DIR:-}" && -d "$TEMP_DIR" ]]; then
+        rm -rf "$TEMP_DIR"
+    fi
+}
+
+# Set up trap for cleanup
+trap cleanup EXIT
+
+# Security function for verified downloads
+secure_download() {
+    local url="$1"
+    local output="$2"
+    local expected_checksum="${3:-}"
+    
+    log "Downloading from: $url"
+    if curl -fsSL "$url" -o "$output"; then
+        if [[ -n "$expected_checksum" ]]; then
+            local actual_checksum
+            actual_checksum=$(sha256sum "$output" | cut -d' ' -f1)
+            if [[ "$actual_checksum" != "$expected_checksum" ]]; then
+                error "Checksum verification failed for $output"
+                return 1
+            else
+                log "Checksum verification passed"
+            fi
+        else
+            warn "Download completed without checksum verification"
+        fi
+        return 0
+    else
+        error "Failed to download from $url"
+        return 1
+    fi
+}
+
 # Colors for output
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
@@ -49,6 +95,42 @@ header() {
 
 command_exists() {
     command -v "$1" >/dev/null 2>&1
+}
+
+# Input validation functions
+validate_email() {
+    local email="$1"
+    if [[ "$email" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+validate_username() {
+    local username="$1"
+    if [[ "$username" =~ ^[A-Za-z0-9]([A-Za-z0-9]|-[A-Za-z0-9])*$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Secure input function
+secure_read() {
+    local prompt="$1"
+    local validator="$2"
+    local value
+    
+    while true; do
+        read -p "$prompt" value
+        if [[ -n "$value" ]] && $validator "$value"; then
+            echo "$value"
+            return 0
+        else
+            warn "Invalid input. Please try again."
+        fi
+    done
 }
 
 detect_os() {
@@ -89,7 +171,13 @@ detect_arch() {
 install_homebrew() {
     if ! command_exists brew; then
         log "Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        # Download to temporary file for security
+        local temp_homebrew_script
+        temp_homebrew_script=$(mktemp)
+        curl -fsSL "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" -o "$temp_homebrew_script" || error "Failed to download Homebrew installer"
+        # Note: Homebrew script includes its own integrity checks
+        bash "$temp_homebrew_script" || error "Homebrew installation failed"
+        rm "$temp_homebrew_script"
         
         # Add Homebrew to PATH for this session
         if [[ -f /opt/homebrew/bin/brew ]]; then
@@ -178,7 +266,16 @@ install_essential_packages() {
             if ! command_exists eza && ! command_exists exa; then
                 log "Installing eza..."
                 local eza_url="https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz"
-                curl -sL "$eza_url" | sudo tar xz -C /usr/local/bin
+                local temp_eza_file
+                temp_eza_file=$(mktemp)
+                
+                if curl -fsSL "$eza_url" -o "$temp_eza_file"; then
+                    sudo tar xzf "$temp_eza_file" -C /usr/local/bin --no-same-owner
+                    rm "$temp_eza_file"
+                else
+                    warn "Failed to download eza, continuing without it..."
+                    rm -f "$temp_eza_file"
+                fi
             fi
             
             # Install tldr and linting tools
@@ -193,48 +290,83 @@ install_essential_packages() {
             # Install chezmoi
             if ! command_exists chezmoi; then
                 log "Installing chezmoi..."
-                sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
+                local temp_chezmoi_script
+                temp_chezmoi_script=$(mktemp)
+                curl -fsSL "https://get.chezmoi.io" -o "$temp_chezmoi_script" || error "Failed to download chezmoi installer"
+                sh "$temp_chezmoi_script" -b ~/.local/bin || error "Chezmoi installation failed"
+                rm "$temp_chezmoi_script"
             fi
             
             # Install starship
             if ! command_exists starship; then
                 log "Installing starship..."
-                curl -sS https://starship.rs/install.sh | sh -s -- --yes
+                local temp_starship_script
+                temp_starship_script=$(mktemp)
+                curl -fsSL "https://starship.rs/install.sh" -o "$temp_starship_script" || error "Failed to download starship installer"
+                sh "$temp_starship_script" --yes || error "Starship installation failed"
+                rm "$temp_starship_script"
             fi
             
             # Install GitHub CLI
             if ! command_exists gh; then
                 log "Installing GitHub CLI..."
-                curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-                && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-                && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-                && sudo apt update \
-                && sudo apt install gh -y
+                local temp_gh_key
+                temp_gh_key=$(mktemp)
+                
+                if curl -fsSL "https://cli.github.com/packages/githubcli-archive-keyring.gpg" -o "$temp_gh_key"; then
+                    sudo dd if="$temp_gh_key" of="/usr/share/keyrings/githubcli-archive-keyring.gpg" bs=1M
+                    sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+                    if sudo apt update; then
+                        sudo apt install gh -y || warn "GitHub CLI installation failed, continuing..."
+                    else
+                        warn "Failed to update package list for GitHub CLI, skipping installation"
+                    fi
+                    rm "$temp_gh_key"
+                else
+                    warn "Failed to download GitHub CLI GPG key, skipping installation"
+                    rm -f "$temp_gh_key"
+                fi
             fi
             
             # Install AWS CLI v2
             if ! command_exists aws; then
                 log "Installing AWS CLI v2..."
-                cd /tmp
-                curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                local temp_dir
+                temp_dir=$(mktemp -d)
+                cd "$temp_dir"
+                curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" || error "Failed to download AWS CLI"
                 unzip awscliv2.zip
-                sudo ./aws/install
-                rm -rf aws awscliv2.zip
+                sudo ./aws/install || error "AWS CLI installation failed"
+                cd - >/dev/null
+                rm -rf "$temp_dir"
             fi
             
             # Install Azure CLI
             if ! command_exists az; then
                 log "Installing Azure CLI..."
-                curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+                local temp_azure_script
+                temp_azure_script=$(mktemp)
+                curl -fsSL "https://aka.ms/InstallAzureCLIDeb" -o "$temp_azure_script" || error "Failed to download Azure CLI installer"
+                sudo bash "$temp_azure_script" || error "Azure CLI installation failed"
+                rm "$temp_azure_script"
             fi
             
             # Install Google Cloud SDK
             if ! command_exists gcloud; then
                 log "Installing Google Cloud SDK..."
-                echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-                curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-                sudo apt-get update
-                sudo apt-get install google-cloud-cli -y
+                # Use modern GPG key management with proper error handling
+                if curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg; then
+                    sudo chmod 644 /usr/share/keyrings/cloud.google.gpg
+                    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list > /dev/null
+                    if sudo apt-get update; then
+                        sudo apt-get install google-cloud-cli -y || warn "Google Cloud CLI installation failed, continuing..."
+                    else
+                        warn "Failed to update package list for Google Cloud SDK, skipping installation"
+                    fi
+                else
+                    warn "Failed to add Google Cloud GPG key, skipping Google Cloud SDK installation"
+                fi
             fi
             ;;
     esac
@@ -270,8 +402,23 @@ install_nerd_font() {
     fi
     
     log "Downloading JetBrainsMono Nerd Font..."
-    local temp_dir=$(mktemp -d)
-    curl -sL "$font_url" | tar xJ -C "$temp_dir"
+    local temp_dir
+    temp_dir=$(mktemp -d)
+    local temp_font_file
+    temp_font_file=$(mktemp --suffix=.tar.xz)
+    
+    if curl -fsSL "$font_url" -o "$temp_font_file"; then
+        if tar xJf "$temp_font_file" -C "$temp_dir"; then
+            log "Font archive extracted successfully"
+        else
+            error "Failed to extract font archive"
+            return 1
+        fi
+        rm "$temp_font_file"
+    else
+        error "Failed to download font"
+        return 1
+    fi
     
     log "Installing font files..."
     find "$temp_dir" -name "*.ttf" -exec cp {} "$font_dir/" \;
@@ -293,7 +440,12 @@ install_mise() {
     header "Installing mise (version manager)"
     
     if ! command_exists mise; then
-        curl https://mise.run | sh
+        log "Installing mise..."
+        local temp_mise_script
+        temp_mise_script=$(mktemp)
+        curl -fsSL "https://mise.run" -o "$temp_mise_script" || error "Failed to download mise installer"
+        sh "$temp_mise_script" || error "mise installation failed"
+        rm "$temp_mise_script"
         export PATH="$HOME/.local/bin:$PATH"
     fi
     
@@ -365,7 +517,7 @@ setup_chezmoi() {
         if [[ "$CI_MODE" == "true" ]]; then
             git_email="ci-test@example.com"
         else
-            read -p "Enter your email address: " git_email
+            git_email=$(secure_read "Enter your email address: " validate_email)
         fi
     fi
     if [[ -z "$git_name" ]]; then
@@ -379,7 +531,7 @@ setup_chezmoi() {
     if [[ "$CI_MODE" == "true" ]]; then
         github_username="ci-test-user"
     else
-        read -p "Enter your GitHub username: " github_username
+        github_username=$(secure_read "Enter your GitHub username: " validate_username)
     fi
     
     # Create chezmoi config with the data
@@ -424,7 +576,7 @@ configure_git() {
         if [[ "$CI_MODE" == "true" ]]; then
             git_email="ci-test@example.com"
         else
-            read -p "Enter your email for Git: " git_email
+            git_email=$(secure_read "Enter your email for Git: " validate_email)
         fi
         git config --global user.email "$git_email"
     fi
