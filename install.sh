@@ -318,18 +318,39 @@ setup_neovim() {
 setup_chezmoi() {
     header "Setting up dotfiles with chezmoi"
     
+    # Get user data for chezmoi templates
+    local git_email=$(git config --global user.email)
+    local git_name=$(git config --global user.name)
+    
+    if [[ -z "$git_email" ]]; then
+        read -p "Enter your email address: " git_email
+    fi
+    if [[ -z "$git_name" ]]; then
+        read -p "Enter your full name: " git_name
+    fi
+    read -p "Enter your GitHub username: " github_username
+    
+    # Create chezmoi config with the data
+    mkdir -p ~/.config/chezmoi
+    cat > ~/.config/chezmoi/chezmoi.toml <<EOF
+[data]
+    email = "$git_email"
+    name = "$git_name"
+    github_username = "$github_username"
+
+[git]
+    autoCommit = false
+    autoPush = false
+EOF
+    
     # Initialize chezmoi with this repository
     if [[ ! -d "$HOME/.local/share/chezmoi" ]]; then
         log "Initializing chezmoi..."
         chezmoi init --apply "$SCRIPT_DIR"
     else
         log "Updating chezmoi configuration..."
-        chezmoi update
+        chezmoi apply
     fi
-    
-    # Configure auto-commit and push
-    chezmoi git add .
-    chezmoi git commit -m "Update dotfiles" || true
     
     success "Dotfiles configured with chezmoi"
 }
@@ -445,8 +466,8 @@ main() {
     install_mise
     install_claude_cli
     setup_neovim
-    setup_chezmoi
     configure_git
+    setup_chezmoi
     configure_shell
     
     # Show completion message
