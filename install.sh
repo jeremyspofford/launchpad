@@ -9,6 +9,9 @@ set -euo pipefail
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly LOG_FILE="${SCRIPT_DIR}/install.log"
 
+# Global CI mode flag
+CI_MODE=false
+
 # Colors for output
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
@@ -323,12 +326,25 @@ setup_chezmoi() {
     local git_name=$(git config --global user.name)
     
     if [[ -z "$git_email" ]]; then
-        read -p "Enter your email address: " git_email
+        if [[ "$CI_MODE" == "true" ]]; then
+            git_email="ci-test@example.com"
+        else
+            read -p "Enter your email address: " git_email
+        fi
     fi
     if [[ -z "$git_name" ]]; then
-        read -p "Enter your full name: " git_name
+        if [[ "$CI_MODE" == "true" ]]; then
+            git_name="CI Test User"
+        else
+            read -p "Enter your full name: " git_name
+        fi
     fi
-    read -p "Enter your GitHub username: " github_username
+    
+    if [[ "$CI_MODE" == "true" ]]; then
+        github_username="ci-test-user"
+    else
+        read -p "Enter your GitHub username: " github_username
+    fi
     
     # Create chezmoi config with the data
     mkdir -p ~/.config/chezmoi
@@ -360,12 +376,20 @@ configure_git() {
     
     # Prompt for user info if not set
     if [[ -z "$(git config --global user.name)" ]]; then
-        read -p "Enter your full name for Git: " git_name
+        if [[ "$CI_MODE" == "true" ]]; then
+            git_name="CI Test User"
+        else
+            read -p "Enter your full name for Git: " git_name
+        fi
         git config --global user.name "$git_name"
     fi
     
     if [[ -z "$(git config --global user.email)" ]]; then
-        read -p "Enter your email for Git: " git_email
+        if [[ "$CI_MODE" == "true" ]]; then
+            git_email="ci-test@example.com"
+        else
+            read -p "Enter your email for Git: " git_email
+        fi
         git config --global user.email "$git_email"
     fi
     
@@ -431,13 +455,40 @@ show_post_install_message() {
 # ============================================================================ #
 
 main() {
-    clear
-    echo -e "${BOLD}${CYAN}"
-    echo "╔══════════════════════════════════════════╗"
-    echo "║     Modern Dotfiles Installer v2.0       ║"
-    echo "║         Fast • Simple • Reliable         ║"
-    echo "╚══════════════════════════════════════════╝"
-    echo -e "${NC}"
+    # Parse command line arguments for CI/automation
+    local minimal_mode=false
+    local no_backup=false
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --yes|--ci)
+                CI_MODE=true
+                shift
+                ;;
+            --minimal)
+                minimal_mode=true
+                shift
+                ;;
+            --no-backup)
+                no_backup=true
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
+    # Skip UI in CI mode
+    if [[ "$CI_MODE" == "false" ]]; then
+        clear
+        echo -e "${BOLD}${CYAN}"
+        echo "╔══════════════════════════════════════════╗"
+        echo "║     Modern Dotfiles Installer v2.0       ║"
+        echo "║         Fast • Simple • Reliable         ║"
+        echo "╚══════════════════════════════════════════╝"
+        echo -e "${NC}"
+    fi
     
     # Initialize log
     : > "$LOG_FILE"

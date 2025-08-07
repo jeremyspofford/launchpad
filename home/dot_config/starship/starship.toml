@@ -1,17 +1,41 @@
-# Starship prompt configuration - Clean and minimal
+# Starship prompt configuration - Powerline style with cloud provider support
 
 "$schema" = 'https://starship.rs/config-schema.json'
 
 # Inserts a blank line between shell prompts
 add_newline = true
 
-# Clean, minimal prompt format
+# Powerline-style prompt with cloud context
 format = """
-$username$hostname$directory$git_branch$git_status
-$nodejs$python$rust$golang$docker_context$character """
+[](fg:blue)\
+$username\
+[](fg:blue bg:purple)\
+$directory\
+[](fg:purple bg:yellow)\
+$git_branch\
+$git_status\
+[](fg:yellow bg:green)\
+$aws\
+$gcloud\
+$azure\
+[](fg:green bg:bright-black)\
+$nodejs\
+$python\
+$rust\
+$golang\
+$docker_context\
+[](fg:bright-black)\
+$fill\
+$cmd_duration\
+$line_break\
+$character"""
 
-# Right-side prompt shows command duration and time
-right_format = """$cmd_duration"""
+# Disable right format for powerline style
+right_format = ""
+
+# Fill module for spacing
+[fill]
+symbol = " "
 
 # Character module - prompt symbol
 [character]
@@ -20,11 +44,11 @@ error_symbol = "[➜](bold red)"
 
 # Username
 [username]
-style_user = "cyan bold"
-style_root = "red bold"
-format = "[$user]($style) "
-disabled = true  # Enable if you want to see username
-show_always = false
+style_user = "bg:blue fg:black"
+style_root = "bg:blue fg:red"
+format = "[ $user ]($style)"
+disabled = false
+show_always = true
 
 # Hostname
 [hostname]
@@ -34,8 +58,8 @@ disabled = false
 
 # Directory
 [directory]
-style = "purple bold"
-format = "[$path]($style) "
+style = "bg:purple fg:black"
+format = "[ $path ]($style)"
 truncation_length = 3
 truncation_symbol = "…/"
 truncate_to_repo = true
@@ -49,12 +73,12 @@ truncate_to_repo = true
 # Git
 [git_branch]
 symbol = " "
-style = "yellow bold"
-format = "[$symbol$branch]($style) "
+style = "bg:yellow fg:black"
+format = "[ $symbol$branch ]($style)"
 
 [git_status]
-style = "yellow bold"
-format = '([$all_status$ahead_behind]($style) )'
+style = "bg:yellow fg:black"
+format = '[$all_status$ahead_behind]($style)'
 conflicted = "="
 ahead = "⇡${count}"
 behind = "⇣${count}"
@@ -69,31 +93,48 @@ deleted = "✘"
 # Command duration
 [cmd_duration]
 min_time = 2_000
-format = "[$duration](bold yellow) "
+format = "[$duration](bold yellow)"
+
+# Cloud Providers
+[aws]
+symbol = "  "
+style = "bg:green fg:black"
+format = '[ $symbol$profile(\($region\))]($style)'
+
+[gcloud]
+symbol = "☁️  "
+style = "bg:green fg:black"
+format = '[ $symbol$account(@$domain)(\($region\))]($style)'
+
+[azure]
+symbol = "󰠅  "
+style = "bg:green fg:black"
+format = '[ $symbol($subscription)]($style)'
+disabled = false
 
 # Languages
 [nodejs]
 symbol = " "
-style = "green bold"
-format = "[$symbol($version )]($style)"
+style = "bg:bright-black fg:green"
+format = "[ $symbol$version ]($style)"
 
 [rust]
 symbol = " "
-style = "red bold"
-format = "[$symbol($version )]($style)"
+style = "bg:bright-black fg:red"
+format = "[ $symbol$version ]($style)"
 
 [python]
 symbol = " "
-style = "yellow bold"
-format = '[${symbol}${pyenv_prefix}(${version} )(\($virtualenv\) )]($style)'
+style = "bg:bright-black fg:yellow"
+format = '[ $symbol$version(\($virtualenv\)) ]($style)'
 
 [golang]
 symbol = " "
-style = "cyan bold"
-format = "[$symbol($version )]($style)"
+style = "bg:bright-black fg:cyan"
+format = "[ $symbol$version ]($style)"
 
 [docker_context]
 symbol = " "
-style = "blue bold"
-format = "[$symbol$context]($style) "
+style = "bg:bright-black fg:blue"
+format = "[ $symbol$context ]($style)"
 only_with_files = true
