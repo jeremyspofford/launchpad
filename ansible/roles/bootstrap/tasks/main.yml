@@ -41,9 +41,9 @@
     - shellcheck
     - yamllint
     
-    # Optional but useful
-    - tldr
-    - zoxide
+    # Package managers and utils  
+    - python3-pip
+    - yq
   become: yes
   when: ansible_os_family == "Debian"
 
@@ -84,9 +84,8 @@
     - shellcheck
     - yamllint
     
-    # Optional but useful
-    - tldr
-    - zoxide
+    # System utilities continued  
+    - python3-pip
     - delta
     
     # ZSH plugins
@@ -136,6 +135,7 @@
       sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
     fi
   when: ansible_os_family == "Debian"
+  become: no
 
 - name: Install starship on Linux
   shell: |
@@ -143,6 +143,7 @@
       curl -sS https://starship.rs/install.sh | sh -s -- --yes
     fi
   when: ansible_os_family == "Debian"
+  become: no
 
 - name: Install mise on Linux
   shell: |
@@ -150,6 +151,7 @@
       curl https://mise.run | sh
     fi
   when: ansible_os_family == "Debian"
+  become: no
 
 - name: Install GitHub CLI on Linux
   shell: |
@@ -195,6 +197,14 @@
     - npm-check-updates
   become: yes
   when: ansible_os_family == "Debian"
+
+- name: Install zoxide on Linux
+  shell: |
+    if ! command -v zoxide >/dev/null 2>&1; then
+      curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+    fi
+  when: ansible_os_family == "Debian"
+  become: no
 
 - name: Install ZSH plugins on Linux
   git:

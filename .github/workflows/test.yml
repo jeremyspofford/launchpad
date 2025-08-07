@@ -275,10 +275,11 @@ jobs:
           docker run --rm -v $PWD:/dotfiles -w /dotfiles ${{ matrix.image }} \
             bash -c "
               export DEBIAN_FRONTEND=noninteractive
-              apt-get update && apt-get install -y git curl sudo locales
+              apt-get update && apt-get install -y git curl sudo locales python3-pip
               locale-gen en_US.UTF-8
               useradd -m -s /bin/bash testuser
               sudo -u testuser bash -c 'export HOME=/home/testuser && \
+                export PATH=\$HOME/.local/bin:\$PATH && \
                 cd /dotfiles && chmod +x install.sh && \
                 ./install.sh --minimal --yes --no-backup'
             "
@@ -309,3 +310,4 @@ jobs:
           test -f docs/troubleshooting.md
           test -f docs/faq.md
           echo "All required documentation files exist"
+

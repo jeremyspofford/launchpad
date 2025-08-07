@@ -28,7 +28,6 @@ rules:
   # Allow comments with less strict spacing
   comments:
     min-spaces-from-content: 1
-    min-spaces-from-content: 1
 
   # Allow quoted strings
   quoted-strings:
