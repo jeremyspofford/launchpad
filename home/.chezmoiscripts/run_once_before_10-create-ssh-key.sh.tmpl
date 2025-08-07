@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly MAGENTA='\033[0;35m'
+readonly CYAN='\033[0;36m'
+readonly BOLD='\033[1m'
+readonly NC='\033[0m' # No Color
+
 # Create SSH key if it doesn't exist
 if [[ ! -f ~/.ssh/personal_id_ed25519 ]]; then
     mkdir -p ~/.ssh
@@ -9,21 +19,37 @@ if [[ ! -f ~/.ssh/personal_id_ed25519 ]]; then
     eval "$(ssh-agent -s)"
     ssh-add ~/.ssh/personal_id_ed25519
 
-    echo "SSH key generated. Please add the following key to GitHub:"
-    cat ~/.ssh/personal_id_ed25519.pub
+    echo -e "\n${BOLD}${GREEN}🔑 SSH Key Generated Successfully!${NC}\n"
+    
+    echo -e "${BOLD}${CYAN}┌─────────────────────────────────────────────────────────────────┐${NC}"
+    echo -e "${BOLD}${CYAN}│                    📋 ADD TO GITHUB                            │${NC}"
+    echo -e "${BOLD}${CYAN}└─────────────────────────────────────────────────────────────────┘${NC}\n"
+    
+    echo -e "${BOLD}${YELLOW}1. Copy the SSH key below:${NC}"
+    echo -e "${GREEN}$(cat ~/.ssh/personal_id_ed25519.pub)${NC}\n"
+    
+    echo -e "${BOLD}${YELLOW}2. Open GitHub SSH settings:${NC}"
+    echo -e "${BOLD}${BLUE}   👉 https://github.com/settings/keys${NC}\n"
+    
+    echo -e "${BOLD}${YELLOW}3. Click${NC} ${BOLD}${GREEN}'New SSH key'${NC}"
+    echo -e "${BOLD}${YELLOW}4. Paste the key and save${NC}\n"
     
     # Try to copy to clipboard
     if command -v pbcopy >/dev/null 2>&1; then
         cat ~/.ssh/personal_id_ed25519.pub | pbcopy
-        echo "Key copied to clipboard (macOS)"
+        echo -e "${GREEN}✅ Key copied to clipboard (macOS)${NC}"
     elif command -v xclip >/dev/null 2>&1; then
         cat ~/.ssh/personal_id_ed25519.pub | xclip -selection clipboard
-        echo "Key copied to clipboard (Linux)"
+        echo -e "${GREEN}✅ Key copied to clipboard (Linux)${NC}"
     elif command -v wl-copy >/dev/null 2>&1; then
         cat ~/.ssh/personal_id_ed25519.pub | wl-copy
-        echo "Key copied to clipboard (Wayland)"
+        echo -e "${GREEN}✅ Key copied to clipboard (Wayland)${NC}"
+    else
+        echo -e "${YELLOW}💡 Copy the key above manually${NC}"
     fi
     
-    echo "Press enter to continue after adding the key to GitHub..."
+    echo -e "\n${BOLD}${MAGENTA}Press ENTER after adding the key to GitHub...${NC}"
     read
+    
+    echo -e "${GREEN}✅ SSH setup complete!${NC}\n"
 fi

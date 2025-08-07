@@ -5,6 +5,33 @@ All notable changes to this dotfiles repository will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-01-07
+
+### 🧹 Major Cleanup & UX Improvements
+
+### ✨ Added
+- **Enhanced SSH key generation UX** - colorized output with clear GitHub instructions and direct link to https://github.com/settings/keys
+- **Improved error handling** - better chezmoi template variable management and robust installation
+- **Streamlined repository** - removed 2.9MB of unused files and configurations
+
+### 🔧 Changed  
+- **SSH key setup** - beautiful colored interface with step-by-step GitHub integration
+- **Documentation consolidation** - unified README replaces multiple versions
+- **Repository structure** - removed legacy development artifacts and unused configs
+
+### 🗑️ Removed  
+- **Legacy documentation** - old `docs/` directory (faq, installation, troubleshooting, usage)
+- **Development artifacts** - Dockerfiles, test scripts, verification tools  
+- **Unused configurations** - VS Code, Kitty, duplicate tmux configs
+- **Fabric AI patterns** - complete removal of 300+ unused pattern files (2.7MB saved)
+- **Testing infrastructure** - Docker containers, verification scripts
+
+### 🐛 Fixed
+- **Neovim installation conflicts** - robust handling of broken symlinks and existing configs
+- **chezmoi template errors** - proper variable initialization for SSH key generation
+- **GitHub Actions reliability** - improved YAML syntax and error handling
+- **Package installation issues** - removed problematic packages not available in repos
+
 ## [Unreleased] - 2024-08-07
 
 ### Added
