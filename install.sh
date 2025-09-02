@@ -255,7 +255,7 @@ install_essential_packages() {
                 git 
 		curl 
 		wget
-                # zsh 
+                zsh 
 		# tmux 
                 fzf 
 		ripgrep 
