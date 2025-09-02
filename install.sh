@@ -303,7 +303,7 @@ install_essential_packages() {
 	    # Install nvm
 	    if ! command_exists nvm; then
 		log "Installing nvm..."
-                curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+                curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | PROFILE=/dev/null bash
 	    fi
 
             # Install tldr and linting tools
