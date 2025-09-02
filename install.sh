@@ -214,20 +214,21 @@ install_essential_packages() {
         macos)
             local packages=(
                 git curl wget
-                zsh tmux neovim
+                # zsh 
+		# tmux 
+		neovim
                 fzf ripgrep bat eza fd tldr
                 jq yq tree
                 node npm
                 gh  # GitHub CLI
-                chezmoi
-                starship
+                # chezmoi
+                # starship
                 gnu-sed coreutils
                 # Linting tools for code quality
                 shellcheck
                 yamllint
                 # Cloud CLI tools
-                awscli
-                azure-cli
+                # azure-cli
             )
             
             for pkg in "${packages[@]}"; do
@@ -251,15 +252,26 @@ install_essential_packages() {
         linux|wsl)
             local packages=(
                 build-essential
-                git curl wget
-                zsh tmux neovim
-                fzf ripgrep bat fd-find
-                jq yq tree
-                nodejs npm
-                unzip fontconfig
+                git 
+		curl 
+		wget
+                # zsh 
+		# tmux 
+                fzf 
+		ripgrep 
+		bat 
+		fd-find
+                jq 
+		yq 
+		tree
+                nodejs 
+		npm
+                unzip 
+		python3-pip
+		fontconfig
             )
             
-            log "Installing packages via apt..."
+            log "Installing packages..."
             sudo apt-get install -y "${packages[@]}"
             
             # Install exa/eza (not in standard repos)
@@ -277,10 +289,28 @@ install_essential_packages() {
                     rm -f "$temp_eza_file"
                 fi
             fi
-            
+
+	    # Install Neovim
+	    if ! command_exists nvim; then
+               log "Installing Neovim..."
+	       curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+               sudo rm -rf /opt/nvim
+	       sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+	       rm nvim-linux-x86_64.tar.gz
+	       echo 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' >> ~/.bashrc
+	       echo 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' >> ~/.zshrc
+	    fi
+
+	    # Install nvm
+	    if ! command_exists nvm; then
+		log "Installing nvm..."
+                curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+	    fi
+
             # Install tldr and linting tools
             if ! command_exists tldr; then
                 npm install -g tldr
+		# pip3 install tldr --break-system-packages
             fi
             
             # Install linting tools for code quality
@@ -343,14 +373,14 @@ install_essential_packages() {
             fi
             
             # Install Azure CLI
-            if ! command_exists az; then
-                log "Installing Azure CLI..."
-                local temp_azure_script
-                temp_azure_script=$(mktemp)
-                curl -fsSL "https://aka.ms/InstallAzureCLIDeb" -o "$temp_azure_script" || error "Failed to download Azure CLI installer"
-                sudo bash "$temp_azure_script" || error "Azure CLI installation failed"
-                rm "$temp_azure_script"
-            fi
+            # if ! command_exists az; then
+            #    log "Installing Azure CLI..."
+            #    local temp_azure_script
+            #    temp_azure_script=$(mktemp)
+            #    curl -fsSL "https://aka.ms/InstallAzureCLIDeb" -o "$temp_azure_script" || error "Failed to download Azure CLI installer"
+            #    sudo bash "$temp_azure_script" || error "Azure CLI installation failed"
+            #    rm "$temp_azure_script"
+            # fi
             
             # Install Google Cloud SDK
             if ! command_exists gcloud; then
@@ -452,17 +482,6 @@ install_mise() {
     success "mise installed"
 }
 
-install_claude_cli() {
-    header "Installing Claude CLI"
-    
-    if ! command_exists claude; then
-        log "Installing Claude CLI via npm..."
-        npm install -g @anthropic-ai/claude-cli
-    fi
-    
-    success "Claude CLI installed"
-}
-
 setup_neovim() {
     header "Setting up Neovim with Kickstart"
     
@@ -517,7 +536,8 @@ setup_chezmoi() {
         if [[ "$CI_MODE" == "true" ]]; then
             git_email="ci-test@example.com"
         else
-            git_email=$(secure_read "Enter your email address: " validate_email)
+            # git_email=$(secure_read "Enter your email address: " validate_email)
+            github_username="23528024+jeremyspofford@users.noreply.github.com"
         fi
     fi
     if [[ -z "$git_name" ]]; then
@@ -531,16 +551,19 @@ setup_chezmoi() {
     if [[ "$CI_MODE" == "true" ]]; then
         github_username="ci-test-user"
     else
-        github_username=$(secure_read "Enter your GitHub username: " validate_username)
+        # github_username=$(secure_read "Enter your GitHub username: " validate_username)
+        github_username="23528024+jeremyspofford@users.noreply.github.com"
     fi
     
     # Create chezmoi config with the data
     mkdir -p ~/.config/chezmoi
+    local work_email=""
     cat > ~/.config/chezmoi/chezmoi.toml <<EOF
 [data]
     email = "$git_email"
     name = "$git_name"
     github_username = "$github_username"
+    work_email = "$work_email"
 
 [git]
     autoCommit = false
@@ -567,7 +590,7 @@ configure_git() {
         if [[ "$CI_MODE" == "true" ]]; then
             git_name="CI Test User"
         else
-            read -p "Enter your full name for Git: " git_name
+	    git_name="Jeremy Spofford"
         fi
         git config --global user.name "$git_name"
     fi
@@ -576,7 +599,8 @@ configure_git() {
         if [[ "$CI_MODE" == "true" ]]; then
             git_email="ci-test@example.com"
         else
-            git_email=$(secure_read "Enter your email for Git: " validate_email)
+            # git_email=$(secure_read "Enter your email for Git: " validate_email)
+	    git_email="23528024+jeremyspofford@users.noreply.github.com"
         fi
         git config --global user.email "$git_email"
     fi
@@ -609,6 +633,43 @@ configure_shell() {
     fi
     
     success "Shell configured"
+}
+
+install_ai() {
+    local app="Cursor Agent CLI"
+    header "Installing ${app}"
+    if ! command_exists cursor-agent; then
+        log "Installing ${app}..."
+        curl https://cursor.com/install -fsSL | bash
+        success "${app} installed"
+    fi
+
+    local app="Gemini CLI"
+    header "Installing ${app}"
+    if ! command_exists gemini; then
+        log "Installing ${app}..."
+        npm install -g @google/gemini-cli
+        success "${app} installed"
+    fi
+    
+    local app="Claude CLI"
+    header "Installing ${app}"
+    if ! command_exists claude; then
+        log "Installing ${app}..."
+	npm install -g @anthropic-ai/claude-code
+        success "${app} installed"
+    fi
+
+    local app="Amazon Q CLI"
+    header "Installing ${app}"
+    if ! command_exists q; then
+        log "Installing ${app}..."
+	sudo apt-get install -y libayatana-appindicator3-1 libwebkit2gtk-4.1-0
+        wget https://desktop-release.q.us-east-1.amazonaws.com/latest/amazon-q.deb
+	sudo dpkg -i amazon-q.deb
+        sudo apt-get install -f
+        success "${app} installed"
+    fi
 }
 
 # ============================================================================ #
@@ -703,11 +764,11 @@ main() {
     install_essential_packages "$os_type"
     install_nerd_font "$os_type"
     install_mise
-    install_claude_cli
     setup_neovim
     configure_git
     setup_chezmoi
     configure_shell
+    install_ai
     
     # Show completion message
     show_post_install_message
