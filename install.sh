@@ -297,8 +297,7 @@ install_essential_packages() {
                sudo rm -rf /opt/nvim
 	       sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
 	       rm nvim-linux-x86_64.tar.gz
-	       echo 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' >> ~/.bashrc
-	       echo 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' >> ~/.zshrc
+	       # The nvim path is now managed by chezmoi in .bashrc and .zshrc
 	    fi
 
 	    # Install nvm

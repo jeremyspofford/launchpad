@@ -402,3 +402,5 @@ if [[ -o interactive ]]; then
     # Run chezmoi auto-update check
     chezmoi_auto_update
 fi
+
+export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
