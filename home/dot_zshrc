@@ -1,4 +1,404 @@
-# Source modular configurations
-for config_file in ~/.config/zsh/*.zsh(.N); do
-    source $config_file
-done
+# ============================================================================ #
+# ZSH Configuration - Modern, Fast, Cross-Platform
+# ============================================================================ #
+
+# Enable Powerlevel10k instant prompt (if using p10k instead of starship)
+# if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+#   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# fi
+
+# ============================================================================ #
+# Environment Variables
+# ============================================================================ #
+
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export EDITOR="nvim"
+export VISUAL="nvim"
+export PAGER="less"
+export LESS="-R"
+export TERM="xterm-256color"
+
+# XDG Base Directories
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_STATE_HOME="$HOME/.local/state"
+
+# History
+export HISTFILE="$XDG_STATE_HOME/zsh/history"
+export HISTSIZE=50000
+export SAVEHIST=50000
+
+# FZF Configuration
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+export FZF_DEFAULT_OPTS='
+  --height 40%
+  --layout=reverse
+  --border
+  --inline-info
+  --preview "bat --style=numbers --color=always --line-range :500 {}"
+  --preview-window=right:50%:wrap
+'
+
+# ============================================================================ #
+# Path Configuration
+# ============================================================================ #
+
+# Add local bin directories to PATH
+path=(
+    $HOME/.local/bin
+    $HOME/bin
+    /usr/local/bin
+    $path
+)
+
+# Remove duplicates from PATH
+typeset -U path
+
+# Homebrew on macOS
+if [[ -f /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -f /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+# mise (version manager)
+if [[ -f "$HOME/.local/bin/mise" ]]; then
+    eval "$($HOME/.local/bin/mise activate zsh)"
+elif command -v mise &>/dev/null; then
+    eval "$(mise activate zsh)"
+fi
+
+# ============================================================================ #
+# ZSH Options
+# ============================================================================ #
+
+# History options
+setopt EXTENDED_HISTORY          # Write the history file in the ':start:elapsed;command' format
+setopt HIST_EXPIRE_DUPS_FIRST    # Expire a duplicate event first when trimming history
+setopt HIST_FIND_NO_DUPS         # Do not display a previously found event
+setopt HIST_IGNORE_ALL_DUPS      # Delete an old recorded event if a new event is a duplicate
+setopt HIST_IGNORE_DUPS          # Do not record an event that was just recorded again
+setopt HIST_IGNORE_SPACE         # Do not record an event starting with a space
+setopt HIST_SAVE_NO_DUPS         # Do not write a duplicate event to the history file
+setopt HIST_VERIFY               # Do not execute immediately upon history expansion
+setopt INC_APPEND_HISTORY        # Write to the history file immediately, not when the shell exits
+setopt SHARE_HISTORY             # Share history between all sessions
+
+# Directory options
+setopt AUTO_CD                   # If a command is a directory name, cd to it
+setopt AUTO_PUSHD                # Make cd push the old directory onto the directory stack
+setopt CDABLE_VARS               # Change directory to a path stored in a variable
+setopt PUSHD_IGNORE_DUPS         # Do not store duplicates in the stack
+setopt PUSHD_SILENT              # Do not print the directory stack after pushd or popd
+
+# Completion options
+setopt ALWAYS_TO_END             # Move cursor to the end of a completed word
+setopt AUTO_LIST                 # Automatically list choices on ambiguous completion
+setopt AUTO_MENU                 # Show completion menu on a successive tab press
+setopt AUTO_PARAM_SLASH          # If completed parameter is a directory, add a trailing slash
+setopt COMPLETE_IN_WORD          # Complete from both ends of a word
+setopt MENU_COMPLETE             # Autoselect the first completion entry
+setopt PATH_DIRS                 # Perform path search even on command names with slashes
+
+# Other options
+setopt EXTENDED_GLOB             # Use extended globbing syntax
+setopt INTERACTIVE_COMMENTS      # Allow comments in interactive shell
+setopt NO_BEEP                   # Don't beep on errors
+setopt PROMPT_SUBST              # Enable parameter expansion, command substitution, etc. in prompts
+
+# ============================================================================ #
+# Completions
+# ============================================================================ #
+
+# Initialize completion system
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qNmh+24) ]]; then
+    compinit
+else
+    compinit -C
+fi
+
+# Completion styling
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
+zstyle ':completion:*:warnings' format '%F{red}-- no matches found --%f'
+
+# Speed up completions
+zstyle ':completion:*' accept-exact '*(N)'
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/zcompcache"
+
+# ============================================================================ #
+# Key Bindings
+# ============================================================================ #
+
+# Use emacs key bindings
+bindkey -e
+
+# Better history search
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+bindkey '^P' history-substring-search-up
+bindkey '^N' history-substring-search-down
+
+# Edit command in editor
+autoload -z edit-command-line
+zle -N edit-command-line
+bindkey '^X^E' edit-command-line
+
+# ============================================================================ #
+# Aliases
+# ============================================================================ #
+
+# Core aliases
+alias ll='eza -la --icons --group-directories-first'
+alias la='eza -la --icons --group-directories-first'
+alias ls='eza --icons --group-directories-first'
+alias lt='eza --tree --icons --level=2'
+alias l='eza -l --icons --group-directories-first'
+
+# Navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias ~='cd ~'
+alias -- -='cd -'
+
+# Git aliases
+alias g='git'
+alias ga='git add'
+alias gc='git commit'
+alias gco='git checkout'
+alias gd='git diff'
+alias gl='git log --oneline --graph --decorate'
+alias gp='git push'
+alias gpl='git pull'
+alias gs='git status -sb'
+alias gst='git status'
+
+# GitHub CLI aliases
+alias ghpr='gh pr create'
+alias ghpv='gh pr view'
+alias ghpl='gh pr list'
+alias ghpc='gh pr checkout'
+alias ghr='gh repo view'
+alias ghi='gh issue list'
+alias ghic='gh issue create'
+
+# Editor
+alias v='nvim'
+alias vi='nvim'
+alias vim='nvim'
+alias nv='nvim'
+
+# Chezmoi
+alias cm='chezmoi'
+alias cma='chezmoi apply'
+alias cmd='chezmoi diff'
+alias cme='chezmoi edit'
+alias cms='chezmoi status'
+alias cmu='chezmoi update'
+
+# System
+alias reload='exec $SHELL'
+alias path='echo $PATH | tr ":" "\n"'
+alias ports='netstat -tuln'
+
+# Modern replacements
+alias cat='bat'
+alias find='fd'
+alias grep='rg'
+alias sed='gsed' # GNU sed on macOS
+alias du='dust'
+alias df='duf'
+alias top='btop'
+alias htop='btop'
+
+# Helpful shortcuts
+alias h='history'
+alias j='jobs -l'
+alias which='type -a'
+alias now='date +"%Y-%m-%d %H:%M:%S"'
+alias week='date +%V'
+
+# Directory shortcuts
+alias dl="cd ~/Downloads"
+alias dt="cd ~/Desktop"
+alias dev="cd ~/dev"
+alias work="cd ~/work"
+alias dots="cd ~/.local/share/chezmoi"
+
+# Code quality and linting
+alias lint-sh='find . -name "*.sh" -exec shellcheck {} \;'
+alias lint-yaml='find . -name "*.yml" -o -name "*.yaml" | xargs yamllint'
+alias lint-all='lint-sh && lint-yaml'
+
+# ============================================================================ #
+# Functions
+# ============================================================================ #
+
+# Create directory and cd into it
+mkcd() {
+    mkdir -p "$1" && cd "$1"
+}
+
+# Extract archives
+extract() {
+    if [ -f "$1" ]; then
+        case "$1" in
+            *.tar.bz2) tar xjf "$1" ;;
+            *.tar.gz) tar xzf "$1" ;;
+            *.tar.xz) tar xJf "$1" ;;
+            *.bz2) bunzip2 "$1" ;;
+            *.rar) unrar e "$1" ;;
+            *.gz) gunzip "$1" ;;
+            *.tar) tar xf "$1" ;;
+            *.tbz2) tar xjf "$1" ;;
+            *.tgz) tar xzf "$1" ;;
+            *.zip) unzip "$1" ;;
+            *.Z) uncompress "$1" ;;
+            *.7z) 7z x "$1" ;;
+            *) echo "'$1' cannot be extracted" ;;
+        esac
+    else
+        echo "'$1' is not a valid file"
+    fi
+}
+
+# Quick notes
+note() {
+    local notes_dir="$HOME/notes"
+    mkdir -p "$notes_dir"
+    local note_file="$notes_dir/$(date +%Y-%m-%d).md"
+    
+    if [ $# -eq 0 ]; then
+        $EDITOR "$note_file"
+    else
+        echo "$(date +%H:%M:%S) - $*" >> "$note_file"
+        echo "Note saved to $note_file"
+    fi
+}
+
+# Git quick commit
+gac() {
+    git add -A && git commit -m "${1:-Update}"
+}
+
+# Find and replace in files
+replace() {
+    if [ $# -ne 2 ]; then
+        echo "Usage: replace 'find' 'replace'"
+        return 1
+    fi
+    rg -l "$1" | xargs sed -i "s/$1/$2/g"
+}
+
+# ============================================================================ #
+# Plugins (minimal approach)
+# ============================================================================ #
+
+# Load zsh-autosuggestions if installed
+if [[ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+elif [[ -f /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+fi
+
+# Load zsh-syntax-highlighting if installed
+if [[ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+elif [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
+
+# Load zsh-history-substring-search if installed
+if [[ -f /usr/share/zsh-history-substring-search/zsh-history-substring-search.zsh ]]; then
+    source /usr/share/zsh-history-substring-search/zsh-history-substring-search.zsh
+elif [[ -f /opt/homebrew/share/zsh-history-substring-search/zsh-history-substring-search.zsh ]]; then
+    source /opt/homebrew/share/zsh-history-substring-search/zsh-history-substring-search.zsh
+fi
+
+# ============================================================================ #
+# Interactive Shell Integrations
+# ============================================================================ #
+
+# Initialize zoxide (better cd)
+if command -v zoxide &>/dev/null; then
+    eval "$(zoxide init zsh)"
+    alias cd='z'
+    alias cdi='zi'
+fi
+
+# Initialize starship prompt
+if command -v starship &>/dev/null; then
+    eval "$(starship init zsh)"
+fi
+
+# FZF key bindings and completion
+if command -v fzf &>/dev/null; then
+    [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+    # Or load from system locations
+    [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] && source /usr/share/doc/fzf/examples/key-bindings.zsh
+    [ -f /usr/share/doc/fzf/examples/completion.zsh ] && source /usr/share/doc/fzf/examples/completion.zsh
+    [ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ] && source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
+    [ -f /opt/homebrew/opt/fzf/shell/completion.zsh ] && source /opt/homebrew/opt/fzf/shell/completion.zsh
+fi
+
+# Load local configuration if it exists
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
+# ============================================================================ #
+# Automatic Chezmoi Updates
+# ============================================================================ #
+
+# Smart chezmoi auto-update function
+chezmoi_auto_update() {
+    if command -v chezmoi &>/dev/null; then
+        local update_file="$XDG_CACHE_HOME/chezmoi_last_update"
+        local current_time=$(date +%s)
+        local update_interval=86400  # 24 hours in seconds
+        
+        # Create cache directory if it doesn't exist
+        mkdir -p "$(dirname "$update_file")"
+        
+        # Check if we should update (first run or 24+ hours since last update)
+        if [[ ! -f "$update_file" ]] || [[ $((current_time - $(cat "$update_file" 2>/dev/null || echo 0))) -gt $update_interval ]]; then
+            echo "🔄 Checking for dotfiles updates..."
+            
+            # Run chezmoi update in background to not block terminal startup
+            {
+                if chezmoi update --apply=false 2>/dev/null; then
+                    local changes=$(chezmoi status 2>/dev/null | wc -l)
+                    if [[ $changes -gt 0 ]]; then
+                        echo "📋 Found $changes dotfile changes. Run 'chezmoi diff' to review or 'chezmoi apply' to apply them."
+                    else
+                        echo "✅ Dotfiles are up to date!"
+                    fi
+                else
+                    echo "⚠️  Could not check for dotfile updates (check network connection)"
+                fi
+                echo "$current_time" > "$update_file"
+            } &
+        fi
+    fi
+}
+
+# ============================================================================ #
+# Welcome Message
+# ============================================================================ #
+
+if [[ -o interactive ]]; then
+    echo "Welcome to $(hostname), $(whoami)!"
+    echo "System: $(uname -s) $(uname -r) | Shell: $SHELL"
+    echo "Type 'tldr <command>' for quick command help"
+    
+    # Run chezmoi auto-update check
+    chezmoi_auto_update
+fi
