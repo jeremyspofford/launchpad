@@ -3,541 +3,719 @@
 set -euo pipefail
 
 # ============================================================================ #
-# Constants and Configuration
+# Modern Dotfiles Installer - Clean, Fast, Cross-Platform
 # ============================================================================ #
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly LOG_FILE="${SCRIPT_DIR}/install.log"
-readonly BACKUP_PREFIX="backup_$(date +%Y%m%d_%H%M%S)"
 
-files_to_backup=(
-  .bash_aliases
-  .bash_profile
-  .bashrc
-  .gitconfig
-  .profile
-  .zshrc
-  .zshenv
-  .zsh_aliases
-  .zprofile
-  .vimrc
-)
+# Global CI mode flag
+CI_MODE=false
 
-# Installation components
-declare -A COMPONENTS=(
-  ["system_packages"]="Install system packages via Ansible"
-  ["mise"]="Install mise version manager"
-  ["starship"]="Install starship prompt"
-  ["chezmoi"]="Setup chezmoi dotfile management"
-  ["shell_switch"]="Switch to zsh shell"
-)
+# Security: Set secure umask
+umask 022
+
+# Error handling function
+cleanup() {
+    local exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        error "Installation failed with exit code $exit_code"
+        log "Check the log file for details: $LOG_FILE"
+    fi
+    # Clean up any temporary files
+    if [[ -n "${TEMP_DIR:-}" && -d "$TEMP_DIR" ]]; then
+        rm -rf "$TEMP_DIR"
+    fi
+}
+
+# Set up trap for cleanup
+trap cleanup EXIT
+
+# Security function for verified downloads
+secure_download() {
+    local url="$1"
+    local output="$2"
+    local expected_checksum="${3:-}"
+    
+    log "Downloading from: $url"
+    if curl -fsSL "$url" -o "$output"; then
+        if [[ -n "$expected_checksum" ]]; then
+            local actual_checksum
+            actual_checksum=$(sha256sum "$output" | cut -d' ' -f1)
+            if [[ "$actual_checksum" != "$expected_checksum" ]]; then
+                error "Checksum verification failed for $output"
+                return 1
+            else
+                log "Checksum verification passed"
+            fi
+        else
+            warn "Download completed without checksum verification"
+        fi
+        return 0
+    else
+        error "Failed to download from $url"
+        return 1
+    fi
+}
+
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly MAGENTA='\033[0;35m'
+readonly CYAN='\033[0;36m'
+readonly BOLD='\033[1m'
+readonly NC='\033[0m' # No Color
 
 # ============================================================================ #
 # Utility Functions
 # ============================================================================ #
 
 log() { 
-    local msg="[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] $1"
-    echo -e "\033[1;34m$msg\033[0m" | tee -a "$LOG_FILE"
-}
-
-warn() { 
-    local msg="[$(date '+%Y-%m-%d %H:%M:%S')] [WARN] $1"
-    echo -e "\033[1;33m$msg\033[0m" | tee -a "$LOG_FILE"
-}
-
-error() { 
-    local msg="[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] $1"
-    echo -e "\033[1;31m$msg\033[0m" | tee -a "$LOG_FILE"
+    echo -e "${BLUE}[INFO]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 success() {
-    local msg="[$(date '+%Y-%m-%d %H:%M:%S')] [SUCCESS] $1"
-    echo -e "\033[1;32m$msg\033[0m" | tee -a "$LOG_FILE"
+    echo -e "${GREEN}[✓]${NC} $1" | tee -a "$LOG_FILE"
 }
 
-detect_os() {
-  case "$(uname -s)" in
-    Darwin) echo "macos" ;;
-    Linux) echo "linux" ;;
-    *) echo "unknown" ;;
-  esac
+error() { 
+    echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"
+    exit 1
+}
+
+warn() { 
+    echo -e "${YELLOW}[WARN]${NC} $1" | tee -a "$LOG_FILE"
+}
+
+header() {
+    echo -e "\n${BOLD}${MAGENTA}==>${NC} ${BOLD}$1${NC}\n"
 }
 
 command_exists() {
-  command -v "$1" >/dev/null 2>&1
+    command -v "$1" >/dev/null 2>&1
 }
 
-# Rollback function for cleanup on failure
-rollback() {
-    error "Installation failed. Performing rollback..."
-    
-    # Restore backed up files if they exist
-    if [[ -d "$HOME/$BACKUP_PREFIX" ]]; then
-        log "Restoring backed up files..."
-        cd "$HOME"
-        for file in "${files_to_backup[@]}"; do
-            if [[ -f "$BACKUP_PREFIX/$file" ]]; then
-                mv "$BACKUP_PREFIX/$file" "$file"
-                log "Restored $file"
-            fi
-        done
+# Input validation functions
+validate_email() {
+    local email="$1"
+    if [[ "$email" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
+        return 0
+    else
+        return 1
     fi
-    
-    # Remove partial chezmoi installation
-    if [[ -d ~/.local/share/chezmoi ]]; then
-        warn "Removing partial chezmoi installation"
-        rm -rf ~/.local/share/chezmoi
-    fi
-    
-    error "Rollback completed. Check $LOG_FILE for details."
-    exit 1
 }
 
-# Set up error handling
-trap 'rollback' ERR
+validate_username() {
+    local username="$1"
+    if [[ "$username" =~ ^[A-Za-z0-9]([A-Za-z0-9]|-[A-Za-z0-9])*$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
 
-# Prompt user for component selection
-select_components() {
-    log "Select installation components:"
-    echo
+# Secure input function
+secure_read() {
+    local prompt="$1"
+    local validator="$2"
+    local value
     
-    declare -g -A selected_components
-    
-    # Default to all components enabled
-    for component in "${!COMPONENTS[@]}"; do
-        selected_components["$component"]=true
-    done
-    
-    # Allow user to deselect components
     while true; do
-        echo "Current selection:"
-        for component in "${!COMPONENTS[@]}"; do
-            local status="❌"
-            [[ "${selected_components[$component]}" == "true" ]] && status="✅"
-            echo "  $status $component: ${COMPONENTS[$component]}"
-        done
+        read -p "$prompt" value
+        if [[ -n "$value" ]] && $validator "$value"; then
+            echo "$value"
+            return 0
+        else
+            warn "Invalid input. Please try again."
+        fi
+    done
+}
+
+detect_os() {
+    case "$(uname -s)" in
+        Darwin) echo "macos" ;;
+        Linux)
+            if grep -q Microsoft /proc/version 2>/dev/null; then
+                echo "wsl"
+            else
+                echo "linux"
+            fi
+            ;;
+        *) echo "unknown" ;;
+    esac
+}
+
+detect_distro() {
+    if [[ -f /etc/os-release ]]; then
+        . /etc/os-release
+        echo "${ID:-unknown}"
+    else
+        echo "unknown"
+    fi
+}
+
+detect_arch() {
+    case "$(uname -m)" in
+        x86_64) echo "amd64" ;;
+        aarch64|arm64) echo "arm64" ;;
+        *) echo "unknown" ;;
+    esac
+}
+
+# ============================================================================ #
+# Package Managers
+# ============================================================================ #
+
+install_homebrew() {
+    if ! command_exists brew; then
+        log "Installing Homebrew..."
+        # Download to temporary file for security
+        local temp_homebrew_script
+        temp_homebrew_script=$(mktemp)
+        curl -fsSL "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" -o "$temp_homebrew_script" || error "Failed to download Homebrew installer"
+        # Note: Homebrew script includes its own integrity checks
+        bash "$temp_homebrew_script" || error "Homebrew installation failed"
+        rm "$temp_homebrew_script"
         
-        echo
-        echo "Options:"
-        echo "  a) Install all (default)"
-        echo "  s) Skip a component"
-        echo "  c) Continue with current selection"
-        echo
-        read -p "Choose option [a/s/c]: " choice
-        
-        case "$choice" in
-            a|A|"")
-                for component in "${!COMPONENTS[@]}"; do
-                    selected_components["$component"]=true
-                done
-                break
-                ;;
-            s|S)
-                echo "Available components to skip:"
-                local i=1
-                local component_list=()
-                for component in "${!COMPONENTS[@]}"; do
-                    if [[ "${selected_components[$component]}" == "true" ]]; then
-                        echo "  $i) $component"
-                        component_list+=("$component")
-                        ((i++))
-                    fi
-                done
-                echo
-                read -p "Enter component number to skip: " skip_num
-                if [[ "$skip_num" =~ ^[0-9]+$ ]] && [[ "$skip_num" -le "${#component_list[@]}" ]] && [[ "$skip_num" -gt 0 ]]; then
-                    local skip_component="${component_list[$((skip_num-1))]}"
-                    selected_components["$skip_component"]=false
-                    log "Disabled: $skip_component"
+        # Add Homebrew to PATH for this session
+        if [[ -f /opt/homebrew/bin/brew ]]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [[ -f /usr/local/bin/brew ]]; then
+            eval "$(/usr/local/bin/brew shellenv)"
+        fi
+    fi
+    success "Homebrew is installed"
+}
+
+update_package_manager() {
+    local os_type="$1"
+    
+    case "$os_type" in
+        macos)
+            brew update
+            ;;
+        linux|wsl)
+            sudo apt-get update -qq
+            ;;
+    esac
+}
+
+# ============================================================================ #
+# Core Tools Installation
+# ============================================================================ #
+
+install_essential_packages() {
+    local os_type="$1"
+    header "Installing Essential Packages"
+    
+    case "$os_type" in
+        macos)
+            local packages=(
+                git curl wget
+                zsh tmux neovim
+                fzf ripgrep bat eza fd tldr
+                jq yq tree
+                node npm
+                gh  # GitHub CLI
+                chezmoi
+                starship
+                gnu-sed coreutils
+                # Linting tools for code quality
+                shellcheck
+                yamllint
+                # Cloud CLI tools
+                awscli
+                azure-cli
+            )
+            
+            for pkg in "${packages[@]}"; do
+                if brew list "$pkg" &>/dev/null; then
+                    success "$pkg already installed"
                 else
-                    warn "Invalid selection"
+                    log "Installing $pkg..."
+                    brew install "$pkg"
                 fi
+            done
+            
+            # Install Google Cloud SDK as a cask
+            if ! brew list --cask google-cloud-sdk &>/dev/null; then
+                log "Installing Google Cloud SDK..."
+                brew install --cask google-cloud-sdk
+            else
+                success "Google Cloud SDK already installed"
+            fi
+            ;;
+            
+        linux|wsl)
+            local packages=(
+                build-essential
+                git curl wget
+                zsh tmux neovim
+                fzf ripgrep bat fd-find
+                jq yq tree
+                nodejs npm
+                unzip fontconfig
+            )
+            
+            log "Installing packages via apt..."
+            sudo apt-get install -y "${packages[@]}"
+            
+            # Install exa/eza (not in standard repos)
+            if ! command_exists eza && ! command_exists exa; then
+                log "Installing eza..."
+                local eza_url="https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz"
+                local temp_eza_file
+                temp_eza_file=$(mktemp)
+                
+                if curl -fsSL "$eza_url" -o "$temp_eza_file"; then
+                    sudo tar xzf "$temp_eza_file" -C /usr/local/bin --no-same-owner
+                    rm "$temp_eza_file"
+                else
+                    warn "Failed to download eza, continuing without it..."
+                    rm -f "$temp_eza_file"
+                fi
+            fi
+            
+            # Install tldr and linting tools
+            if ! command_exists tldr; then
+                npm install -g tldr
+            fi
+            
+            # Install linting tools for code quality
+            log "Installing linting tools..."
+            sudo apt-get install -y shellcheck yamllint
+            
+            # Install chezmoi
+            if ! command_exists chezmoi; then
+                log "Installing chezmoi..."
+                local temp_chezmoi_script
+                temp_chezmoi_script=$(mktemp)
+                curl -fsSL "https://get.chezmoi.io" -o "$temp_chezmoi_script" || error "Failed to download chezmoi installer"
+                sh "$temp_chezmoi_script" -b ~/.local/bin || error "Chezmoi installation failed"
+                rm "$temp_chezmoi_script"
+            fi
+            
+            # Install starship
+            if ! command_exists starship; then
+                log "Installing starship..."
+                local temp_starship_script
+                temp_starship_script=$(mktemp)
+                curl -fsSL "https://starship.rs/install.sh" -o "$temp_starship_script" || error "Failed to download starship installer"
+                sh "$temp_starship_script" --yes || error "Starship installation failed"
+                rm "$temp_starship_script"
+            fi
+            
+            # Install GitHub CLI
+            if ! command_exists gh; then
+                log "Installing GitHub CLI..."
+                local temp_gh_key
+                temp_gh_key=$(mktemp)
+                
+                if curl -fsSL "https://cli.github.com/packages/githubcli-archive-keyring.gpg" -o "$temp_gh_key"; then
+                    sudo dd if="$temp_gh_key" of="/usr/share/keyrings/githubcli-archive-keyring.gpg" bs=1M
+                    sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+                    if sudo apt update; then
+                        sudo apt install gh -y || warn "GitHub CLI installation failed, continuing..."
+                    else
+                        warn "Failed to update package list for GitHub CLI, skipping installation"
+                    fi
+                    rm "$temp_gh_key"
+                else
+                    warn "Failed to download GitHub CLI GPG key, skipping installation"
+                    rm -f "$temp_gh_key"
+                fi
+            fi
+            
+            # Install AWS CLI v2
+            if ! command_exists aws; then
+                log "Installing AWS CLI v2..."
+                local temp_dir
+                temp_dir=$(mktemp -d)
+                cd "$temp_dir"
+                curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" || error "Failed to download AWS CLI"
+                unzip awscliv2.zip
+                sudo ./aws/install || error "AWS CLI installation failed"
+                cd - >/dev/null
+                rm -rf "$temp_dir"
+            fi
+            
+            # Install Azure CLI
+            if ! command_exists az; then
+                log "Installing Azure CLI..."
+                local temp_azure_script
+                temp_azure_script=$(mktemp)
+                curl -fsSL "https://aka.ms/InstallAzureCLIDeb" -o "$temp_azure_script" || error "Failed to download Azure CLI installer"
+                sudo bash "$temp_azure_script" || error "Azure CLI installation failed"
+                rm "$temp_azure_script"
+            fi
+            
+            # Install Google Cloud SDK
+            if ! command_exists gcloud; then
+                log "Installing Google Cloud SDK..."
+                # Use modern GPG key management with proper error handling
+                if curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg; then
+                    sudo chmod 644 /usr/share/keyrings/cloud.google.gpg
+                    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list > /dev/null
+                    if sudo apt-get update; then
+                        sudo apt-get install google-cloud-cli -y || warn "Google Cloud CLI installation failed, continuing..."
+                    else
+                        warn "Failed to update package list for Google Cloud SDK, skipping installation"
+                    fi
+                else
+                    warn "Failed to add Google Cloud GPG key, skipping Google Cloud SDK installation"
+                fi
+            fi
+            ;;
+    esac
+    
+    success "Essential packages installed"
+}
+
+# ============================================================================ #
+# Nerd Font Installation
+# ============================================================================ #
+
+install_nerd_font() {
+    header "Installing JetBrainsMono Nerd Font"
+    
+    local font_name="JetBrainsMono"
+    local font_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${font_name}.tar.xz"
+    local os_type="$1"
+    
+    case "$os_type" in
+        macos)
+            local font_dir="$HOME/Library/Fonts"
+            ;;
+        linux|wsl)
+            local font_dir="$HOME/.local/share/fonts"
+            mkdir -p "$font_dir"
+            ;;
+    esac
+    
+    # Check if font already installed
+    if ls "$font_dir"/*JetBrains* >/dev/null 2>&1; then
+        success "JetBrainsMono Nerd Font already installed"
+        return 0
+    fi
+    
+    log "Downloading JetBrainsMono Nerd Font..."
+    local temp_dir
+    temp_dir=$(mktemp -d)
+    local temp_font_file
+    temp_font_file=$(mktemp --suffix=.tar.xz)
+    
+    if curl -fsSL "$font_url" -o "$temp_font_file"; then
+        if tar xJf "$temp_font_file" -C "$temp_dir"; then
+            log "Font archive extracted successfully"
+        else
+            error "Failed to extract font archive"
+            return 1
+        fi
+        rm "$temp_font_file"
+    else
+        error "Failed to download font"
+        return 1
+    fi
+    
+    log "Installing font files..."
+    find "$temp_dir" -name "*.ttf" -exec cp {} "$font_dir/" \;
+    
+    # Update font cache on Linux
+    if [[ "$os_type" == "linux" ]] || [[ "$os_type" == "wsl" ]]; then
+        fc-cache -fv >/dev/null 2>&1
+    fi
+    
+    rm -rf "$temp_dir"
+    success "JetBrainsMono Nerd Font installed"
+}
+
+# ============================================================================ #
+# Development Tools
+# ============================================================================ #
+
+install_mise() {
+    header "Installing mise (version manager)"
+    
+    if ! command_exists mise; then
+        log "Installing mise..."
+        local temp_mise_script
+        temp_mise_script=$(mktemp)
+        curl -fsSL "https://mise.run" -o "$temp_mise_script" || error "Failed to download mise installer"
+        sh "$temp_mise_script" || error "mise installation failed"
+        rm "$temp_mise_script"
+        export PATH="$HOME/.local/bin:$PATH"
+    fi
+    
+    success "mise installed"
+}
+
+install_claude_cli() {
+    header "Installing Claude CLI"
+    
+    if ! command_exists claude; then
+        log "Installing Claude CLI via npm..."
+        npm install -g @anthropic-ai/claude-cli
+    fi
+    
+    success "Claude CLI installed"
+}
+
+setup_neovim() {
+    header "Setting up Neovim with Kickstart"
+    
+    local nvim_config_dir="$HOME/.config/nvim"
+    
+    # Create .config directory if it doesn't exist
+    mkdir -p "$(dirname "$nvim_config_dir")"
+    
+    # Handle existing config more robustly - check for ANY existing path
+    if [[ -L "$nvim_config_dir" ]]; then
+        # It's a symlink (broken or not)
+        warn "Removing existing symlink at $nvim_config_dir"
+        rm "$nvim_config_dir"
+    elif [[ -d "$nvim_config_dir" ]]; then
+        # It's a directory
+        warn "Backing up existing Neovim config..."
+        mv "$nvim_config_dir" "${nvim_config_dir}.backup.$(date +%Y%m%d_%H%M%S)"
+    elif [[ -f "$nvim_config_dir" ]]; then
+        # It's a regular file
+        warn "Removing existing file at $nvim_config_dir"
+        rm "$nvim_config_dir"
+    elif [[ -e "$nvim_config_dir" ]]; then
+        # Some other type of file system object
+        warn "Removing existing object at $nvim_config_dir"
+        rm -rf "$nvim_config_dir"
+    fi
+    
+    # Clone kickstart.nvim (directory should be clear now)
+    log "Installing kickstart.nvim..."
+    if git clone https://github.com/nvim-lua/kickstart.nvim.git "$nvim_config_dir"; then
+        success "kickstart.nvim installed successfully"
+    else
+        error "Failed to clone kickstart.nvim"
+        return 1
+    fi
+    
+    success "Neovim configured with kickstart.nvim"
+}
+
+# ============================================================================ #
+# Dotfiles Setup
+# ============================================================================ #
+
+setup_chezmoi() {
+    header "Setting up dotfiles with chezmoi"
+    
+    # Get user data for chezmoi templates
+    local git_email=$(git config --global user.email)
+    local git_name=$(git config --global user.name)
+    
+    if [[ -z "$git_email" ]]; then
+        if [[ "$CI_MODE" == "true" ]]; then
+            git_email="ci-test@example.com"
+        else
+            git_email=$(secure_read "Enter your email address: " validate_email)
+        fi
+    fi
+    if [[ -z "$git_name" ]]; then
+        if [[ "$CI_MODE" == "true" ]]; then
+            git_name="CI Test User"
+        else
+            read -p "Enter your full name: " git_name
+        fi
+    fi
+    
+    if [[ "$CI_MODE" == "true" ]]; then
+        github_username="ci-test-user"
+    else
+        github_username=$(secure_read "Enter your GitHub username: " validate_username)
+    fi
+    
+    # Create chezmoi config with the data
+    mkdir -p ~/.config/chezmoi
+    cat > ~/.config/chezmoi/chezmoi.toml <<EOF
+[data]
+    email = "$git_email"
+    name = "$git_name"
+    github_username = "$github_username"
+
+[git]
+    autoCommit = false
+    autoPush = false
+EOF
+    
+    # Initialize chezmoi with this repository
+    if [[ ! -d "$HOME/.local/share/chezmoi" ]]; then
+        log "Initializing chezmoi..."
+        chezmoi init --apply "$SCRIPT_DIR"
+    else
+        log "Updating chezmoi configuration..."
+        chezmoi apply
+    fi
+    
+    success "Dotfiles configured with chezmoi"
+}
+
+configure_git() {
+    header "Configuring Git"
+    
+    # Prompt for user info if not set
+    if [[ -z "$(git config --global user.name)" ]]; then
+        if [[ "$CI_MODE" == "true" ]]; then
+            git_name="CI Test User"
+        else
+            read -p "Enter your full name for Git: " git_name
+        fi
+        git config --global user.name "$git_name"
+    fi
+    
+    if [[ -z "$(git config --global user.email)" ]]; then
+        if [[ "$CI_MODE" == "true" ]]; then
+            git_email="ci-test@example.com"
+        else
+            git_email=$(secure_read "Enter your email for Git: " validate_email)
+        fi
+        git config --global user.email "$git_email"
+    fi
+    
+    # Set up conditional includes for different environments
+    cat > "$HOME/.gitconfig.work" <<EOF
+[user]
+    email = work@example.com  # Update this
+EOF
+    
+    cat > "$HOME/.gitconfig.personal" <<EOF
+[user]
+    email = $(git config --global user.email)
+EOF
+    
+    # Add conditional includes to main gitconfig
+    git config --global includeIf."gitdir:~/work/".path ~/.gitconfig.work
+    git config --global includeIf."gitdir:~/personal/".path ~/.gitconfig.personal
+    
+    success "Git configured with conditional includes"
+}
+
+configure_shell() {
+    header "Configuring Shell"
+    
+    # Change default shell to zsh if not already
+    if [[ "$SHELL" != *"zsh"* ]]; then
+        log "Changing default shell to zsh..."
+        chsh -s "$(which zsh)"
+    fi
+    
+    success "Shell configured"
+}
+
+# ============================================================================ #
+# Post-Installation
+# ============================================================================ #
+
+show_post_install_message() {
+    echo
+    echo -e "${BOLD}${GREEN}✨ Installation Complete!${NC}"
+    echo
+    echo -e "${CYAN}Next steps:${NC}"
+    echo "  1. Restart your terminal or run: exec zsh"
+    echo "  2. Configure Claude CLI: claude login"
+    echo "  3. Configure GitHub CLI: gh auth login"
+    echo "  4. Set up Git work email in ~/.gitconfig.work"
+    echo "  5. Open Neovim and let plugins install: nvim"
+    echo
+    echo -e "${CYAN}Dotfiles Management:${NC}"
+    echo "  • Edit configs: chezmoi edit ~/.zshrc"
+    echo "  • Apply changes: chezmoi apply"
+    echo "  • Update from repo: chezmoi update"
+    echo "  • Add new file: chezmoi add ~/.newconfig"
+    echo
+    echo -e "${CYAN}Version Management:${NC}"
+    echo "  • Install Node version: mise use node@20"
+    echo "  • Install Python: mise use python@3.11"
+    echo
+}
+
+# ============================================================================ #
+# Main Installation Flow
+# ============================================================================ #
+
+main() {
+    # Parse command line arguments for CI/automation
+    local minimal_mode=false
+    local no_backup=false
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --yes|--ci)
+                CI_MODE=true
+                shift
                 ;;
-            c|C)
-                break
+            --minimal)
+                minimal_mode=true
+                shift
+                ;;
+            --no-backup)
+                no_backup=true
+                shift
                 ;;
             *)
-                warn "Invalid option"
+                shift
                 ;;
         esac
     done
-}
-
-# ============================================================================ #
-# Package Management Functions
-# ============================================================================ #
-
-install_ansible_macos() {
-  if ! command_exists brew; then
-    error "❌ Homebrew not found. Please install it from https://brew.sh"
-    exit 1
-  fi
-
-  if ! command_exists ansible; then
-    log "Installing Ansible via Homebrew..."
-    brew install ansible || {
-        error "Failed to install Ansible via Homebrew"
-        return 1
-    }
-  fi
-  success "Ansible is available"
-}
-
-install_ansible_ubuntu() {
-  if ! command_exists ansible; then
-    log "Installing Ansible via apt..."
-    sudo apt update && sudo apt upgrade -y || {
-        error "Failed to update package lists"
-        return 1
-    }
-    sudo apt install -y software-properties-common || {
-        error "Failed to install software-properties-common"
-        return 1
-    }
-    sudo apt-add-repository --yes --update ppa:ansible/ansible || {
-        error "Failed to add Ansible PPA"
-        return 1
-    }
-    sudo apt install -y ansible || {
-        error "Failed to install Ansible"
-        return 1
-    }
-  fi
-  success "Ansible is available"
-}
-
-detect_os_and_install_ansible() {
-  local os_type
-  os_type=$(detect_os)
-  
-  case "$os_type" in
-    macos)
-      log "Detected macOS"
-      install_ansible_macos
-      ;;
-    linux)
-      log "Detected Linux"
-      install_ansible_ubuntu
-      ;;
-    *)
-      error "Unsupported OS: $(uname -s)"
-      exit 1
-      ;;
-  esac
-}
-
-# ============================================================================ #
-# Core Setup Functions
-# ============================================================================ #
-
-backup_dotfiles() {
-  if [[ "$backup" = true ]]; then
-    log "Attempting to backup $HOME dotfiles"
-    cd "$HOME"
-
-    local backup_folder="$BACKUP_PREFIX"
-
-    for file in "${files_to_backup[@]}"; do
-      if [ -f "$file" ] && [ ! -L "$file" ]; then
-        mkdir -p "$backup_folder"
-        log "Backing up $file"
-        cp "$file" "$backup_folder/$file" || {
-            error "Failed to backup $file"
-            return 1
-        }
-      else
-        warn "Skipping $file because it's a symlink or doesn't exist"
-      fi
-    done
-
-    if [ -d "$backup_folder" ]; then
-      success "Dotfiles backup complete in $backup_folder"
-    else
-      log "No files needed backup"
+    
+    # Skip UI in CI mode
+    if [[ "$CI_MODE" == "false" ]]; then
+        clear
+        echo -e "${BOLD}${CYAN}"
+        echo "╔══════════════════════════════════════════╗"
+        echo "║     Modern Dotfiles Installer v2.0       ║"
+        echo "║         Fast • Simple • Reliable         ║"
+        echo "╚══════════════════════════════════════════╝"
+        echo -e "${NC}"
     fi
-  fi
-}
-
-setup_chezmoi() {
-  log "Setting up chezmoi dotfiles manager"
-  cd "$SCRIPT_DIR"
-  
-  # Initialize chezmoi with current repository
-  if ! command_exists chezmoi; then
-    error "chezmoi not found. Run system package installation first."
-    return 1
-  fi
-  
-  # Create necessary directories
-  mkdir -p ~/.local/share/zsh
-  mkdir -p ~/.local/share/less
-  mkdir -p ~/.cache
-  
-  # Initialize chezmoi with this repository
-  if [[ ! -d ~/.local/share/chezmoi ]]; then
-    log "Initializing chezmoi with dotfiles repository"
-    chezmoi init --apply "$(pwd)" || {
-        error "Failed to initialize chezmoi"
-        return 1
-    }
-  else
-    log "Updating existing chezmoi configuration"
-    chezmoi apply || {
-        error "Failed to apply chezmoi configuration"
-        return 1
-    }
-  fi
-  
-  success "chezmoi setup complete"
-}
-
-run_ansible_and_continue() {
-  if [[ "${selected_components[system_packages]}" != "true" ]]; then
-    log "Skipping system package installation"
-    return 0
-  fi
-
-  if command_exists ansible; then
-    log "Running Ansible playbook..."
-    if ansible-playbook -i "$SCRIPT_DIR/ansible/inventory.ini" "$SCRIPT_DIR/ansible/playbook.yml" --ask-become-pass; then
-      success "Ansible playbook completed successfully"
-    else
-      error "Ansible playbook encountered issues"
-      return 1
+    
+    # Initialize log
+    : > "$LOG_FILE"
+    
+    # Detect system
+    local os_type=$(detect_os)
+    local distro=$(detect_distro)
+    local arch=$(detect_arch)
+    
+    log "System: $os_type | Distro: $distro | Arch: $arch"
+    
+    # Ensure ~/.local/bin is in PATH
+    export PATH="$HOME/.local/bin:$PATH"
+    
+    # Install Homebrew on macOS
+    if [[ "$os_type" == "macos" ]]; then
+        install_homebrew
     fi
-  else
-    warn "Ansible not found, skipping playbook execution"
-  fi
-}
-
-install_mise() {
-  if [[ "${selected_components[mise]}" != "true" ]]; then
-    log "Skipping mise installation"
-    return 0
-  fi
-
-  if ! command_exists mise; then
-    log "Installing mise..."
-    curl -fsSL https://mise.run | sh || {
-        error "Failed to install mise"
-        return 1
-    }
-  else
-    log "✓ mise already installed"
-  fi
-  success "mise installation complete"
-}
-
-install_starship() {
-  if [[ "${selected_components[starship]}" != "true" ]]; then
-    log "Skipping starship installation"
-    return 0
-  fi
-
-  if ! command_exists starship; then
-    log "Installing starship..."
-    curl -sS https://starship.rs/install.sh | sh -s -- --yes || {
-        error "Failed to install starship"
-        return 1
-    }
-  else
-    log "✓ starship already installed"
-  fi
-  success "starship installation complete"
-}
-
-finalize() {
-  log "Finalizing setup..."
-  
-  local os_type
-  os_type=$(detect_os)
-  
-  # Only run apt commands on Linux
-  if [[ "$os_type" == "linux" ]] && command_exists apt; then
-    sudo apt autoremove -y || warn "Failed to autoremove packages"
-  fi
-
-  # Prompt user about backup folder
-  if ls "$HOME"/${BACKUP_PREFIX} 1> /dev/null 2>&1; then
-    echo -n "Backup folder found. Would you like to remove it? [y/N]: "
-    read -r remove_backup
-    if [[ "$remove_backup" =~ ^[Yy]$ ]]; then
-      rm -rf "$HOME"/${BACKUP_PREFIX}
-      log "Backup folder removed"
-    fi
-  fi
-  
-  # Switch to zsh if available and selected
-  if [[ "${selected_components[shell_switch]}" == "true" ]] && command_exists zsh; then
-    log "Switching to zsh shell"
-    if [[ "$SHELL" != "$(which zsh)" ]]; then
-        chsh -s "$(which zsh)" || warn "Failed to change shell to zsh"
-    fi
-    success "Shell configuration complete"
-  else
-    log "Staying in current shell"
-  fi
-}
-
-# ============================================================================ #
-# Main Script Logic
-# ============================================================================ #
-
-check_dependencies() {
-  local missing_deps=()
-  
-  if ! command_exists git; then
-    missing_deps+=("git")
-  fi
-  
-  if ! command_exists curl; then
-    missing_deps+=("curl")
-  fi
-  
-  if [[ ${#missing_deps[@]} -gt 0 ]]; then
-    error "Missing required dependencies: ${missing_deps[*]}"
-    error "Please install them first, or run the system package installation to install dependencies automatically"
-    exit 1
-  fi
-  success "All dependencies are available"
-}
-
-show_usage() {
-    cat << EOF
-Usage: $0 [OPTIONS]
-
-Install and configure a comprehensive dotfiles environment using chezmoi.
-
-OPTIONS:
-    -h, --help          Show this help message
-    -n, --no-backup     Skip backup of existing dotfiles
-    -q, --quiet         Suppress non-essential output
-    -y, --yes           Answer yes to all prompts (non-interactive mode)
-    --minimal           Install only essential components
-    --no-ansible        Skip system package installation
-    --log-file FILE     Use custom log file location
-
-EXAMPLES:
-    $0                  # Interactive installation with all components
-    $0 --no-backup      # Skip backing up existing dotfiles
-    $0 --minimal        # Install only essential components
-    $0 -y --no-ansible  # Non-interactive, skip system packages
-
-For more information, see: docs/installation.md
-EOF
-}
-
-main() {
-  log "🚀 Starting dotfiles installation with chezmoi..."
-  
-  # Initialize log file
-  : > "$LOG_FILE"
-  
-  # Ensure ~/.local/bin is in PATH for this session (tools get installed there)
-  export PATH="$HOME/.local/bin:$PATH"
-  
-  # Parse command line options
-  local backup=true
-  local quiet=false
-  local yes_to_all=false
-  local minimal=false
-  local skip_ansible=false
-  
-  while [[ $# -gt 0 ]]; do
-    case $1 in
-      -h|--help)
-        show_usage
-        exit 0
-        ;;
-      -n|--no-backup)
-        backup=false
-        shift
-        ;;
-      -q|--quiet)
-        quiet=true
-        shift
-        ;;
-      -y|--yes)
-        yes_to_all=true
-        shift
-        ;;
-      --minimal)
-        minimal=true
-        shift
-        ;;
-      --no-ansible)
-        skip_ansible=true
-        shift
-        ;;
-      --log-file)
-        LOG_FILE="$2"
-        shift 2
-        ;;
-      *)
-        error "Unknown option: $1"
-        show_usage
-        exit 1
-        ;;
-    esac
-  done
-
-  # Clean up any existing backup folders before starting
-  rm -rf "$HOME"/backup_* || true
-
-  # Execute setup steps
-  check_dependencies
-  
-  # Set up component selection
-  if [[ "$minimal" == "true" ]]; then
-    selected_components["system_packages"]=false
-    selected_components["mise"]=false
-    selected_components["starship"]=false
-    selected_components["chezmoi"]=true
-    selected_components["shell_switch"]=false
-  elif [[ "$skip_ansible" == "true" ]]; then
-    selected_components["system_packages"]=false
-  fi
-  
-  # Interactive component selection unless in yes-to-all mode
-  if [[ "$yes_to_all" != "true" ]]; then
-    select_components
-  fi
-  
-  # Execute installation steps
-  backup_dotfiles
-  
-  if [[ "${selected_components[system_packages]}" == "true" ]]; then
-    detect_os_and_install_ansible
-    run_ansible_and_continue
-  fi
-  
-  if [[ "${selected_components[mise]}" == "true" ]]; then
+    
+    # Update package manager
+    update_package_manager "$os_type"
+    
+    # Install everything
+    install_essential_packages "$os_type"
+    install_nerd_font "$os_type"
     install_mise
-  fi
-  
-  if [[ "${selected_components[starship]}" == "true" ]]; then
-    install_starship
-  fi
-  
-  if [[ "${selected_components[chezmoi]}" == "true" ]]; then
+    install_claude_cli
+    setup_neovim
+    configure_git
     setup_chezmoi
-  fi
-  
-  finalize
-
-  success "✅ Full bootstrap complete with chezmoi!"
-  log "📝 Installation log saved to: $LOG_FILE"
-  log "🔧 Use 'chezmoi apply' to apply future changes"
-  log "📝 Use 'chezmoi edit <file>' to edit dotfiles"
-  log "🔄 Use 'chezmoi update' to pull and apply remote changes"
-  
-  if [[ "${selected_components[shell_switch]}" == "true" ]] && command_exists zsh; then
-    log "🐚 Restart your terminal or run 'exec zsh' to use the new shell"
-  fi
+    configure_shell
+    
+    # Show completion message
+    show_post_install_message
+    
+    success "Installation log saved to: $LOG_FILE"
 }
 
-# Only run main if script is executed directly (not sourced)
+# Run main if not sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi
