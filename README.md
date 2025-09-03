@@ -20,6 +20,9 @@ A streamlined, cross-platform dotfiles setup that gets you productive immediatel
 
 ```bash
 # Clone and install everything
+sudo apt-get update -y
+sudo apt-get install -y gh
+gh auth login
 git clone https://github.com/yourusername/dotfiles.git ~/dotfiles
 ~/dotfiles/install-new.sh
 ```
