@@ -2,6 +2,7 @@
     email = "{{ promptStringOnce . "email" "Email address" }}"
     name = "{{ promptStringOnce . "name" "Full name" }}"
     github_username = "{{ promptStringOnce . "github_username" "GitHub username" }}"
+    work_email = "{{ promptStringOnce . "work_email" "Your work email (leave blank if none)" "" }}"
 
 [git]
     autoCommit = false
