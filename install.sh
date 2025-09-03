@@ -572,10 +572,10 @@ EOF
     # Initialize chezmoi with this repository
     if [[ ! -d "$HOME/.local/share/chezmoi" ]]; then
         log "Initializing chezmoi..."
-        chezmoi init --apply "$SCRIPT_DIR"
+        chezmoi init --apply --force "$SCRIPT_DIR"
     else
         log "Updating chezmoi configuration..."
-        chezmoi apply
+        chezmoi apply --force
     fi
     
     success "Dotfiles configured with chezmoi"
