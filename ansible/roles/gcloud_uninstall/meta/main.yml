@@ -1,0 +1,18 @@
+#SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: Jeremy Spofford
+  description: Uninstall Google Cloud CLI from various operating systems
+  company: Personal
+
+  license: MIT
+
+  min_ansible_version: 2.9
+
+  galaxy_tags:
+    - gcloud
+    - google-cloud
+    - cloud
+    - cli
+    - uninstall
+
+dependencies: []

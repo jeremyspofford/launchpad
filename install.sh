@@ -215,8 +215,8 @@ install_essential_packages() {
             local packages=(
                 git curl wget
                 # zsh 
-		# tmux 
-		neovim
+		        # tmux 
+		        neovim
                 fzf ripgrep bat eza fd tldr
                 jq yq tree
                 node npm
@@ -253,22 +253,22 @@ install_essential_packages() {
             local packages=(
                 build-essential
                 git 
-		curl 
-		wget
+                curl 
+                wget
                 zsh 
-		# tmux 
+                # tmux 
                 fzf 
-		ripgrep 
-		bat 
-		fd-find
+                ripgrep 
+                bat 
+                fd-find
                 jq 
-		yq 
-		tree
+                yq 
+                tree
                 nodejs 
-		npm
+                npm
                 unzip 
-		python3-pip
-		fontconfig
+                python3-pip
+                fontconfig
             )
             
             log "Installing packages..."
@@ -655,7 +655,7 @@ install_ai() {
     header "Installing ${app}"
     if ! command_exists claude; then
         log "Installing ${app}..."
-	npm install -g @anthropic-ai/claude-code
+	    npm install -g @anthropic-ai/claude-code
         success "${app} installed"
     fi
 
@@ -663,9 +663,9 @@ install_ai() {
     header "Installing ${app}"
     if ! command_exists q; then
         log "Installing ${app}..."
-	sudo apt-get install -y libayatana-appindicator3-1 libwebkit2gtk-4.1-0
+	    sudo apt-get install -y libayatana-appindicator3-1 libwebkit2gtk-4.1-0
         wget https://desktop-release.q.us-east-1.amazonaws.com/latest/amazon-q.deb
-	sudo dpkg -i amazon-q.deb
+	    sudo dpkg -i amazon-q.deb
         sudo apt-get install -f
         success "${app} installed"
     fi

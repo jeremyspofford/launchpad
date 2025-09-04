@@ -2,7 +2,9 @@
   hosts: localhost
   connection: local
   gather_facts: true
-  become: yes
 
   roles:
-    - bootstrap
+    # - bootstrap
+    - aws_install
+    - gcloud_install
+    # - gcloud_uninstall
