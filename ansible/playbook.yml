@@ -4,7 +4,22 @@
   gather_facts: true
 
   roles:
+    - aws
+    - browsers
+    - dependencies
+    - cli
+    - logitech-options
+
     # - bootstrap
-    - aws_install
-    - gcloud_install
-    # - gcloud_uninstall
+    # - gcloud
+    # - neovim_install
+    # - node_install
+    # - python_install
+    # - zsh_install
+    # - mise_install
+    # - oh_my_zsh_install
+    # - starship_install
+    # - tmux_install
+    # - tmuxinator_install
+    # - tmuxinator_install
+    # - neovim_install

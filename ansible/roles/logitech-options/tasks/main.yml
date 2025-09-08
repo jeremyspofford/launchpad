@@ -1,0 +1,60 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for logitech-options
+
+- name: Check if logi-options+ is already installed in Applications
+  ansible.builtin.stat:
+    path: /Applications/LogiOptionsPlus.app
+  when: ansible_os_family == "Darwin"
+  register: logi_app_check
+
+- name: Install logi-options+ cask
+  community.general.homebrew_cask:
+    name: logi-options+
+    state: present
+  when: ansible_os_family == "Darwin"
+  become: false
+  register: logi_install_result
+
+- name: Get logi-options+ installed versions
+  ansible.builtin.command:
+    cmd: ls /opt/homebrew/Caskroom/logi-options+/
+  when: 
+    - ansible_os_family == "Darwin"
+    - (logi_install_result.changed or not logi_app_check.stat.exists)
+  register: logi_versions_output
+  become: false
+  changed_when: false
+  ignore_errors: true
+
+- name: Set logi-versions fact when directory exists
+  ansible.builtin.set_fact:
+    logi_versions: "{{ logi_versions_output.stdout_lines }}"
+  when: 
+    - ansible_os_family == "Darwin"
+    - logi_versions_output is defined
+    - logi_versions_output.rc is defined
+    - logi_versions_output.rc == 0
+    - logi_versions_output.stdout_lines is defined
+
+- name: Run logi-options+ installer programmatically
+  ansible.builtin.shell: |
+    /opt/homebrew/Caskroom/logi-options+/{{ item }}/logioptionsplus_installer.app/Contents/MacOS/logioptionsplus_installer --silent --accept-license
+  when: 
+    - ansible_os_family == "Darwin"
+    - (logi_install_result.changed or not logi_app_check.stat.exists)
+    - logi_versions is defined
+    - logi_versions | length > 0
+  loop: "{{ logi_versions }}"
+  become: false
+  ignore_errors: true
+  async: 300
+  poll: 0
+
+- name: Wait for installer to complete
+  ansible.builtin.pause:
+    seconds: 30
+  when: 
+    - ansible_os_family == "Darwin"
+    - (logi_install_result.changed or not logi_app_check.stat.exists)
+    - logi_versions is defined

@@ -1,0 +1,24 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for dependencies
+
+- name: Install UV (Python Version Manager)
+  community.general.homebrew:
+    name: uv
+    state: present
+  when: ansible_os_family == "Darwin"
+  become: false
+  
+- name: Install nodejs
+  community.general.homebrew:
+    name: npm
+    state: present
+  when: ansible_os_family == "Darwin"
+  become: false
+
+- name: Install npm 
+  community.general.homebrew:
+    name: npm
+    state: present
+  when: ansible_os_family == "Darwin"
+  become: false
