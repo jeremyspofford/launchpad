@@ -16,5 +16,8 @@ macos_formulae_packages:
   - node
   - eza
   - gsed
+  - bash  # Modern Bash (5.x) to replace macOS default 3.2.57
   - zsh-history-substring-search
   - zsh-completions
+  - stow
+  - zsh-vi-mode

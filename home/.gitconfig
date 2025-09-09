@@ -1,0 +1,141 @@
+[user]
+    name = "Jeremy Spofford"
+    email = ""
+
+[core]
+    editor = nvim
+    excludesfile = ~/.gitignore
+    autocrlf = input
+    pager = delta
+
+[init]
+    defaultBranch = main
+
+[push]
+    default = current
+    autoSetupRemote = true
+
+# Force SSH for Git operations (always use SSH, never HTTPS)
+[url "git@github.com:"]
+    insteadOf = https://github.com/
+
+[url "git@gitlab.com:"]
+    insteadOf = https://gitlab.com/
+
+[pull]
+    rebase = true
+
+[fetch]
+    prune = true
+
+[merge]
+    conflictstyle = diff3
+
+[diff]
+    colorMoved = default
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true
+    light = false
+    side-by-side = true
+    line-numbers = true
+
+[alias]
+    # Basic shortcuts
+    st = status -sb
+    co = checkout
+    ci = commit
+    br = branch
+    df = diff
+    lg = log --oneline --graph --decorate
+    
+    # Advanced shortcuts
+    unstage = reset HEAD --
+    last = log -1 HEAD
+    amend = commit --amend --no-edit
+    undo = reset --soft HEAD~1
+    
+    # Branch management
+    branches = branch -a
+    remotes = remote -v
+    cleanup = !git branch --merged | grep -v '\\*\\|main\\|master\\|develop' | xargs -n 1 git branch -d
+    
+    # Stash shortcuts
+    stashes = stash list
+    save = stash save
+    pop = stash pop
+    
+    # Log variations
+    hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
+    today = log --since=midnight --oneline
+    recent = log --oneline -10
+    
+    # Work tracking
+    standup = log --since=yesterday --author='' --oneline
+    
+    # Sync shortcuts
+    sync = !git fetch --all && git pull
+    pushf = push --force-with-lease
+
+# Conditional includes for different directories and clients
+# Personal projects (GitHub personal repos, open source contributions)
+[includeIf "gitdir:~/personal/"]
+    path = ~/.gitconfig.personal
+
+[includeIf "gitdir:~/opensource/"]
+    path = ~/.gitconfig.personal
+
+[includeIf "gitdir:~/github/"]
+    path = ~/.gitconfig.personal
+
+# Work repositories (company)
+[includeIf "gitdir:~/work/company/"]
+    path = ~/.gitconfig.company
+
+[includeIf "gitdir:~/company/"]
+    path = ~/.gitconfig.company
+
+# Client work (anonymized)
+[includeIf "gitdir:~/work/client1/"]
+    path = ~/.gitconfig.client1
+
+[includeIf "gitdir:~/client1/"]
+    path = ~/.gitconfig.client1
+
+[includeIf "gitdir:~/work/client2/"]
+    path = ~/.gitconfig.client2
+
+[includeIf "gitdir:~/client2/"]
+    path = ~/.gitconfig.client2
+
+# Fallback for any ~/work/ directory not caught above  
+[includeIf "gitdir:~/work/"]
+    path = ~/.gitconfig.company
+
+
+
+
+
+
+
+[color]
+    ui = true
+    
+[color "branch"]
+    current = yellow reverse
+    local = yellow
+    remote = green
+
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+
+[color "status"]
+    added = green
+    changed = yellow
+    untracked = cyan

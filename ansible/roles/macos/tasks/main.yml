@@ -2,6 +2,9 @@
 - name: Import packages tasks
   import_tasks: packages.yml
 
+- name: Import shell configuration tasks
+  import_tasks: shell.yml
+
 - name: Import AWS tasks
   import_tasks: aws.yml
 
@@ -13,3 +16,6 @@
 
 - name: Import font configuration tasks
   import_tasks: fonts_config.yml
+
+- name: Configure macOS defaults
+  import_tasks: defaults.yml

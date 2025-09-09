@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(ansible-galaxy:*)",
+      "Bash(ansible-doc:*)",
+      "Bash(chmod:*)",
+      "Read(//Users/jeremyspofford/.ssh/**)",
+      "Read(//Users/jeremyspofford/workspace/**)",
+      "Bash(source:*)",
+      "Read(//private/etc/**)",
+      "Read(//Users/jeremyspofford/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

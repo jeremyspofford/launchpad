@@ -95,20 +95,7 @@
         state: absent
       when: not nvim_binary_check.stat.exists
 
-- name: Install chezmoi (Linux)
-  when: ansible_os_family != "Darwin" # Only on Linux
-  block:
-    - name: Check if chezmoi is already installed
-      ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/.local/bin/chezmoi"
-      register: chezmoi_binary_check
-
-    - name: Download and install chezmoi
-      ansible.builtin.shell:
-        cmd: curl -fsSL https://get.chezmoi.io | sh -s -- -b ~/.local/bin
-      args:
-        creates: "{{ ansible_env.HOME }}/.local/bin/chezmoi"
-      when: not chezmoi_binary_check.stat.exists
+# chezmoi installation removed - using stow instead
 
 - name: Install Linux apt packages
   become: true
@@ -206,20 +193,7 @@
         state: absent
       when: not nvim_binary_check.stat.exists
 
-- name: Install chezmoi (Linux)
-  when: ansible_os_family != "Darwin" # Only on Linux
-  block:
-    - name: Check if chezmoi is already installed
-      ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/.local/bin/chezmoi"
-      register: chezmoi_binary_check
-
-    - name: Download and install chezmoi
-      ansible.builtin.shell:
-        cmd: curl -fsSL https://get.chezmoi.io | sh -s -- -b ~/.local/bin
-      args:
-        creates: "{{ ansible_env.HOME }}/.local/bin/chezmoi"
-      when: not chezmoi_binary_check.stat.exists
+# chezmoi installation removed - using stow instead
 
 - name: Install Starship (Linux)
   when: ansible_os_family != "Darwin" # Only on Linux

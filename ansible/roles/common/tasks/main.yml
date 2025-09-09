@@ -35,37 +35,47 @@
     state: present
   when: tldr_check.rc != 0 # Install if command failed (tldr not found)
 
-- name: Ensure ~/.config/chezmoi directory exists
-  ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.config/chezmoi"
-    state: directory
-    mode: '0700'
 
-- name: Create chezmoi.toml configuration
-  ansible.builtin.template:
-    src: chezmoi.toml.j2
-    dest: "{{ ansible_env.HOME }}/.config/chezmoi/chezmoi.toml"
-    mode: '0600'
 
-- name: Ensure ~/.local/share directory exists for chezmoi
+- name: Check if stow is installed
+  ansible.builtin.command: which stow
+  register: stow_check
+  failed_when: false
+  changed_when: false
+
+- name: Install stow if not present (macOS)
+  community.general.homebrew:
+    name: stow
+    state: present
+  when: 
+    - stow_check.rc != 0
+    - ansible_facts['os_family'] == 'Darwin'
+
+- name: Install stow if not present (Linux)
+  ansible.builtin.package:
+    name: stow
+    state: present
+  become: true
+  when: 
+    - stow_check.rc != 0
+    - ansible_facts['os_family'] != 'Darwin'
+
+- name: Ensure dotfiles are symlinked with stow
+  ansible.builtin.command:
+    cmd: stow -t "{{ ansible_facts['user_dir'] }}" home
+    chdir: "{{ playbook_dir }}/.."
+  become: false
+  register: stow_result
+  changed_when: stow_result.rc == 0
+
+- name: Create workspace directory
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.local/share"
+    path: "{{ ansible_env.HOME }}/workspace"
     state: directory
     mode: '0755'
 
-- name: Check if chezmoi is initialized
-  ansible.builtin.stat:
-    path: "{{ ansible_env.HOME }}/.local/share/chezmoi"
-  register: chezmoi_initialized_check
+- name: Setup SSH keys for Git hosting services
+  import_tasks: ssh_keys.yml
 
-- name: Initialize chezmoi
-  ansible.builtin.command: "chezmoi init {{ dotfiles_root }}"
-  args:
-    chdir: "{{ dotfiles_root }}" # Run chezmoi from the dotfiles root
-  when: not chezmoi_initialized_check.stat.exists
-
-- name: Apply dotfiles with chezmoi
-  ansible.builtin.command: chezmoi apply
-  args:
-    chdir: "{{ dotfiles_root }}" # Run chezmoi from the dotfiles root
-  changed_when: false # chezmoi apply is idempotent, but might report changes even if none are applied
+- name: Setup Oh My Zsh
+  import_tasks: oh_my_zsh.yml

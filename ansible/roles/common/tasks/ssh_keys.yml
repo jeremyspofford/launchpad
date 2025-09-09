@@ -1,0 +1,186 @@
+---
+# ============================================================================ #
+# SSH Key Management for Git Hosting Services
+# ============================================================================ #
+# Automatically creates personal SSH key and uploads to GitHub/GitLab
+# ============================================================================ #
+
+- name: Ensure .ssh directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.ssh"
+    state: directory
+    mode: '0700'
+
+- name: Check if personal SSH key already exists
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.ssh/id_ed25519_personal"
+  register: personal_ssh_key
+
+- name: Generate personal SSH key if it doesn't exist
+  ansible.builtin.command:
+    cmd: ssh-keygen -t ed25519 -f "{{ ansible_env.HOME }}/.ssh/id_ed25519_personal" -C "{{ ansible_env.USER }}@{{ ansible_hostname }} (personal)" -N ""
+  when: not personal_ssh_key.stat.exists
+
+- name: Set correct permissions on SSH key
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.ssh/id_ed25519_personal"
+    mode: '0600'
+  when: not personal_ssh_key.stat.exists
+
+- name: Add SSH key to SSH agent
+  ansible.builtin.command:
+    cmd: ssh-add --apple-use-keychain "{{ ansible_env.HOME }}/.ssh/id_ed25519_personal"
+  when: 
+    - not personal_ssh_key.stat.exists
+    - ansible_os_family == 'Darwin'
+
+- name: Add SSH key to SSH agent (Linux)
+  ansible.builtin.command:
+    cmd: ssh-add "{{ ansible_env.HOME }}/.ssh/id_ed25519_personal"
+  when: 
+    - not personal_ssh_key.stat.exists
+    - ansible_os_family != 'Darwin'
+
+# GitHub Authentication and SSH Key Upload
+- name: Check if gh CLI is authenticated
+  ansible.builtin.command: gh auth status
+  register: gh_auth_status
+  failed_when: false
+  changed_when: false
+
+- name: Prompt for GitHub authentication
+  ansible.builtin.pause:
+    prompt: |
+      
+      🔐 GitHub CLI is not authenticated.
+      
+      Please authenticate with GitHub to automatically upload your SSH key:
+      
+      1. Press Ctrl+C then 'A' to abort and run: gh auth login
+      2. Or press Enter to skip GitHub SSH key upload
+      
+      Continue? (Enter to skip, Ctrl+C to abort)
+  when: 
+    - gh_auth_status.rc != 0
+    - not personal_ssh_key.stat.exists
+
+- name: Run GitHub authentication interactively
+  ansible.builtin.command: gh auth login
+  when: 
+    - gh_auth_status.rc != 0
+    - not personal_ssh_key.stat.exists
+  register: gh_auth_result
+  failed_when: false
+
+- name: Re-check GitHub authentication after login
+  ansible.builtin.command: gh auth status
+  register: gh_auth_status_after
+  failed_when: false
+  changed_when: false
+  when: 
+    - gh_auth_status.rc != 0
+    - not personal_ssh_key.stat.exists
+
+- name: Upload SSH key to GitHub
+  ansible.builtin.command:
+    cmd: gh ssh-key add "{{ ansible_env.HOME }}/.ssh/id_ed25519_personal.pub" --title "Personal - {{ ansible_hostname }} - {{ ansible_date_time.date }}"
+  when: 
+    - not personal_ssh_key.stat.exists
+    - (gh_auth_status.rc == 0 or (gh_auth_status_after is defined and gh_auth_status_after.rc == 0))
+  register: gh_key_upload
+  failed_when: false
+
+- name: Display GitHub key upload result
+  ansible.builtin.debug:
+    msg: |
+      {% if not personal_ssh_key.stat.exists %}
+        {% if (gh_auth_status.rc == 0 or (gh_auth_status_after is defined and gh_auth_status_after.rc == 0)) and gh_key_upload is defined and gh_key_upload.rc == 0 %}
+      ✅ SSH key successfully uploaded to GitHub
+        {% elif gh_auth_status.rc != 0 and (gh_auth_status_after is not defined or gh_auth_status_after.rc != 0) %}
+      ⚠️  GitHub CLI authentication skipped - SSH key not uploaded
+        {% else %}
+      ⚠️  GitHub key upload failed (key may already exist)
+        {% endif %}
+      {% else %}
+      ℹ️  Personal SSH key already exists - GitHub upload skipped
+      {% endif %}
+
+# GitLab Authentication and SSH Key Upload  
+- name: Check if glab CLI is authenticated
+  ansible.builtin.command: glab auth status
+  register: glab_auth_status
+  failed_when: false
+  changed_when: false
+
+- name: Prompt for GitLab authentication
+  ansible.builtin.pause:
+    prompt: |
+      
+      🔐 GitLab CLI is not authenticated.
+      
+      Please authenticate with GitLab to automatically upload your SSH key:
+      
+      1. Press Ctrl+C then 'A' to abort and run: glab auth login
+      2. Or press Enter to skip GitLab SSH key upload
+      
+      Continue? (Enter to skip, Ctrl+C to abort)
+  when: 
+    - glab_auth_status.rc != 0
+    - not personal_ssh_key.stat.exists
+
+- name: Run GitLab authentication interactively
+  ansible.builtin.command: glab auth login
+  when: 
+    - glab_auth_status.rc != 0
+    - not personal_ssh_key.stat.exists
+  register: glab_auth_result
+  failed_when: false
+
+- name: Re-check GitLab authentication after login
+  ansible.builtin.command: glab auth status
+  register: glab_auth_status_after
+  failed_when: false
+  changed_when: false
+  when: 
+    - glab_auth_status.rc != 0
+    - not personal_ssh_key.stat.exists
+
+- name: Upload SSH key to GitLab
+  ansible.builtin.command:
+    cmd: glab ssh-key add "{{ ansible_env.HOME }}/.ssh/id_ed25519_personal.pub" --title "Personal - {{ ansible_hostname }} - {{ ansible_date_time.date }}"
+  when: 
+    - not personal_ssh_key.stat.exists
+    - (glab_auth_status.rc == 0 or (glab_auth_status_after is defined and glab_auth_status_after.rc == 0))
+  register: glab_key_upload
+  failed_when: false
+
+- name: Display GitLab key upload result
+  ansible.builtin.debug:
+    msg: |
+      {% if not personal_ssh_key.stat.exists %}
+        {% if (glab_auth_status.rc == 0 or (glab_auth_status_after is defined and glab_auth_status_after.rc == 0)) and glab_key_upload is defined and glab_key_upload.rc == 0 %}
+      ✅ SSH key successfully uploaded to GitLab
+        {% elif glab_auth_status.rc != 0 and (glab_auth_status_after is not defined or glab_auth_status_after.rc != 0) %}
+      ⚠️  GitLab CLI authentication skipped - SSH key not uploaded
+        {% else %}
+      ⚠️  GitLab key upload failed (key may already exist)
+        {% endif %}
+      {% else %}
+      ℹ️  Personal SSH key already exists - GitLab upload skipped
+      {% endif %}
+
+- name: Display SSH key information
+  ansible.builtin.debug:
+    msg: |
+      SSH Key Setup Complete:
+      
+      🔑 Personal SSH Key: {{ ansible_env.HOME }}/.ssh/id_ed25519_personal
+      🔑 Public Key: {{ ansible_env.HOME }}/.ssh/id_ed25519_personal.pub
+      
+      Next Steps:
+      - Authenticate CLI tools if not already done:
+        • gh auth login
+        • glab auth login
+      - Test SSH connections:
+        • ssh -T git@github.com
+        • ssh -T git@gitlab.com

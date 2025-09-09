@@ -1,7 +1,7 @@
 ---
 - name: Configure WezTerm font
   ansible.builtin.lineinfile:
-    path: "{{ dotfiles_root }}/home/dot_wezterm.lua"
+    path: "{{ dotfiles_root }}/home/.wezterm.lua"
     regexp: |
       ^config.font = wezterm.font(".*")
     line: |

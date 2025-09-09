@@ -1,6 +1,5 @@
 ---
 common_packages:
-  - chezmoi
   - curl
   - fzf
   - gh
@@ -17,3 +16,5 @@ common_packages:
   - zsh
 
 os_packages: []
+
+

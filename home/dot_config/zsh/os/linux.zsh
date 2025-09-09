@@ -1,1 +1,0 @@
-alias start="xdg-open"
