@@ -5,6 +5,43 @@ All notable changes to this dotfiles repository will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2024-09-09
+
+### 🚀 Major Migration: Chezmoi to GNU Stow
+
+### ✨ Added
+- **GNU Stow integration** - Complete migration from chezmoi to stow for dotfile management
+- **Streamlined shell configuration** - New `.commonrc` for shared bash/zsh configurations
+- **OS-adaptive aliases** - Platform-specific commands (start=open/explorer.exe/xdg-open)
+- **One-command setup** - `./scripts/setup.sh` handles Ansible, Oh My Zsh, and stow operations
+- **Oh My Zsh plugin management** - Proper plugin loading without conflicts
+
+### 🔧 Changed
+- **Repository structure** - `home/` directory now directly mirrors `~/` for stow compatibility  
+- **Shell configuration architecture** - Eliminated duplication between `.bashrc` and `.zshrc`
+- **Setup process** - Simplified from complex chezmoi workflow to single script execution
+- **Documentation** - Updated README.md and CLAUDE.md to reflect new stow-based workflow
+
+### 🗑️ Removed
+- **Chezmoi dependencies** - Completely removed chezmoi configuration and templates
+- **Fabric integration** - Removed all fabric-related aliases and configurations
+- **Obsidian aliases** - Cleaned out obsidian-specific shortcuts
+- **Duplicate configurations** - Eliminated redundant environment variables and PATH exports
+- **Legacy plugin loading** - Removed manual zsh plugin loading that conflicted with Oh My Zsh
+
+### 🐛 Fixed
+- **Zsh exit code 130** - Resolved plugin loading conflicts causing terminal crashes
+- **Stow package structure** - Fixed directory organization for proper symlink creation
+- **Ansible playbook** - Corrected gnu_stow task configuration
+- **History file management** - Separated bash and zsh history locations
+- **Platform detection** - Improved WSL vs native Linux detection
+
+### 📋 Migration Notes
+This is a **breaking change** for existing users. The repository has been completely restructured around GNU Stow. Users should:
+1. Back up existing configurations
+2. Run `./scripts/setup.sh` for fresh installation
+3. Verify symlinks with `ls -la ~ | grep '\->'`
+
 ## [2.1.0] - 2025-01-07
 
 ### 🧹 Major Cleanup & UX Improvements
@@ -132,7 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Migration Guide from v1.x to v2.0
 
 1. **Backup your current dotfiles**: The installer will do this automatically
-2. **Clone the new repository**: `git clone https://github.com/jeremyspofford/dotfiles.git`
+2. **Clone the new repository**: `git clone https://github.com/yourusername/dotfiles.git`
 3. **Run the new installer**: `./dotfiles/install.sh`
 4. **Follow the prompts**: Provide email, name, and GitHub username
 5. **Verify the setup**: Use `chezmoi status` to see managed files

@@ -1,0 +1,290 @@
+---
+- name: Install Linux apt packages
+  become: true
+  ansible.builtin.apt:
+    name: "{{ linux_apt_packages }}"
+    state: present
+    update_cache: true
+
+- name: Install Google Cloud CLI via APT on Debian-based systems
+  ansible.builtin.apt:
+    name: google-cloud-cli
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+  become: true
+
+- name: Install Google Cloud CLI via YUM/DNF on RedHat-based systems
+  ansible.builtin.yum:
+    name: google-cloud-cli
+    state: present
+  when: ansible_os_family == "RedHat"
+  become: true
+
+- name: Install eza (modern ls replacement)
+  when: ansible_os_family != "Darwin" # Only on Linux
+  block:
+    - name: Set eza architecture fact
+      set_fact:
+        eza_arch: "{{ 'x86_64' if ansible_architecture == 'x86_64' else 'aarch64' }}" # Assuming only these two
+
+    - name: Set eza download URL
+      set_fact:
+        eza_url: "https://github.com/eza-community/eza/releases/latest/download/eza_{{ eza_arch }}-unknown-linux-gnu.tar.gz"
+
+    - name: Check if eza is already installed
+      ansible.builtin.stat:
+        path: /usr/local/bin/eza
+      register: eza_binary_check
+
+    - name: Download eza tarball
+      ansible.builtin.get_url:
+        url: "{{ eza_url }}"
+        dest: "/tmp/eza_{{ eza_arch }}.tar.gz"
+        mode: '0644'
+      when: not eza_binary_check.stat.exists
+
+    - name: Extract eza tarball
+      ansible.builtin.unarchive:
+        src: "/tmp/eza_{{ eza_arch }}.tar.gz"
+        dest: /usr/local/bin
+        remote_src: true
+        extra_opts: [--strip-components=1] # To extract contents directly
+      become: true
+      when: not eza_binary_check.stat.exists
+
+    - name: Clean up eza tarball
+      ansible.builtin.file:
+        path: "/tmp/eza_{{ eza_arch }}.tar.gz"
+        state: absent
+      when: not eza_binary_check.stat.exists
+
+- name: Install Neovim (Linux)
+  when: ansible_os_family != "Darwin" # Only on Linux
+  block:
+    - name: Check if nvim is already installed
+      ansible.builtin.stat:
+        path: /opt/nvim/bin/nvim
+      register: nvim_binary_check
+
+    - name: Download Neovim tarball
+      ansible.builtin.get_url:
+        url: https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+        dest: /tmp/nvim-linux-x86_64.tar.gz
+        mode: '0644'
+      when: not nvim_binary_check.stat.exists
+
+    - name: Ensure /opt/nvim is absent before extracting
+      ansible.builtin.file:
+        path: /opt/nvim
+        state: absent
+      become: true
+      when: not nvim_binary_check.stat.exists
+
+    - name: Extract Neovim tarball to /opt
+      ansible.builtin.unarchive:
+        src: /tmp/nvim-linux-x86_64.tar.gz
+        dest: /opt
+        remote_src: true
+      become: true
+      when: not nvim_binary_check.stat.exists
+
+    - name: Clean up Neovim tarball
+      ansible.builtin.file:
+        path: /tmp/nvim-linux-x86_64.tar.gz
+        state: absent
+      when: not nvim_binary_check.stat.exists
+
+# chezmoi installation removed - using stow instead
+
+- name: Install Linux apt packages
+  become: true
+  ansible.builtin.apt:
+    name: "{{ linux_apt_packages }}"
+    state: present
+    update_cache: true
+
+- name: Install Google Cloud CLI via APT on Debian-based systems
+  ansible.builtin.apt:
+    name: google-cloud-cli
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+  become: true
+
+- name: Install Google Cloud CLI via YUM/DNF on RedHat-based systems
+  ansible.builtin.yum:
+    name: google-cloud-cli
+    state: present
+  when: ansible_os_family == "RedHat"
+  become: true
+
+- name: Install eza (modern ls replacement)
+  when: ansible_os_family != "Darwin" # Only on Linux
+  block:
+    - name: Set eza architecture fact
+      set_fact:
+        eza_arch: "{{ 'x86_64' if ansible_architecture == 'x86_64' else 'aarch64' }}" # Assuming only these two
+
+    - name: Set eza download URL
+      set_fact:
+        eza_url: "https://github.com/eza-community/eza/releases/latest/download/eza_{{ eza_arch }}-unknown-linux-gnu.tar.gz"
+
+    - name: Check if eza is already installed
+      ansible.builtin.stat:
+        path: /usr/local/bin/eza
+      register: eza_binary_check
+
+    - name: Download eza tarball
+      ansible.builtin.get_url:
+        url: "{{ eza_url }}"
+        dest: "/tmp/eza_{{ eza_arch }}.tar.gz"
+        mode: '0644'
+      when: not eza_binary_check.stat.exists
+
+    - name: Extract eza tarball
+      ansible.builtin.unarchive:
+        src: "/tmp/eza_{{ eza_arch }}.tar.gz"
+        dest: /usr/local/bin
+        remote_src: true
+        extra_opts: [--strip-components=1] # To extract contents directly
+      become: true
+      when: not eza_binary_check.stat.exists
+
+    - name: Clean up eza tarball
+      ansible.builtin.file:
+        path: "/tmp/eza_{{ eza_arch }}.tar.gz"
+        state: absent
+      when: not eza_binary_check.stat.exists
+
+- name: Install Neovim (Linux)
+  when: ansible_os_family != "Darwin" # Only on Linux
+  block:
+    - name: Check if nvim is already installed
+      ansible.builtin.stat:
+        path: /opt/nvim/bin/nvim
+      register: nvim_binary_check
+
+    - name: Download Neovim tarball
+      ansible.builtin.get_url:
+        url: https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+        dest: /tmp/nvim-linux-x86_64.tar.gz
+        mode: '0644'
+      when: not nvim_binary_check.stat.exists
+
+    - name: Ensure /opt/nvim is absent before extracting
+      ansible.builtin.file:
+        path: /opt/nvim
+        state: absent
+      become: true
+      when: not nvim_binary_check.stat.exists
+
+    - name: Extract Neovim tarball to /opt
+      ansible.builtin.unarchive:
+        src: /tmp/nvim-linux-x86_64.tar.gz
+        dest: /opt
+        remote_src: true
+      become: true
+      when: not nvim_binary_check.stat.exists
+
+    - name: Clean up Neovim tarball
+      ansible.builtin.file:
+        path: /tmp/nvim-linux-x86_64.tar.gz
+        state: absent
+      when: not nvim_binary_check.stat.exists
+
+# chezmoi installation removed - using stow instead
+
+- name: Install Starship (Linux)
+  when: ansible_os_family != "Darwin" # Only on Linux
+  block:
+    - name: Check if starship is already installed
+      ansible.builtin.stat:
+        path: "{{ ansible_env.HOME }}/.local/bin/starship"
+      register: starship_binary_check
+
+    - name: Download and install Starship
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://starship.rs/install.sh | sh -s -- --yes
+      args:
+        creates: "{{ ansible_env.HOME }}/.local/bin/starship"
+      when: not starship_binary_check.stat.exists
+
+- name: Install GitHub CLI (Linux)
+  when: ansible_os_family == "Debian" # Only on Debian/Ubuntu
+  block:
+    - name: Check if gh is already installed
+      ansible.builtin.stat:
+        path: /usr/bin/gh
+      register: gh_binary_check
+
+    - name: Add GitHub CLI GPG key
+      ansible.builtin.apt_key:
+        url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+        state: present
+      become: true
+      when: not gh_binary_check.stat.exists
+
+    - name: Add GitHub CLI APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch={{ ansible_architecture }} signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main"
+        state: present
+        filename: github-cli
+      become: true
+      when: not gh_binary_check.stat.exists
+
+    - name: Install gh
+      ansible.builtin.apt:
+        name: gh
+        state: present
+        update_cache: true
+      become: true
+      when: not gh_binary_check.stat.exists
+
+- name: Install AWS CLI v2 (Linux)
+  when: ansible_os_family != "Darwin" # Only on Linux
+  block:
+    - name: Check if aws is already installed
+      ansible.builtin.stat:
+        path: /usr/local/bin/aws
+      register: aws_binary_check
+
+    - name: Set AWS CLI architecture fact
+      set_fact:
+        aws_arch: "{{ 'x86_64' if ansible_architecture == 'x86_64' else 'aarch64' }}"
+
+    - name: Set AWS CLI download URL
+      set_fact:
+        aws_url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ aws_arch }}.zip"
+
+    - name: Create temporary directory for AWS CLI download
+      ansible.builtin.file:
+        path: /tmp/awscli_install
+        state: directory
+        mode: '0755'
+      when: not aws_binary_check.stat.exists
+
+    - name: Download AWS CLI zip file
+      ansible.builtin.get_url:
+        url: "{{ aws_url }}"
+        dest: "/tmp/awscli_install/awscliv2.zip"
+        mode: '0644'
+      when: not aws_binary_check.stat.exists
+
+    - name: Unzip AWS CLI
+      ansible.builtin.unarchive:
+        src: "/tmp/awscli_install/awscliv2.zip"
+        dest: "/tmp/awscli_install"
+        remote_src: true
+      when: not aws_binary_check.stat.exists
+
+    - name: Run AWS CLI installer
+      ansible.builtin.command: "/tmp/awscli_install/aws/install"
+      become: true
+      when: not aws_binary_check.stat.exists
+
+    - name: Clean up AWS CLI temporary directory
+      ansible.builtin.file:
+        path: /tmp/awscli_install
+        state: absent
+      when: not aws_binary_check.stat.exists

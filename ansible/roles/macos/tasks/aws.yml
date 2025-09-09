@@ -1,0 +1,19 @@
+---
+- name: Create .local/bin directory if it doesn't exist
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/bin"
+    state: directory
+    mode: '0755'
+
+- name: Check if Amazon Q app exists
+  ansible.builtin.stat:
+    path: "/Applications/Amazon Q.app/Contents/MacOS/q"
+  register: amazon_q_binary_check
+
+- name: Create symlink for q command in user bin directory
+  ansible.builtin.file:
+    src: "/Applications/Amazon Q.app/Contents/MacOS/q"
+    dest: "{{ ansible_env.HOME }}/.local/bin/q"
+    state: link
+    mode: '0755'
+  when: amazon_q_binary_check.stat.exists

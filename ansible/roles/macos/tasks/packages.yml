@@ -1,0 +1,10 @@
+---
+- name: Install macOS cask packages
+  community.general.homebrew_cask:
+    name: "{{ cask_packages }}"
+    state: present
+
+- name: Install macOS formulae packages
+  community.general.homebrew:
+    name: "{{ macos_formulae_packages }}"
+    state: present

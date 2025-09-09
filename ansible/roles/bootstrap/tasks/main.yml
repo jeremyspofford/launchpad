@@ -99,9 +99,6 @@
     # Prompt
     - starship
     
-    # Dotfile management
-    - chezmoi
-    
     # Cloud CLI tools
     - awscli
     - azure-cli
@@ -139,14 +136,6 @@
     fi
   when: ansible_os_family == "Debian"
   ignore_errors: yes
-
-- name: Install chezmoi on Linux
-  shell: |
-    if ! command -v chezmoi >/dev/null 2>&1; then
-      sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
-    fi
-  when: ansible_os_family == "Debian"
-  become: no
 
 - name: Install starship on Linux
   shell: |
@@ -212,7 +201,10 @@
 - name: Install zoxide on Linux
   shell: |
     if ! command -v zoxide >/dev/null 2>&1; then
-      curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+      TEMP_SCRIPT=$(mktemp)
+      curl -fsSL "https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh" -o "$TEMP_SCRIPT"
+      bash "$TEMP_SCRIPT"
+      rm "$TEMP_SCRIPT"
     fi
   when: ansible_os_family == "Debian"
   become: no

@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(ansible-galaxy:*)",
+      "Bash(ansible-doc:*)",
+      "Bash(chmod:*)",
+      "Read(//Users/jeremyspofford/.ssh/**)",
+      "Read(//Users/jeremyspofford/workspace/**)",
+      "Bash(source:*)",
+      "Read(//private/etc/**)",
+      "Read(//Users/jeremyspofford/**)",
+      "Bash(cat:*)",
+      "Bash(git add:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

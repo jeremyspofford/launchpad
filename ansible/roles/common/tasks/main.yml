@@ -1,0 +1,85 @@
+---
+- name: Install common packages
+  become: "{{ ansible_os_family != 'Darwin' }}"
+  ansible.builtin.package:
+    name: "{{ common_packages }}"
+    state: present
+
+- name: Install OS-specific packages
+  become: "{{ ansible_os_family != 'Darwin' }}"
+  ansible.builtin.package:
+    name: "{{ os_packages }}"
+    state: present
+
+- name: Check if nvm is already installed
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.nvm/nvm.sh"
+  register: nvm_check
+
+- name: Install nvm (Node Version Manager)
+  ansible.builtin.shell:
+    cmd: |
+      TEMP_SCRIPT=$(mktemp)
+      curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh" -o "$TEMP_SCRIPT"
+      PROFILE=/dev/null bash "$TEMP_SCRIPT"
+      rm "$TEMP_SCRIPT"
+  args:
+    creates: "{{ ansible_env.HOME }}/.nvm/nvm.sh" # Idempotency check
+  when: not nvm_check.stat.exists
+
+- name: Check if tldr is already installed
+  ansible.builtin.command: tldr --version
+  register: tldr_check
+  ignore_errors: true # Command will fail if tldr is not found
+
+- name: Install tldr globally via npm
+  community.general.npm:
+    name: tldr
+    global: true
+    state: present
+  when: tldr_check.rc != 0 # Install if command failed (tldr not found)
+
+
+
+- name: Check if stow is installed
+  ansible.builtin.command: which stow
+  register: stow_check
+  failed_when: false
+  changed_when: false
+
+- name: Install stow if not present (macOS)
+  community.general.homebrew:
+    name: stow
+    state: present
+  when: 
+    - stow_check.rc != 0
+    - ansible_facts['os_family'] == 'Darwin'
+
+- name: Install stow if not present (Linux)
+  ansible.builtin.package:
+    name: stow
+    state: present
+  become: true
+  when: 
+    - stow_check.rc != 0
+    - ansible_facts['os_family'] != 'Darwin'
+
+- name: Ensure dotfiles are symlinked with stow
+  ansible.builtin.command:
+    cmd: stow -t "{{ ansible_facts['user_dir'] }}" home
+    chdir: "{{ playbook_dir }}/.."
+  become: false
+  register: stow_result
+  changed_when: stow_result.rc == 0
+
+- name: Create workspace directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/workspace"
+    state: directory
+    mode: '0755'
+
+- name: Setup SSH keys for Git hosting services
+  import_tasks: ssh_keys.yml
+
+- name: Setup Oh My Zsh
+  import_tasks: oh_my_zsh.yml
