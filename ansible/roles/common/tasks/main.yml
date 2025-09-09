@@ -46,10 +46,6 @@
     src: chezmoi.toml.j2
     dest: "{{ ansible_env.HOME }}/.config/chezmoi/chezmoi.toml"
     mode: '0600'
-  vars:
-    chezmoi_email: "your_email@example.com" # Replace with actual email
-    chezmoi_name: "Your Name" # Replace with actual name
-    chezmoi_github_username: "your_github_username" # Replace with actual GitHub username
 
 - name: Ensure ~/.local/share directory exists for chezmoi
   ansible.builtin.file:

@@ -25,6 +25,12 @@ config.font = wezterm.font("JetBrainsMono Nerd Font")
 config.font = wezterm.font("JetBrainsMono Nerd Font")
 
 config.font = wezterm.font("JetBrainsMono Nerd Font")
+
+config.font = wezterm.font("JetBrainsMono Nerd Font")
+
+config.font = wezterm.font("JetBrainsMono Nerd Font")
+
+config.font = wezterm.font("JetBrainsMono Nerd Font")
 config.color_scheme = 'AdventureTime'
 
 -- Finally, return the configuration to wezterm:

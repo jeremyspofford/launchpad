@@ -26,6 +26,9 @@
 
   vars:
     dotfiles_root: "{{ playbook_dir }}/.."
+    chezmoi_email: "23528024+jeremyspofford@users.noreply.github.com"
+    chezmoi_name: "Jeremy Spofford"
+    chezmoi_github_username: "jeremyspofford"
 
   pre_tasks:
     - name: Check if Homebrew is installed (Apple Silicon)

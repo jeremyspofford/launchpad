@@ -117,7 +117,10 @@ if ! shopt -oq posix; then
   fi
 fi
 
-eval "$($HOME/.local/bin/mise activate bash)"
+# mise activation - only if mise is installed
+if command -v mise &>/dev/null; then
+    eval "$(mise activate bash)"
+fi
 
 # Starship prompt (if installed)
 if command -v starship &>/dev/null; then
@@ -151,23 +154,19 @@ chezmoi_auto_update() {
         if [[ ! -f "$update_file" ]] || [[ $((current_time - $(cat "$update_file" 2>/dev/null || echo 0))) -gt $update_interval ]]; then
             echo "🔄 Checking for dotfiles updates..."
             
-            # Run chezmoi update in background to not block terminal startup
-            {
-                local chezmoi_output
-                chezmoi_output=$(chezmoi update --apply=false 2>&1) # Capture all output
+            # Run chezmoi update (now in foreground, no output capture)
+            chezmoi update --apply=false >/dev/null 2>&1
+            local chezmoi_exit_status=$? # Capture exit status immediately
 
-                if [[ $? -eq 0 ]]; then # If chezmoi update command succeeded
-                    local changes=$(chezmoi status 2>/dev/null | wc -l)
-                    if [[ $changes -gt 0 ]]; then
-                        echo "📋 Found $changes dotfile changes. Run 'chezmoi diff' to review or 'chezmoi apply' to apply them."
-                        echo "$chezmoi_output" # Show output if there were changes
-                    fi
-                else
-                    echo "⚠️  Could not check for dotfile updates (check network connection or chezmoi error):"
-                    echo "$chezmoi_output" # Show error output
+            if [[ $chezmoi_exit_status -eq 0 ]]; then # If chezmoi update command succeeded
+                local changes=$(chezmoi status 2>/dev/null | wc -l)
+                if [[ $changes -gt 0 ]]; then
+                    echo "📋 Found $changes dotfile changes. Run 'chezmoi diff' to review or 'chezmoi apply' to apply them."
                 fi
-                echo "$current_time" > "$update_file"
-            } &
+            else
+                echo "⚠️  Could not check for dotfile updates (check network connection or chezmoi error)."
+            fi
+            echo "$current_time" > "$update_file"
         fi
     fi
 }
@@ -182,5 +181,4 @@ if [[ -o interactive ]]; then
     echo "Type 'tldr <command>' for quick command help"
     
     # Run chezmoi auto-update check
-    chezmoi_auto_update
 fi
