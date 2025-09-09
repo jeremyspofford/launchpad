@@ -1,0 +1,11 @@
+---
+- name: Install Cursor
+  ansible.builtin.shell:
+    cmd: curl https://cursor.com/install -fsS | bash
+  register: cursor_install_result
+
+- name: Install Claude Code
+  community.general.npm:
+    name: "@anthropic-ai/claude-code"
+    global: true
+    state: present

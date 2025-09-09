@@ -5,7 +5,8 @@
 # If not running interactively, don't do anything
 case $- in
 *i*) ;;
-*) return ;;
+*)
+  return ;; 
 esac
 
 # don't put duplicate lines or lines starting with space in the history.
@@ -57,7 +58,7 @@ if [ -n "$force_color_prompt" ]; then
 fi
 
 if [ "$color_prompt" = yes ]; then
-  PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+  PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]: F\[\033[01;34m\]\w\[\033[00m\]\$ '
 else
   PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
@@ -65,10 +66,11 @@ unset color_prompt force_color_prompt
 
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
-xterm* | rxvt*)
+xterm* | rxvt*) 
   PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
   ;;
-*) ;;
+*)
+  ;;
 esac
 
 # enable color support of ls and also add handy aliases
@@ -93,7 +95,7 @@ alias l='ls -CF'
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^	*[0-9]	*//;s/[;&|] alert$//'\')"'
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
@@ -129,3 +131,56 @@ export NVM_DIR="$HOME/.nvm"
 
 export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
 export PATH="$HOME/.cursor/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+
+# ============================================================================ #
+# Automatic Chezmoi Updates
+# ============================================================================ #
+
+# Smart chezmoi auto-update function
+chezmoi_auto_update() {
+    if command -v chezmoi &>/dev/null; then
+        local update_file="$XDG_CACHE_HOME/chezmoi_last_update"
+        local current_time=$(date +%s)
+        local update_interval=86400  # 24 hours in seconds
+        
+        # Create cache directory if it doesn't exist
+        mkdir -p "$(dirname "$update_file")"
+        
+        # Check if we should update (first run or 24+ hours since last update)
+        if [[ ! -f "$update_file" ]] || [[ $((current_time - $(cat "$update_file" 2>/dev/null || echo 0))) -gt $update_interval ]]; then
+            echo "🔄 Checking for dotfiles updates..."
+            
+            # Run chezmoi update in background to not block terminal startup
+            {
+                local chezmoi_output
+                chezmoi_output=$(chezmoi update --apply=false 2>&1) # Capture all output
+
+                if [[ $? -eq 0 ]]; then # If chezmoi update command succeeded
+                    local changes=$(chezmoi status 2>/dev/null | wc -l)
+                    if [[ $changes -gt 0 ]]; then
+                        echo "📋 Found $changes dotfile changes. Run 'chezmoi diff' to review or 'chezmoi apply' to apply them."
+                        echo "$chezmoi_output" # Show output if there were changes
+                    fi
+                else
+                    echo "⚠️  Could not check for dotfile updates (check network connection or chezmoi error):"
+                    echo "$chezmoi_output" # Show error output
+                fi
+                echo "$current_time" > "$update_file"
+            } &
+        fi
+    fi
+}
+
+# ============================================================================ #
+# Welcome Message
+# ============================================================================ #
+
+if [[ -o interactive ]]; then
+    echo "Welcome to $(hostname), $(whoami)!"
+    echo "System: $(uname -s) $(uname -r) | Shell: $SHELL"
+    echo "Type 'tldr <command>' for quick command help"
+    
+    # Run chezmoi auto-update check
+    chezmoi_auto_update
+fi

@@ -1,0 +1,75 @@
+---
+- name: Install common packages
+  become: "{{ ansible_os_family != 'Darwin' }}"
+  ansible.builtin.package:
+    name: "{{ common_packages }}"
+    state: present
+
+- name: Install OS-specific packages
+  become: "{{ ansible_os_family != 'Darwin' }}"
+  ansible.builtin.package:
+    name: "{{ os_packages }}"
+    state: present
+
+- name: Check if nvm is already installed
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.nvm/nvm.sh"
+  register: nvm_check
+
+- name: Install nvm (Node Version Manager)
+  ansible.builtin.shell:
+    cmd: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | PROFILE=/dev/null bash
+  args:
+    creates: "{{ ansible_env.HOME }}/.nvm/nvm.sh" # Idempotency check
+  when: not nvm_check.stat.exists
+
+- name: Check if tldr is already installed
+  ansible.builtin.command: tldr --version
+  register: tldr_check
+  ignore_errors: true # Command will fail if tldr is not found
+
+- name: Install tldr globally via npm
+  community.general.npm:
+    name: tldr
+    global: true
+    state: present
+  when: tldr_check.rc != 0 # Install if command failed (tldr not found)
+
+- name: Ensure ~/.config/chezmoi directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/chezmoi"
+    state: directory
+    mode: '0700'
+
+- name: Create chezmoi.toml configuration
+  ansible.builtin.template:
+    src: chezmoi.toml.j2
+    dest: "{{ ansible_env.HOME }}/.config/chezmoi/chezmoi.toml"
+    mode: '0600'
+  vars:
+    chezmoi_email: "your_email@example.com" # Replace with actual email
+    chezmoi_name: "Your Name" # Replace with actual name
+    chezmoi_github_username: "your_github_username" # Replace with actual GitHub username
+
+- name: Ensure ~/.local/share directory exists for chezmoi
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/share"
+    state: directory
+    mode: '0755'
+
+- name: Check if chezmoi is initialized
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.local/share/chezmoi"
+  register: chezmoi_initialized_check
+
+- name: Initialize chezmoi
+  ansible.builtin.command: "chezmoi init {{ dotfiles_root }}"
+  args:
+    chdir: "{{ dotfiles_root }}" # Run chezmoi from the dotfiles root
+  when: not chezmoi_initialized_check.stat.exists
+
+- name: Apply dotfiles with chezmoi
+  ansible.builtin.command: chezmoi apply
+  args:
+    chdir: "{{ dotfiles_root }}" # Run chezmoi from the dotfiles root
+  changed_when: false # chezmoi apply is idempotent, but might report changes even if none are applied

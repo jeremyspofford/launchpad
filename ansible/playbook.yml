@@ -1,25 +1,55 @@
-- name: Bootstrap system packages for dotfiles
+# - name: Bootstrap system packages for dotfiles
+#   hosts: localhost
+#   connection: local
+#   gather_facts: true
+
+#   roles:
+
+#     # - bootstrap
+#     # - neovim_install
+#     # - node_install
+#     # - python_install
+#     # - zsh_install
+#     # - mise_install
+#     # - oh_my_zsh_install
+#     # - starship_install
+#     # - tmux_install
+#     # - tmuxinator_install
+#     # - tmuxinator_install
+#     # - neovim_install
+
+---
+- name: Bootstrap workstation
   hosts: localhost
   connection: local
   gather_facts: true
 
-  roles:
-    - aws
-    - browsers
-    - dependencies
-    - cli
-    - logitech-options
+  vars:
+    dotfiles_root: "{{ playbook_dir }}/.."
 
-    # - bootstrap
-    # - gcloud
-    # - neovim_install
-    # - node_install
-    # - python_install
-    # - zsh_install
-    # - mise_install
-    # - oh_my_zsh_install
-    # - starship_install
-    # - tmux_install
-    # - tmuxinator_install
-    # - tmuxinator_install
-    # - neovim_install
+  pre_tasks:
+    - name: Check if Homebrew is installed (Apple Silicon)
+      stat:
+        path: /opt/homebrew/bin/brew
+      register: homebrew_stat_arm
+      when: ansible_os_family == 'Darwin'
+
+    - name: Check if Homebrew is installed (Intel)
+      stat:
+        path: /usr/local/bin/brew
+      register: homebrew_stat_intel
+      when: ansible_os_family == 'Darwin'
+
+    - name: Install Homebrew
+      shell: NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      when:
+        - ansible_os_family == 'Darwin'
+        - not homebrew_stat_arm.stat.exists and not homebrew_stat_intel.stat.exists
+
+  roles:
+    - role: common
+    - role: fonts
+    - role: macos
+      when: ansible_os_family == 'Darwin'
+    - role: linux
+      when: ansible_os_family != 'Darwin'

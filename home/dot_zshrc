@@ -374,15 +374,18 @@ chezmoi_auto_update() {
             
             # Run chezmoi update in background to not block terminal startup
             {
-                if chezmoi update --apply=false 2>/dev/null; then
+                local chezmoi_output
+                chezmoi_output=$(chezmoi update --apply=false 2>&1) # Capture all output
+
+                if [[ $? -eq 0 ]]; then # If chezmoi update command succeeded
                     local changes=$(chezmoi status 2>/dev/null | wc -l)
                     if [[ $changes -gt 0 ]]; then
                         echo "📋 Found $changes dotfile changes. Run 'chezmoi diff' to review or 'chezmoi apply' to apply them."
-                    else
-                        echo "✅ Dotfiles are up to date!"
+                        echo "$chezmoi_output" # Show output if there were changes
                     fi
                 else
-                    echo "⚠️  Could not check for dotfile updates (check network connection)"
+                    echo "⚠️  Could not check for dotfile updates (check network connection or chezmoi error):"
+                    echo "$chezmoi_output" # Show error output
                 fi
                 echo "$current_time" > "$update_file"
             } &

@@ -12,6 +12,19 @@ config.initial_rows = 28
 
 -- or, changing the font size and color scheme.
 config.font_size = 24
+config.font = wezterm.font("JetBrainsMono Nerd Font")
+
+config.font = wezterm.font("JetBrainsMono Nerd Font")
+
+config.font = wezterm.font("JetBrainsMono Nerd Font")
+
+config.font = wezterm.font("JetBrainsMono Nerd Font")
+
+config.font = wezterm.font("JetBrainsMono Nerd Font")
+
+config.font = wezterm.font("JetBrainsMono Nerd Font")
+
+config.font = wezterm.font("JetBrainsMono Nerd Font")
 config.color_scheme = 'AdventureTime'
 
 -- Finally, return the configuration to wezterm:

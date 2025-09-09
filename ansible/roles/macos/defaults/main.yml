@@ -1,0 +1,17 @@
+---
+cask_packages:
+  - google-cloud-sdk
+  - docker-desktop
+  - amazon-q
+  - brave-browser
+  - wezterm
+  - rectangle-pro
+  - betterdisplay
+  - logi-options+
+
+macos_formulae_packages:
+  - awscli
+  - gemini-cli
+  - uv
+  - node
+  - eza

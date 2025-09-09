@@ -1,0 +1,19 @@
+---
+common_packages:
+  - chezmoi
+  - curl
+  - fzf
+  - gh
+  - glab
+  - git
+  - jq
+  - neovim
+  - ripgrep
+  - shellcheck
+  - starship
+  - tmux
+  - wget
+  - yamllint
+  - zsh
+
+os_packages: []
