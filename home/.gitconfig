@@ -82,27 +82,15 @@
 
 # Conditional includes for different directories
 # Personal projects (default for most directories)
-[includeIf "gitdir:~/personal/"]
-    path = ~/.config/git/personal.gitconfig
-
-[includeIf "gitdir:~/opensource/"]
-    path = ~/.config/git/personal.gitconfig
-
-[includeIf "gitdir:~/github/"]
-    path = ~/.config/git/personal.gitconfig
-
 [includeIf "gitdir:~/workspace/"]
     path = ~/.config/git/personal.gitconfig
 
-# Work repositories - any directory under ~/work/
-[includeIf "gitdir:~/work/"]
+[includeIf "gitdir:~/workspace/vividcloud/"]
     path = ~/.config/git/work.gitconfig
 
-
-
-
-
-
+# Work repositories - any directory under ~/work/
+[includeIf "gitdir:~/workspace/clients/"]
+    path = ~/.config/git/work.gitconfig
 
 [color]
     ui = true
