@@ -22,9 +22,6 @@
 
 set -euo pipefail
 
-# Global variables to track what was done
-SUMMARY_ACTIONS=()
-add_summary() { SUMMARY_ACTIONS+=("$1"); }
 
 # Parse command line arguments
 FORCE_FLAG=""
@@ -101,17 +98,6 @@ For more information, see README.md in the repository.
 EOF
 }
 
-show_summary() {
-    if [[ ${#SUMMARY_ACTIONS[@]} -gt 0 ]]; then
-        header "Setup Summary"
-        log "The following actions were performed:"
-        for action in "${SUMMARY_ACTIONS[@]}"; do
-            echo "  ✓ $action"
-        done
-        echo ""
-    fi
-}
-
 main() {
     header "Dotfiles Setup"
     
@@ -119,8 +105,6 @@ main() {
     ensure_repository
     bootstrap_system
     run_ansible_playbook
-    
-    show_summary
     success "🎉 Setup complete! Your dotfiles environment is ready."
     echo ""
     echo "Next steps:"
@@ -209,7 +193,6 @@ ensure_repository() {
     cd "$HOME/workspace"
     gh repo clone "$DOTFILES_REPO" || error "Failed to clone dotfiles repository: $DOTFILES_REPO"
     cd dotfiles
-    add_summary "Cloned dotfiles repository: $DOTFILES_REPO"
     success "Dotfiles repository ready."
 }
 
@@ -220,7 +203,6 @@ ensure_homebrew() {
     
     log "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || error "Failed to install Homebrew"
-    add_summary "Installed Homebrew package manager"
     
     # Add Homebrew to PATH for current session
     if [[ -f /opt/homebrew/bin/brew ]]; then
@@ -245,11 +227,9 @@ bootstrap_system() {
         if [[ "$OS_TYPE" == "macos" ]]; then
             ensure_homebrew
             brew install ansible || error "Failed to install Ansible via Homebrew"
-            add_summary "Installed Ansible via Homebrew"
         elif [[ "$OS_TYPE" == "wsl" ]] || [[ "$OS_TYPE" == "linux" ]]; then
             sudo apt-get update -qq || warn "Failed to update apt list"
             sudo apt-get install -y ansible python3-pip || error "Failed to install Ansible via apt"
-            add_summary "Installed Ansible via apt"
         fi
         
         success "Ansible installed."
@@ -259,7 +239,6 @@ bootstrap_system() {
     if [[ -f "ansible/requirements.yml" ]]; then
         log "Installing Ansible collections..."
         ansible-galaxy collection install -r ansible/requirements.yml || warn "Some collections may have failed to install"
-        add_summary "Installed Ansible collections"
         success "Ansible collections processed."
     fi
 }
@@ -289,7 +268,6 @@ run_ansible_playbook() {
         $ANSIBLE_CMD || error "Ansible playbook execution failed"
     fi
     
-    add_summary "Executed Ansible playbook ($(grep -c 'name:' ansible/playbook.yml ansible/roles/*/tasks/main.yml 2>/dev/null || echo 'multiple') tasks)"
     success "Ansible playbook completed successfully."
 }
 
