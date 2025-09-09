@@ -20,22 +20,37 @@ cd ~/dotfiles
 ./scripts/setup.sh
 ```
 
+**Advanced Usage:**
+```bash
+./scripts/setup.sh --help              # Show detailed help
+./scripts/setup.sh --force             # Force all tasks to run
+DOTFILES_REPO=myuser/dotfiles ./scripts/setup.sh  # Custom repository
+```
+
 This script will:
-- Install Ansible and its collections
-- Install Oh My Zsh  
+- Auto-detect your operating system (macOS, Linux, WSL)
+- Install prerequisites (Homebrew on macOS, Ansible, etc.)
+- Install Oh My Zsh and essential tools (bat, delta, fzf, etc.)
 - Use GNU Stow to symlink all dotfiles from `home/` to your `~` directory
+- Provide a summary of what was accomplished
 
 ### What Gets Installed
 
-**Prerequisites that `setup.sh` installs:**
-- GNU Stow (must be installed manually first: `brew install stow` or `sudo apt install stow`)
-- Ansible + required collections
-- Oh My Zsh
+**Prerequisites that `setup.sh` installs automatically:**
+- **macOS**: Homebrew, Ansible via brew
+- **Linux/WSL**: Ansible via apt, GitHub CLI
+- GNU Stow, Oh My Zsh, Ansible collections
 
-**After initial setup, use Ansible for updates:**
+**Essential tools via Ansible:**
+- Modern CLI tools: `bat`, `delta`, `fzf`, `ripgrep`, `jq`
+- Development tools: `neovim`, `tmux`, `shellcheck`
+- Git enhancements with `delta` pager and syntax highlighting
+
+**For updates after initial setup:**
 ```bash
-cd ~/dotfiles/ansible
-ansible-playbook playbook.yml --ask-become-pass
+cd ~/dotfiles
+./scripts/setup.sh          # Normal update
+./scripts/setup.sh --force  # Force all tasks
 ```
 
 ## 📁 Repository Structure
@@ -157,10 +172,22 @@ rm ~/.zshrc ~/.bashrc  # etc.
 ./scripts/setup.sh
 ```
 
+### Tasks Not Running or Skipped
+Use the force flag to ensure all tasks run:
+```bash
+./scripts/setup.sh --force
+```
+
 ### Command Not Found
 Restart your shell after installation:
 ```bash
 exec zsh
+```
+
+### Need Help?
+Get detailed usage information:
+```bash
+./scripts/setup.sh --help
 ```
 
 ## 🔑 Testing Your Setup

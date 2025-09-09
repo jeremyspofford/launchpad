@@ -9,11 +9,42 @@
 # - Installs Ansible if needed
 # - Runs the Ansible playbook to configure everything
 # 
+# Usage:
+#   ./setup.sh [OPTIONS]
+#
+# Options:
+#   -f, --force    Force execution of all tasks (passed to ansible-playbook)
+#   -h, --help     Show this help message
+# 
 # Can be run via curl for new machines:
 #   bash -c "$(curl -fsSL https://raw.githubusercontent.com/yourusername/dotfiles/main/scripts/setup.sh)"
 # ============================================================================ #
 
 set -euo pipefail
+
+# Global variables to track what was done
+SUMMARY_ACTIONS=()
+add_summary() { SUMMARY_ACTIONS+=("$1"); }
+
+# Parse command line arguments
+FORCE_FLAG=""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -f|--force)
+            FORCE_FLAG="--force"
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        *)
+            error "Unknown option: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+done
 
 # --- Colors for output ---
 readonly RED='\033[0;31m'
@@ -34,6 +65,53 @@ header() { echo -e "\n${BOLD}${MAGENTA}==>${NC} ${BOLD}$1${NC}\n"; }
 # --- Helper Functions ---
 command_exists() { command -v "$1" >/dev/null 2>&1; }
 
+show_help() {
+    cat << EOF
+Universal Dotfiles Setup Script
+
+DESCRIPTION:
+    Automated setup script for cross-platform dotfiles management using 
+    Ansible and GNU Stow. Handles initial bootstrap and regular updates.
+
+USAGE:
+    $0 [OPTIONS]
+
+OPTIONS:
+    -f, --force     Force execution of all Ansible tasks, even if they 
+                    appear to be up-to-date. Useful for troubleshooting
+                    or ensuring complete reconfiguration.
+    
+    -h, --help      Show this help message and exit.
+
+EXAMPLES:
+    $0                    # Normal setup/update
+    $0 --force           # Force all tasks to run
+    $0 -h                # Show this help
+
+ENVIRONMENT VARIABLES:
+    DOTFILES_REPO        Override repository to clone (default: jeremyspofford/dotfiles)
+                         Example: DOTFILES_REPO=myuser/dotfiles $0
+
+REQUIREMENTS:
+    - macOS: Xcode Command Line Tools
+    - Linux/WSL: curl, sudo access
+    - Network connection for package downloads
+
+For more information, see README.md in the repository.
+EOF
+}
+
+show_summary() {
+    if [[ ${#SUMMARY_ACTIONS[@]} -gt 0 ]]; then
+        header "Setup Summary"
+        log "The following actions were performed:"
+        for action in "${SUMMARY_ACTIONS[@]}"; do
+            echo "  ✓ $action"
+        done
+        echo ""
+    fi
+}
+
 main() {
     header "Dotfiles Setup"
     
@@ -42,6 +120,7 @@ main() {
     bootstrap_system
     run_ansible_playbook
     
+    show_summary
     success "🎉 Setup complete! Your dotfiles environment is ready."
     echo ""
     echo "Next steps:"
@@ -130,6 +209,7 @@ ensure_repository() {
     cd "$HOME/workspace"
     gh repo clone "$DOTFILES_REPO" || error "Failed to clone dotfiles repository: $DOTFILES_REPO"
     cd dotfiles
+    add_summary "Cloned dotfiles repository: $DOTFILES_REPO"
     success "Dotfiles repository ready."
 }
 
@@ -140,6 +220,7 @@ ensure_homebrew() {
     
     log "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || error "Failed to install Homebrew"
+    add_summary "Installed Homebrew package manager"
     
     # Add Homebrew to PATH for current session
     if [[ -f /opt/homebrew/bin/brew ]]; then
@@ -164,9 +245,11 @@ bootstrap_system() {
         if [[ "$OS_TYPE" == "macos" ]]; then
             ensure_homebrew
             brew install ansible || error "Failed to install Ansible via Homebrew"
+            add_summary "Installed Ansible via Homebrew"
         elif [[ "$OS_TYPE" == "wsl" ]] || [[ "$OS_TYPE" == "linux" ]]; then
             sudo apt-get update -qq || warn "Failed to update apt list"
             sudo apt-get install -y ansible python3-pip || error "Failed to install Ansible via apt"
+            add_summary "Installed Ansible via apt"
         fi
         
         success "Ansible installed."
@@ -176,6 +259,7 @@ bootstrap_system() {
     if [[ -f "ansible/requirements.yml" ]]; then
         log "Installing Ansible collections..."
         ansible-galaxy collection install -r ansible/requirements.yml || warn "Some collections may have failed to install"
+        add_summary "Installed Ansible collections"
         success "Ansible collections processed."
     fi
 }
@@ -188,11 +272,24 @@ run_ansible_playbook() {
     fi
     
     log "Executing main Ansible playbook..."
-    log "You may be prompted for your sudo password."
     
-    # Run the playbook with privilege escalation
-    ansible-playbook ansible/playbook.yml --ask-become-pass || error "Ansible playbook execution failed"
+    # Build ansible-playbook command with optional force flag
+    ANSIBLE_CMD="ansible-playbook -i ansible/inventory.ini ansible/playbook.yml"
+    if [[ -n "$FORCE_FLAG" ]]; then
+        ANSIBLE_CMD="$ANSIBLE_CMD $FORCE_FLAG"
+        log "Force flag enabled - all tasks will be executed regardless of state."
+    fi
     
+    # Check if we need sudo privileges by looking for tasks with become: yes
+    if grep -r "become.*yes\|become.*true" ansible/ >/dev/null 2>&1; then
+        log "Some tasks require sudo privileges. You will be prompted for your password."
+        $ANSIBLE_CMD --ask-become-pass || error "Ansible playbook execution failed"
+    else
+        log "No sudo privileges required."
+        $ANSIBLE_CMD || error "Ansible playbook execution failed"
+    fi
+    
+    add_summary "Executed Ansible playbook ($(grep -c 'name:' ansible/playbook.yml ansible/roles/*/tasks/main.yml 2>/dev/null || echo 'multiple') tasks)"
     success "Ansible playbook completed successfully."
 }
 

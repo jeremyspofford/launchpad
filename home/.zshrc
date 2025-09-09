@@ -154,17 +154,8 @@ elif [[ -f /usr/local/bin/brew ]]; then
 fi
 
 # ============================================================================ #
-# Modular Zsh Configuration Loading
+# OS-specific configurations removed for faster startup
 # ============================================================================ #
-
-# Source OS-specific configurations
-if [[ -f "$XDG_CONFIG_HOME/zsh/os/darwin.zsh" && "$(uname)" == "Darwin" ]]; then
-    source "$XDG_CONFIG_HOME/zsh/os/darwin.zsh"
-elif [[ -f "$XDG_CONFIG_HOME/zsh/os/linux.zsh" && "$(uname)" == "Linux" ]]; then
-    source "$XDG_CONFIG_HOME/zsh/os/linux.zsh"
-elif [[ -f "$XDG_CONFIG_HOME/zsh/os/wsl.zsh" && "$(uname -r)" =~ "WSL" ]]; then
-    source "$XDG_CONFIG_HOME/zsh/os/wsl.zsh"
-fi
 
 # ============================================================================ #
 # ZSH Options
@@ -208,12 +199,13 @@ setopt PROMPT_SUBST
 # Completions
 # ============================================================================ #
 
-# Initialize completion system
+# Initialize completion system (optimized)
 autoload -Uz compinit
+# Only rebuild completions once per day
 if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qNmh+24) ]]; then
     compinit
 else
-    compinit -C
+    compinit -C  # Skip security check for faster startup
 fi
 
 # Completion styling
@@ -266,11 +258,8 @@ bindkey '^X^E' edit-command-line
 # Welcome Message
 # ============================================================================ #
 
+# Moved welcome message to be faster and only show essential info
 if [[ -o interactive ]]; then
-    echo "Welcome to $(hostname), $(whoami)!"
-    echo "System: $(uname -s) $(uname -r) | Shell: $SHELL"
-    echo "Type 'tldr <command>' for quick command help"
-
-    # Run chezmoi auto-update check
-    # chezmoi_auto_update # No longer needed
+    echo "Welcome to $(whoami)@$(hostname -s)!"
+    # Removed slower system info calls for faster startup
 fi

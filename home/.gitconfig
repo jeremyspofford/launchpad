@@ -42,6 +42,7 @@
     side-by-side = true
     line-numbers = true
 
+
 [alias]
     # Basic shortcuts
     st = status -sb
