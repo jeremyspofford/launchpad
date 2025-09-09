@@ -1,6 +1,5 @@
 [user]
     name = "Jeremy Spofford"
-    email = ""
 
 [core]
     editor = nvim
@@ -80,40 +79,23 @@
     sync = !git fetch --all && git pull
     pushf = push --force-with-lease
 
-# Conditional includes for different directories and clients
-# Personal projects (GitHub personal repos, open source contributions)
+# Conditional includes for different directories
+# Personal projects (default for most directories)
 [includeIf "gitdir:~/personal/"]
-    path = ~/.gitconfig.personal
+    path = ~/.config/git/personal.gitconfig
 
 [includeIf "gitdir:~/opensource/"]
-    path = ~/.gitconfig.personal
+    path = ~/.config/git/personal.gitconfig
 
 [includeIf "gitdir:~/github/"]
-    path = ~/.gitconfig.personal
+    path = ~/.config/git/personal.gitconfig
 
-# Work repositories (company)
-[includeIf "gitdir:~/work/company/"]
-    path = ~/.gitconfig.company
+[includeIf "gitdir:~/workspace/"]
+    path = ~/.config/git/personal.gitconfig
 
-[includeIf "gitdir:~/company/"]
-    path = ~/.gitconfig.company
-
-# Client work (anonymized)
-[includeIf "gitdir:~/work/client1/"]
-    path = ~/.gitconfig.client1
-
-[includeIf "gitdir:~/client1/"]
-    path = ~/.gitconfig.client1
-
-[includeIf "gitdir:~/work/client2/"]
-    path = ~/.gitconfig.client2
-
-[includeIf "gitdir:~/client2/"]
-    path = ~/.gitconfig.client2
-
-# Fallback for any ~/work/ directory not caught above  
+# Work repositories - any directory under ~/work/
 [includeIf "gitdir:~/work/"]
-    path = ~/.gitconfig.company
+    path = ~/.config/git/work.gitconfig
 
 
 

@@ -52,5 +52,5 @@ log_heredoc() {
 }
 
 get_repo_root() {
-    echo $(git rev-parse --show-toplevel)
+    echo "$(git rev-parse --show-toplevel)"
 }

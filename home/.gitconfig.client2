@@ -1,5 +1,0 @@
-[user]
-    name = "Jeremy Spofford"
-    email = ""  # Replace with actual client email
-
-# SSH-only setup - no credential helper needed

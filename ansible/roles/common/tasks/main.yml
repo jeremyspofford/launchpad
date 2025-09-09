@@ -18,7 +18,11 @@
 
 - name: Install nvm (Node Version Manager)
   ansible.builtin.shell:
-    cmd: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | PROFILE=/dev/null bash
+    cmd: |
+      TEMP_SCRIPT=$(mktemp)
+      curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh" -o "$TEMP_SCRIPT"
+      PROFILE=/dev/null bash "$TEMP_SCRIPT"
+      rm "$TEMP_SCRIPT"
   args:
     creates: "{{ ansible_env.HOME }}/.nvm/nvm.sh" # Idempotency check
   when: not nvm_check.stat.exists

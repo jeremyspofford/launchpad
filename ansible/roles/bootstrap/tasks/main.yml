@@ -201,7 +201,10 @@
 - name: Install zoxide on Linux
   shell: |
     if ! command -v zoxide >/dev/null 2>&1; then
-      curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+      TEMP_SCRIPT=$(mktemp)
+      curl -fsSL "https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh" -o "$TEMP_SCRIPT"
+      bash "$TEMP_SCRIPT"
+      rm "$TEMP_SCRIPT"
     fi
   when: ansible_os_family == "Debian"
   become: no

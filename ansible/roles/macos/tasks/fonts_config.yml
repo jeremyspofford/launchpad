@@ -2,11 +2,9 @@
 - name: Configure WezTerm font
   ansible.builtin.lineinfile:
     path: "{{ dotfiles_root }}/home/.wezterm.lua"
-    regexp: |
-      ^config.font = wezterm.font(".*")
-    line: |
-      config.font = wezterm.font("JetBrainsMono Nerd Font")
-    insertafter: '^config.font_size = .*'
+    regexp: '^config\.font = wezterm\.font\(".*"\)'
+    line: 'config.font = wezterm.font("JetBrainsMono Nerd Font")'
+    insertafter: '^config\.font_size = .*'
     backup: true
 
 - name: Ensure VSCode settings directory exists

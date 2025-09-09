@@ -124,9 +124,11 @@ ensure_repository() {
     fi
     
     # Clone repository
+    # Use environment variable or try to detect repository from git remote
+    DOTFILES_REPO="${DOTFILES_REPO:-jeremyspofford/dotfiles}"
     mkdir -p "$HOME/workspace"
     cd "$HOME/workspace"
-    gh repo clone jeremyspofford/dotfiles || error "Failed to clone dotfiles repository"
+    gh repo clone "$DOTFILES_REPO" || error "Failed to clone dotfiles repository: $DOTFILES_REPO"
     cd dotfiles
     success "Dotfiles repository ready."
 }
