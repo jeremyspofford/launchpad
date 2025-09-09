@@ -1,0 +1,22 @@
+---
+common_packages:
+  - bat
+  - curl
+  - delta
+  - fzf
+  - gh
+  - glab
+  - git
+  - jq
+  - neovim
+  - ripgrep
+  - shellcheck
+  - starship
+  - tmux
+  - wget
+  - yamllint
+  - zsh
+
+os_packages: []
+
+

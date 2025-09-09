@@ -70,16 +70,9 @@ backup_*/
 *.bak
 *.orig
 
-# chezmoi specific
-.chezmoidata/
-.chezmoitemplates/
-
 # Ansible
 *.retry
 .vault_pass.txt
-
-# Fabric specific
-.fabric/
 
 # Personal files that shouldn't be tracked
 secrets/

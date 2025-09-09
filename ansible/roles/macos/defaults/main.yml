@@ -1,0 +1,23 @@
+---
+cask_packages:
+  - google-cloud-sdk
+  - docker-desktop
+  - amazon-q
+  - brave-browser
+  - wezterm
+  - rectangle-pro
+  - betterdisplay
+  - logi-options+
+
+macos_formulae_packages:
+  - awscli
+  - gemini-cli
+  - uv
+  - node
+  - eza
+  - gsed
+  - bash  # Modern Bash (5.x) to replace macOS default 3.2.57
+  - zsh-history-substring-search
+  - zsh-completions
+  - stow
+  - zsh-vi-mode
