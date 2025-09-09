@@ -10,7 +10,8 @@
       "Bash(source:*)",
       "Read(//private/etc/**)",
       "Read(//Users/jeremyspofford/**)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

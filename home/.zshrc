@@ -113,43 +113,37 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 # ============================================================================ #
-# ZSH Configuration - Modern, Fast, Cross-Platform
+# Post Oh My Zsh Configuration - Custom Settings
 # ============================================================================ #
 
-# ============================================================================ #
-# Zsh-Specific Setup (before sourcing .commonrc)
-# ============================================================================ #
-
-# XDG directories (needed before sourcing .commonrc)
+# XDG directories for better organization
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_STATE_HOME="$HOME/.local/state"
 
-# Zsh-specific history configuration
-export HISTFILE="$XDG_STATE_HOME/zsh/history"
+# Create zsh state directory if it doesn't exist
 if [ ! -d "$XDG_STATE_HOME/zsh" ]; then
     mkdir -p "$XDG_STATE_HOME/zsh"
 fi
 
-# ============================================================================ #
-# Source Common Configuration (shared with bash)
-# ============================================================================ #
+# Set custom history file location
+export HISTFILE="$XDG_STATE_HOME/zsh/history"
 
-# Source common configurations before zsh-specific ones
+# Source common configurations (shared with bash)
 [ -f ~/.commonrc ] && source ~/.commonrc
 
 # ============================================================================ #
-# Zsh-Specific Path Configuration
+# Zsh-Specific Configuration
 # ============================================================================ #
 
-# Remove duplicates from PATH (zsh-specific)
+# Remove duplicates from PATH (zsh-specific feature)
 typeset -U path
 
-# Homebrew on macOS
-if [[ -f /opt/homebrew/bin/brew ]]; then
+# Homebrew setup (if not already done in .commonrc)
+if [[ ! "$PATH" =~ "homebrew" ]] && [[ -f /opt/homebrew/bin/brew ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ -f /usr/local/bin/brew ]]; then
+elif [[ ! "$PATH" =~ "homebrew" ]] && [[ -f /usr/local/bin/brew ]]; then
     eval "$(/usr/local/bin/brew shellenv)"
 fi
 

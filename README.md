@@ -190,7 +190,30 @@ Get detailed usage information:
 ./scripts/setup.sh --help
 ```
 
+### Security Considerations
+
+**SSH Key Generation**: By default, SSH keys are generated **without passphrases** for automation convenience. This trade-off prioritizes ease of use over maximum security.
+
+**Security measures in place:**
+- Keys have 600 permissions (owner read/write only)
+- macOS keychain integration for secure storage
+- Ed25519 keys (modern, secure algorithm)
+
+**For higher security environments:**
+```bash
+# Generate passphrase-protected keys manually
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_personal -C "user@hostname (personal)"
+# Enter passphrase when prompted
+```
+
 ## 🔑 Testing Your Setup
+
+**Automated validation:**
+```bash
+./scripts/validate-setup.sh
+```
+
+**Manual verification:**
 
 After running `scripts/setup.sh`, verify:
 

@@ -20,6 +20,10 @@
   ansible.builtin.command:
     cmd: ssh-keygen -t ed25519 -f "{{ ansible_env.HOME }}/.ssh/id_ed25519_personal" -C "{{ ansible_env.USER }}@{{ ansible_hostname }} (personal)" -N ""
   when: not personal_ssh_key.stat.exists
+  # SECURITY NOTE: Using -N "" creates keys WITHOUT passphrases for automation convenience.
+  # Trade-off: Easier automation vs. reduced security if private key is compromised.
+  # Keys are secured with 600 permissions and keychain integration on macOS.
+  # For higher security environments, manually generate keys with passphrases.
 
 - name: Set correct permissions on SSH key
   ansible.builtin.file:
