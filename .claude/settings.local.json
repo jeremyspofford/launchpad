@@ -11,7 +11,10 @@
       "Read(//private/etc/**)",
       "Read(//Users/jeremyspofford/**)",
       "Bash(cat:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)"
     ],
     "deny": [],
     "ask": []
