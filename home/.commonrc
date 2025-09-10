@@ -194,8 +194,29 @@ alias kickstart='NVIM_APPNAME="nvim-kickstart" nvim'
 alias nvchad="NVIM_APPNAME=nvchad nvim"
 
 # Dotfiles sync function (forwards all arguments)
+# Dynamically finds the dotfiles directory based on the sync.sh script location
 sync() {
-    "$HOME/workspace/dotfiles/scripts/sync.sh" "$@"
+    # Try to find sync.sh in common locations
+    local sync_script=""
+    
+    # Check if DOTFILES_DIR is set
+    if [[ -n "$DOTFILES_DIR" ]] && [[ -x "$DOTFILES_DIR/scripts/sync.sh" ]]; then
+        sync_script="$DOTFILES_DIR/scripts/sync.sh"
+    # Check common location
+    elif [[ -x "$HOME/workspace/dotfiles/scripts/sync.sh" ]]; then
+        sync_script="$HOME/workspace/dotfiles/scripts/sync.sh"
+    # Check if we're in a dotfiles repo
+    elif [[ -x "./scripts/sync.sh" ]]; then
+        sync_script="./scripts/sync.sh"
+    # Check parent directory
+    elif [[ -x "../scripts/sync.sh" ]]; then
+        sync_script="../scripts/sync.sh"
+    else
+        echo "Error: sync.sh not found. Please set DOTFILES_DIR or ensure dotfiles are in ~/workspace/dotfiles" >&2
+        return 1
+    fi
+    
+    "$sync_script" "$@"
 }
 
 # Platform-specific clipboard aliases

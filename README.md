@@ -9,6 +9,7 @@ A streamlined, cross-platform dotfiles setup using GNU Stow. Clone, run one comm
 - **🔄 Easy Syncing**: GNU Stow for managing and syncing dotfiles across machines
 - **🌳 Smart Git Config**: Multiple conditional Git identities for work/personal projects
 - **🎨 Terminal Configuration**: WeZTerm configuration included
+- **⚡ Neovim Setup**: LazyVim configuration with modern plugins and LSP support
 
 ## 🚀 Quick Install
 
@@ -69,6 +70,8 @@ dotfiles/
 │   ├── .vimrc            # Vim configuration
 │   ├── .wezterm.lua      # WeZTerm configuration
 │   └── .config/          # Application configs
+│       ├── nvim/         # LazyVim Neovim configuration
+│       ├── git/          # Git conditional configs
 │       └── zsh/          # Modular zsh configuration
 ├── ansible/              # System packages and updates
 │   ├── playbook.yml

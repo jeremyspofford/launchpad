@@ -13,5 +13,39 @@
   "statusLine": {
     "type": "command",
     "command": "input=$(cat); printf '\\033[01;32m%s@%s\\033[00m: \\033[01;34m%s\\033[00m' \"$(whoami)\" \"$(hostname -s)\" \"$(pwd)\""
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/workspace/dotfiles/scripts/doc-update-hook.sh '{{filePath}}'",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/workspace/dotfiles/scripts/doc-update-hook.sh '{{filePath}}'",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "matcher": "MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/workspace/dotfiles/scripts/doc-update-hook.sh '{{filePath}}'",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
   }
 }

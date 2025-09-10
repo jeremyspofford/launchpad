@@ -17,3 +17,10 @@
     state: link
     mode: '0755'
   when: amazon_q_binary_check.stat.exists
+
+- name: Install AWS CDK
+  community.general.npm:
+    name: "aws-cdk"
+    global: true
+    state: present
+

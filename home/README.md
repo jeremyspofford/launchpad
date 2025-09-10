@@ -1,82 +1,115 @@
 # Dotfiles Management with GNU Stow
 
-This directory (`home/`) is designed to be managed with [GNU Stow](https://www.gnu.org/software/stow/). Stow is a symlink farm manager that allows you to keep your dotfiles in a version-controlled directory and then symlink them into your home directory (`~`).
+This directory (`home/`) contains all dotfiles and is designed to be managed with [GNU Stow](https://www.gnu.org/software/stow/). Stow is a symlink farm manager that creates symlinks from your home directory (`~`) to these version-controlled dotfiles.
 
 ## Why GNU Stow?
 
--   **Cleanliness:** Keeps your home directory tidy by symlinking configuration files from a central, version-controlled location.
--   **Portability:** Easily deploy your dotfiles across multiple machines.
--   **Modularity:** Each subdirectory within `home/` (e.g., `config`, `git`, `wezterm`) is treated as a separate "package," allowing you to selectively manage which dotfiles are symlinked.
+-   **Cleanliness:** Keeps your home directory tidy by symlinking configuration files from this central, version-controlled location.
+-   **Portability:** Easily deploy your dotfiles across multiple machines with a single command.
+-   **Transparency:** Files appear in your home directory as if they were there normally, but are actually symlinked.
+-   **Automatic Management:** The setup script handles all stow operations automatically.
 
-## Installation
+## Automatic Installation (Recommended)
 
-First, ensure you have GNU Stow installed on your system.
-
-Stow is installed via Ansible as part of the dotfiles setup.
-
-## Usage
-
-To use Stow, navigate to the `home/` directory within your dotfiles repository.
+The dotfiles setup script handles everything automatically:
 
 ```bash
-cd /Users/jeremyspofford/workspace/dotfiles/home
+cd ~/dotfiles
+./scripts/setup.sh
 ```
 
-### Stowing a Package
+This script will:
+- Install GNU Stow (via Ansible)
+- Automatically run `stow home` to create all necessary symlinks
+- Handle any conflicts or issues
 
-To symlink a package (e.g., `config`, `git`, `wezterm`) into your home directory, run `stow` followed by the package name:
+## Manual Stow Operations (Advanced)
+
+If you need to manage stow manually, navigate to the repository root:
 
 ```bash
-stow <package_name>
-# Example: stow config
-# This will symlink files from home/config into ~/.config
+cd ~/dotfiles
 ```
 
-For example, to stow your Zsh configuration:
+### Stowing the Home Package
+
+The entire `home/` directory is treated as a single stow package:
 
 ```bash
-stow config
-stow git
-stow wezterm
-stow vim
-stow hushlogin
-stow shell_configuration_files
+stow home
+# This creates symlinks for ALL files in home/ to corresponding locations in ~/
 ```
 
-### Unstowing a Package
+For example, this creates:
+- `home/.zshrc` → `~/.zshrc`
+- `home/.config/nvim/init.lua` → `~/.config/nvim/init.lua`
+- `home/.gitconfig` → `~/.gitconfig`
 
-To remove the symlinks created by Stow for a specific package, use the `-D` (delete) flag:
+### Unstowing (Removing Symlinks)
+
+To remove all dotfiles symlinks:
 
 ```bash
-stow -D <package_name>
-# Example: stow -D config
+stow -D home
 ```
 
-### Dry Run
+### Dry Run (Preview Changes)
 
-Before making any changes, it's highly recommended to perform a dry run to see what `stow` will do:
+To see what stow would do without making changes:
 
 ```bash
-stow -nv <package_name>
-# -n: dry run
+stow -nv home
+# -n: dry run (don't make changes)
 # -v: verbose output
 ```
 
-### Important Considerations
+## Current File Structure
 
--   **Conflicts:** If a file or directory already exists in your home directory that `stow` wants to create a symlink for, it will report a conflict. You'll need to resolve these manually (e.g., move the existing file, back it up, or delete it) before `stow` can proceed.
--   **Target Directory:** By default, `stow` symlinks to the parent directory of where it's run. Since you'll be running `stow` from `/Users/jeremyspofford/workspace/dotfiles/home`, it will correctly symlink to `/Users/jeremyspofford/workspace/dotfiles/` which is not your home directory. To make it symlink to your actual home directory, you need to specify the target directory using the `-t` flag:
+The `home/` directory mirrors your home directory structure exactly:
 
-    ```bash
-    stow -t "$HOME" <package_name>
-    # Example: stow -t "$HOME" config
-    ```
-    **Always use `-t "$HOME"` when running stow from this directory.**
+```
+home/
+├── .commonrc              # Shared bash/zsh configuration
+├── .zshrc                # Zsh-specific configuration  
+├── .bashrc               # Bash-specific configuration
+├── .bash_profile         # Bash login shell setup
+├── .gitconfig            # Main git config with conditional includes
+├── .gitconfig.*          # Work/personal git identities  
+├── .vimrc               # Vim configuration
+├── .wezterm.lua         # WeZTerm terminal configuration
+├── .hushlogin           # Suppress login messages
+└── .config/             # Application configurations
+    ├── nvim/            # LazyVim Neovim setup
+    │   ├── init.lua     # Neovim entry point
+    │   ├── lazy-lock.json
+    │   └── lua/         # Lua configuration modules
+    ├── git/             # Git conditional configs
+    │   ├── personal.gitconfig
+    │   └── work.gitconfig
+    └── zsh/             # Modular zsh configuration
+        ├── aliases.zsh
+        ├── completion.zsh  
+        ├── env.zsh
+        ├── path.zsh
+        ├── plugins.zsh
+        └── os/          # OS-specific configurations
+            ├── darwin.zsh
+            ├── linux.zsh
+            └── wsl.zsh
+```
 
--   **Selective Stowing:** You can choose to stow only specific packages. For instance, if you only want your `git` configuration:
+## Important Notes
 
-    ```bash
-    stow -t "$HOME" git
-    ```
+- **Conflicts:** If files already exist in `~`, stow will report conflicts. The setup script handles these automatically
+- **All-or-nothing:** The current setup treats `home/` as a single package - all files are linked together
+- **Symlinks are transparent:** Applications work normally with symlinked files
+- **Changes are immediate:** Editing files in `home/` immediately affects your live configuration
 
-This README provides a quick start to managing your dotfiles with GNU Stow.
+## Troubleshooting
+
+If you have issues:
+
+1. **Use the setup script first:** `./scripts/setup.sh` handles most problems
+2. **Check for conflicts:** `stow -nv home` shows what would happen  
+3. **Manual unstow/restow:** `stow -D home && stow home`
+4. **Check symlinks:** `ls -la ~ | grep '\->'` shows current symlinks

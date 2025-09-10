@@ -1,0 +1,7 @@
+---
+- name: Create .local/bin directory if it doesn't exist
+  community.general.npm
+    name: "typescript"
+    global: true
+    state: present
+
