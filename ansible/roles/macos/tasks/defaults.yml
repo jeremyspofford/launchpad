@@ -58,10 +58,10 @@
     value: true
   notify: restart_finder
 
-- name: Display Dock on left side
+- name: Display Dock on bottom
   community.general.osx_defaults:
     domain: com.apple.dock
     key: orientation
     type: string
-    value: left
+    value: bottom
   notify: restart_dock

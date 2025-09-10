@@ -14,7 +14,9 @@
       "Bash(git add:*)",
       "Bash(gh pr list:*)",
       "Bash(gh pr view:*)",
-      "Bash(gh pr diff:*)"
+      "Bash(gh pr diff:*)",
+      "WebSearch",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []

@@ -81,16 +81,16 @@
     pushf = push --force-with-lease
 
 # Conditional includes for different directories
-# Personal projects (default for most directories)
 [includeIf "gitdir:~/workspace/"]
+    path = ~/.config/git/work.gitconfig
+
+# Personal projects
+[includeIf "gitdir:~/workspace/dotfiles/"]
     path = ~/.config/git/personal.gitconfig
 
-[includeIf "gitdir:~/workspace/vividcloud/"]
-    path = ~/.config/git/work.gitconfig
-
 # Work repositories - any directory under ~/work/
-[includeIf "gitdir:~/workspace/clients/"]
-    path = ~/.config/git/work.gitconfig
+; [includeIf "gitdir:~/workspace/clients/"]
+;     path = ~/.config/git/work.gitconfig
 
 [color]
     ui = true

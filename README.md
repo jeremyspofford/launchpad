@@ -59,20 +59,22 @@ cd ~/dotfiles
 ```
 dotfiles/
 ├── scripts/
-│   └── setup.sh            # One-time initial setup script
+│   ├── setup.sh            # One-time initial setup script
+│   └── validate-setup.sh   # Validation script to check setup
 ├── home/                   # Your dotfiles (mirrors ~/ structure)  
 │   ├── .commonrc          # Shared configuration for bash/zsh
 │   ├── .zshrc             # Zsh-specific configuration + Oh My Zsh
 │   ├── .bashrc            # Bash-specific configuration
 │   ├── .bash_profile      # Bash login shell setup
 │   ├── .gitconfig         # Main git config with conditional includes
-│   ├── .gitconfig.*       # Work/personal git identities
+│   ├── .gitignore         # Global git ignore patterns
 │   ├── .vimrc            # Vim configuration
 │   ├── .wezterm.lua      # WeZTerm configuration
 │   └── .config/          # Application configs
 │       ├── nvim/         # LazyVim Neovim configuration
-│       ├── git/          # Git conditional configs
-│       └── zsh/          # Modular zsh configuration
+│       └── git/          # Git conditional configs
+│           ├── personal.gitconfig  # Personal Git identity
+│           └── work.gitconfig      # Work Git identity
 ├── ansible/              # System packages and updates
 │   ├── playbook.yml
 │   ├── requirements.yml
@@ -86,7 +88,8 @@ dotfiles/
 
 **Streamlined Shell Configuration:** 
 - `.commonrc` contains all shared configurations between bash and zsh
-- `.zshrc` and `.bashrc` contain shell-specific settings and source `.commonrc`
+- `.zshrc` includes Oh My Zsh setup and sources `.commonrc`
+- `.bashrc` contains bash-specific settings and sources `.commonrc`
 - OS-specific aliases (e.g., `start` command) automatically adapt to your platform
 
 **Initial Setup:** `scripts/setup.sh` handles the one-time setup (Ansible, Oh My Zsh, stow operation)
@@ -148,14 +151,19 @@ Multiple Git identities managed via conditional includes:
 
 **Main config** (`home/.gitconfig`):
 ```ini
-[includeIf "gitdir:~/personal/"]
-    path = ~/.gitconfig.personal
+# Personal projects (default for most directories)
+[includeIf "gitdir:~/workspace/"]
+    path = ~/.config/git/personal.gitconfig
+
+# Work repositories
+[includeIf "gitdir:~/workspace/vividcloud/"]
+    path = ~/.config/git/work.gitconfig
     
-[includeIf "gitdir:~/work/company/"]  
-    path = ~/.gitconfig.company
+[includeIf "gitdir:~/workspace/clients/"]
+    path = ~/.config/git/work.gitconfig
 ```
 
-**Identity configs** (`home/.gitconfig.personal`, etc.):
+**Identity configs** (`home/.config/git/personal.gitconfig`, etc.):
 ```ini
 [user]
     name = Your Name
