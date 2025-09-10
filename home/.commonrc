@@ -193,6 +193,11 @@ alias xero="NVIM_APPNAME=xero/dotfiles/neovim/.config/nvim nvim"
 alias kickstart='NVIM_APPNAME="nvim-kickstart" nvim'
 alias nvchad="NVIM_APPNAME=nvchad nvim"
 
+# Dotfiles sync function (forwards all arguments)
+sync() {
+    "$HOME/workspace/dotfiles/scripts/sync.sh" "$@"
+}
+
 # Platform-specific clipboard aliases
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     alias pbpaste="xclip -selection clipboard -o"

@@ -39,8 +39,6 @@
     state: present
   when: tldr_check.rc != 0 # Install if command failed (tldr not found)
 
-
-
 - name: Check if stow is installed
   ansible.builtin.command: which stow
   register: stow_check
