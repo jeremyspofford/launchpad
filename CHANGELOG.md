@@ -5,6 +5,20 @@ All notable changes to this dotfiles repository will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2025-01-15
+
+### ✨ Added
+- **LazyVim Neovim Configuration** - Modern Neovim setup with LazyVim framework and LSP support
+- **Enhanced Documentation** - Updated all README files to reflect current GNU Stow architecture
+- **Test Suite Foundation** - Basic testing infrastructure for sync script validation
+
+### 🔧 Changed  
+- **Documentation Updates** - All markdown files updated to reflect current project state
+- **Repository Status** - Marked chezmoi migration as fully complete and working
+
+### 🐛 Fixed
+- **Documentation Accuracy** - Corrected outdated references to chezmoi in various docs
+
 ## [3.0.0] - 2024-09-09
 
 ### 🚀 Major Migration: Chezmoi to GNU Stow

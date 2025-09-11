@@ -1,0 +1,7 @@
+---
+- name: Install TypeScript (Global)
+  community.general.npm:
+    name: "typescript"
+    global: true
+    state: present
+

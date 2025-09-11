@@ -19,3 +19,6 @@
 
 - name: Configure macOS defaults
   import_tasks: defaults.yml
+
+- name: Import development tasks
+  import_tasks: development.yml
