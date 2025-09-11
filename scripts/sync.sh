@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2086
 
 # sync.sh - Simple script to apply dotfiles symlinks via GNU stow
 # Based on the Ansible configuration from ansible/roles/common/tasks/main.yml
@@ -97,7 +98,7 @@ echo -e "${YELLOW}Running stow to create symlinks...${NC}"
 
 # Temporarily disable set -e to handle stow errors gracefully
 set +e
-stow $STOW_FLAGS -t "$HOME" home
+stow ${STOW_FLAGS} -t "$HOME" home
 stow_exit_code=$?
 set -e
 

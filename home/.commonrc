@@ -45,7 +45,7 @@ export DOCKER_CONFIG="$XDG_CONFIG_HOME/docker"
 export COMPOSE_FILE="docker-compose.yml"
 
 # SSH
-export SSH_KEY_PATH="$HOME/.ssh/id_ed25519_personal"
+export SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/id_ed25519_personal}"
 
 # History configuration (shell-agnostic location)
 export HISTSIZE=50000
@@ -98,11 +98,11 @@ if command -v ssh-add >/dev/null 2>&1; then
         # Keys are loaded
         :
     else
-        # Load personal SSH key with keychain support (macOS)
+        # Load SSH key with keychain support (macOS)
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            ssh-add --apple-use-keychain ~/.ssh/id_ed25519_personal 2>/dev/null
+            ssh-add --apple-use-keychain "${SSH_KEY_PATH}" 2>/dev/null
         else
-            ssh-add ~/.ssh/id_ed25519_personal 2>/dev/null
+            ssh-add "${SSH_KEY_PATH}" 2>/dev/null
         fi
     fi
 fi
