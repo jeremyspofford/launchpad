@@ -94,10 +94,15 @@ cd "$DOTFILES_DIR"
 # Run stow to symlink the home directory contents to the user's home
 # Using the same command structure as in the Ansible playbook
 echo -e "${YELLOW}Running stow to create symlinks...${NC}"
+
+# Temporarily disable set -e to handle stow errors gracefully
+set +e
 stow $STOW_FLAGS -t "$HOME" home
+stow_exit_code=$?
+set -e
 
 # Check if stow succeeded
-if [ $? -eq 0 ]; then
+if [ $stow_exit_code -eq 0 ]; then
     echo -e "${GREEN}✓ Dotfiles synced successfully!${NC}"
 else
     echo -e "${RED}✗ Failed to sync dotfiles${NC}"
