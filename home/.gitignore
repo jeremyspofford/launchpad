@@ -26,6 +26,7 @@ build/
 # Environment
 .env
 .env.local
+.secrets
 
 # Python
 __pycache__/

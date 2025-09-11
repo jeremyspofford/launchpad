@@ -9,3 +9,5 @@
     name: "@anthropic-ai/claude-code"
     global: true
     state: present
+
+-
