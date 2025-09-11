@@ -45,7 +45,7 @@ export DOCKER_CONFIG="$XDG_CONFIG_HOME/docker"
 export COMPOSE_FILE="docker-compose.yml"
 
 # SSH
-export SSH_KEY_PATH="$HOME/.ssh/id_ed25519_personal"
+export SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/id_ed25519_personal}"
 
 # History configuration (shell-agnostic location)
 export HISTSIZE=50000
@@ -98,11 +98,11 @@ if command -v ssh-add >/dev/null 2>&1; then
         # Keys are loaded
         :
     else
-        # Load personal SSH key with keychain support (macOS)
+        # Load SSH key with keychain support (macOS)
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            ssh-add --apple-use-keychain ~/.ssh/id_ed25519_personal 2>/dev/null
+            ssh-add --apple-use-keychain "${SSH_KEY_PATH}" 2>/dev/null
         else
-            ssh-add ~/.ssh/id_ed25519_personal 2>/dev/null
+            ssh-add "${SSH_KEY_PATH}" 2>/dev/null
         fi
     fi
 fi
@@ -192,6 +192,32 @@ alias starter="NVIM_APPNAME=starter nvim"
 alias xero="NVIM_APPNAME=xero/dotfiles/neovim/.config/nvim nvim"
 alias kickstart='NVIM_APPNAME="nvim-kickstart" nvim'
 alias nvchad="NVIM_APPNAME=nvchad nvim"
+
+# Dotfiles sync function (forwards all arguments)
+# Dynamically finds the dotfiles directory based on the sync.sh script location
+sync() {
+    # Try to find sync.sh in common locations
+    local sync_script=""
+    
+    # Check if DOTFILES_DIR is set
+    if [[ -n "$DOTFILES_DIR" ]] && [[ -x "$DOTFILES_DIR/scripts/sync.sh" ]]; then
+        sync_script="$DOTFILES_DIR/scripts/sync.sh"
+    # Check common location
+    elif [[ -x "$HOME/workspace/dotfiles/scripts/sync.sh" ]]; then
+        sync_script="$HOME/workspace/dotfiles/scripts/sync.sh"
+    # Check if we're in a dotfiles repo
+    elif [[ -x "./scripts/sync.sh" ]]; then
+        sync_script="./scripts/sync.sh"
+    # Check parent directory
+    elif [[ -x "../scripts/sync.sh" ]]; then
+        sync_script="../scripts/sync.sh"
+    else
+        echo "Error: sync.sh not found. Please set DOTFILES_DIR or ensure dotfiles are in ~/workspace/dotfiles" >&2
+        return 1
+    fi
+    
+    "$sync_script" "$@"
+}
 
 # Platform-specific clipboard aliases
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then

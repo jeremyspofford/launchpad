@@ -51,5 +51,5 @@
     - role: fonts
     - role: macos
       when: ansible_os_family == 'Darwin'
-    - role: linux
-      when: ansible_os_family != 'Darwin'
+    # - role: linux
+    #   when: ansible_os_family != 'Darwin'
