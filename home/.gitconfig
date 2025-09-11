@@ -1,5 +1,5 @@
 [user]
-    name = ${GIT_USER_NAME:-"Jeremy Spofford"}
+    name = "Jeremy Spofford"
 
 [core]
     editor = nvim
@@ -20,6 +20,9 @@
 
 [url "git@gitlab.com:"]
     insteadOf = https://gitlab.com/
+
+[url "git@gitlab-vividcloud:vividcloud/"]
+    insteadOf = https://gitlab.com/vividcloud/
 
 [pull]
     rebase = true
@@ -80,13 +83,26 @@
     sync = !git fetch --all && git pull
     pushf = push --force-with-lease
 
-# Conditional includes for different directories
-[includeIf "gitdir:~/workspace/"]
+[include]
     path = ~/.config/git/work.gitconfig
 
-# Personal projects
+[includeIf "gitdir:~/personal/"]
+    path = ~/.config/git/personal.gitconfig
+
 [includeIf "gitdir:~/workspace/dotfiles/"]
     path = ~/.config/git/personal.gitconfig
+
+# # Override with work config for dotfiles (work computer)
+# [includeIf "gitdir:~/workspace/"]
+#     path = ~/.config/git/work.gitconfig
+
+# # Override with personal config if dotfiles repo exists (personal computer)
+# [includeIf "gitdir:~/workspace/dotfiles/"]
+#     path = ~/.config/git/personal.gitconfig
+
+# # Override with personal config if dotfiles repo exists (personal computer)
+# [includeIf "gitdir:~/personal/"]
+#     path = ~/.config/git/personal.gitconfig
 
 # Work repositories - any directory under ~/work/
 ; [includeIf "gitdir:~/workspace/clients/"]
