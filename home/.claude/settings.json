@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/workspace/dotfiles/scripts/doc-update-hook.sh '{{filePath}}'",
+            "command": "${DOTFILES_DIR:-$HOME/workspace/dotfiles}/scripts/doc-update-hook.sh '{{filePath}}'",
             "timeout": 3
           }
         ]
@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/workspace/dotfiles/scripts/doc-update-hook.sh '{{filePath}}'",
+            "command": "${DOTFILES_DIR:-$HOME/workspace/dotfiles}/scripts/doc-update-hook.sh '{{filePath}}'",
             "timeout": 3
           }
         ]
@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/workspace/dotfiles/scripts/doc-update-hook.sh '{{filePath}}'",
+            "command": "${DOTFILES_DIR:-$HOME/workspace/dotfiles}/scripts/doc-update-hook.sh '{{filePath}}'",
             "timeout": 3
           }
         ]

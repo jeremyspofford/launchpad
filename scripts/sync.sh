@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2086
+# shellcheck disable=SC2086  # Intentional word splitting for STOW_FLAGS
 
 # sync.sh - Simple script to apply dotfiles symlinks via GNU stow
 # Based on the Ansible configuration from ansible/roles/common/tasks/main.yml
 
-set -e
+set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
 # Colors for output
 RED='\033[0;31m'
@@ -73,6 +73,22 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Get the dotfiles repository root (parent of scripts directory)
 DOTFILES_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 
+# Validate environment
+if [[ -z "${HOME:-}" ]]; then
+    echo -e "${RED}Error: HOME environment variable is not set${NC}" >&2
+    exit 1
+fi
+
+if [[ ! -d "$HOME" ]]; then
+    echo -e "${RED}Error: HOME directory '$HOME' does not exist${NC}" >&2
+    exit 1
+fi
+
+if [[ ! -d "$DOTFILES_DIR/home" ]]; then
+    echo -e "${RED}Error: Dotfiles home directory '$DOTFILES_DIR/home' does not exist${NC}" >&2
+    exit 1
+fi
+
 echo -e "${GREEN}Syncing dotfiles from:${NC} $DOTFILES_DIR"
 
 # Check if stow is installed
@@ -96,19 +112,31 @@ cd "$DOTFILES_DIR"
 # Using the same command structure as in the Ansible playbook
 echo -e "${YELLOW}Running stow to create symlinks...${NC}"
 
+# Create a temporary file for stow output
+TEMP_LOG=$(mktemp)
+trap 'rm -f "$TEMP_LOG"' EXIT
+
 # Temporarily disable set -e to handle stow errors gracefully
 set +e
-stow ${STOW_FLAGS} -t "$HOME" home
+stow ${STOW_FLAGS} -t "$HOME" home 2>"$TEMP_LOG"
 stow_exit_code=$?
 set -e
 
 # Check if stow succeeded
 if [ $stow_exit_code -eq 0 ]; then
     echo -e "${GREEN}✓ Dotfiles synced successfully!${NC}"
+    # Clean up temp file
+    rm -f "$TEMP_LOG"
 else
     echo -e "${RED}✗ Failed to sync dotfiles${NC}"
+    echo ""
+    echo -e "${YELLOW}Stow error output:${NC}"
+    cat "$TEMP_LOG"
+    echo ""
     echo "You may need to resolve conflicts manually."
     echo "Try running: $0 -v"
     echo "to see verbose output and identify conflicts."
+    # Clean up temp file
+    rm -f "$TEMP_LOG"
     exit 1
 fi

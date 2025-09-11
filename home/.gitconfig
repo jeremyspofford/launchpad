@@ -1,5 +1,5 @@
 [user]
-    name = "Jeremy Spofford"
+    name = ${GIT_USER_NAME:-"Jeremy Spofford"}
 
 [core]
     editor = nvim
