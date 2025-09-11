@@ -17,7 +17,8 @@
       "Bash(gh pr diff:*)",
       "WebSearch",
       "Bash(sed:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

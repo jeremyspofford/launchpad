@@ -163,7 +163,8 @@ run_test "Script checks for stow installation" '
 # Test 11: Script has proper error handling
 run_test "Script has proper error handling" '
     grep -q "set -e" "$SYNC_SCRIPT" &&
-    grep -q "if \[ \$? -eq 0 \]" "$SYNC_SCRIPT"
+    grep -q "stow_exit_code=\$?" "$SYNC_SCRIPT" &&
+    grep -q "if \[ \$stow_exit_code -eq 0 \]" "$SYNC_SCRIPT"
 '
 
 # Test 12: Script resolves paths correctly
