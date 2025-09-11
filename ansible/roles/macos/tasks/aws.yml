@@ -18,6 +18,22 @@
     mode: '0755'
   when: amazon_q_binary_check.stat.exists
 
+- name: Check if q CLI is available
+  ansible.builtin.command: "{{ ansible_env.HOME }}/.local/bin/q --version"
+  register: q_cli_check
+  failed_when: false
+  changed_when: false
+  when: amazon_q_binary_check.stat.exists
+
+- name: Enable Amazon Q Wezterm integration
+  ansible.builtin.command: "{{ ansible_env.HOME }}/.local/bin/q integrations install input-method"
+  when: 
+    - amazon_q_binary_check.stat.exists
+    - q_cli_check.rc == 0
+  register: q_wezterm_integration
+  changed_when: "'already installed' not in q_wezterm_integration.stdout"
+  failed_when: false
+
 - name: Install AWS CDK
   community.general.npm:
     name: "aws-cdk"
