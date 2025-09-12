@@ -5,7 +5,3 @@
     global: true
     state: present
 
-- name: Install Mise-en-place
-  community.general.homebrew:
-    name: "mise"
-    state: latest

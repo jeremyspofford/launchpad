@@ -8,6 +8,8 @@ cask_packages:
   - rectangle-pro
   - betterdisplay
   - logi-options+
+  - 1password
+  - 1password-cli
 
 macos_formulae_packages:
   - awscli
@@ -21,3 +23,5 @@ macos_formulae_packages:
   - zsh-completions
   - stow
   - zsh-vi-mode
+  - mise
+  - lazygit
