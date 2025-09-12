@@ -15,7 +15,13 @@ config.font_size = 18
 config.font = wezterm.font("JetBrainsMono Nerd Font")
 -- config.color_scheme = 'AdventureTime'
 -- config.color_scheme = "TokyoNight"
-config.color_scheme = "catppuccin-mocha"
+-- config.color_scheme = "VS Code Dark+ (default dark)"
+-- config.color_scheme = "catppuccin-mocha"
+config.color_scheme = "Dark+"
 
 -- Finally, return the configuration to wezterm:
+config.keys = {
+	{ key = "Enter", mods = "SHIFT", action = wezterm.action({ SendString = "\x1b\r" }) },
+}
+
 return config

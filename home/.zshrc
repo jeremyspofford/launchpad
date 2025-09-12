@@ -197,6 +197,10 @@ setopt PROMPT_SUBST
 
 # Initialize completion system (optimized)
 autoload -Uz compinit
+# Clean up old completion dumps (keep only 2 newest)
+if ls ${ZDOTDIR:-$HOME}/.zcompdump* &>/dev/null; then
+    ls -t ${ZDOTDIR:-$HOME}/.zcompdump* | tail -n +3 | xargs rm -f
+fi
 # Only rebuild completions once per day
 if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qNmh+24) ]]; then
     compinit

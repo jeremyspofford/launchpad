@@ -1,7 +1,0 @@
----
-- name: Playbook to install Google Cloud CLI
-  hosts: localhost
-  connection: local
-  gather_facts: true
-  roles:
-    - gcloud_install
