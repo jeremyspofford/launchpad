@@ -19,7 +19,9 @@
       "Bash(sed:*)",
       "Bash(git push:*)",
       "Bash(grep:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(nvim:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []
