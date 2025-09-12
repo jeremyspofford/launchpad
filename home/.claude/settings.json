@@ -6,7 +6,8 @@
       "Bash(gh pr list:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr diff:*)",
-      "Edit(*.md)"
+      "Edit(*.md)",
+      "Find"
     ],
     "deny": [],
     "ask": []

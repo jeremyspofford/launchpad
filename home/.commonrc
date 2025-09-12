@@ -227,3 +227,27 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     # pbpaste/pbcopy already available on macOS
     :
 fi
+
+# 1Password Secrets Management
+# Source secrets file if it exists (created by scripts/sync-secrets.sh)
+if [[ -f "$HOME/.secrets" ]]; then
+    source "$HOME/.secrets"
+fi
+
+# Function to sync secrets from 1Password
+sync-secrets() {
+    local dotfiles_dir="${DOTFILES_DIR:-$HOME/workspace/dotfiles}"
+    local sync_script="$dotfiles_dir/scripts/sync-secrets.sh"
+    
+    if [[ -x "$sync_script" ]]; then
+        "$sync_script" "$@"
+        # Reload secrets after syncing
+        if [[ -f "$HOME/.secrets" ]]; then
+            source "$HOME/.secrets"
+            echo "Secrets reloaded in current shell"
+        fi
+    else
+        echo "Error: sync-secrets.sh not found at $sync_script" >&2
+        return 1
+    fi
+}
