@@ -75,13 +75,14 @@ ZSH_THEME="robbyrussell"
 
 plugins=(
     git
-    vi-mode
+    # vi-mode
     zsh-autosuggestions
     zsh-syntax-highlighting
-    colored-man-pages
-    command-not-found
+    # colored-man-pages
+    # command-not-found
     # extract
-    z
+    # z
+    # virtualenv
     # docker
     # kubectl
     # terraform
@@ -267,5 +268,9 @@ fi
 # Amazon Q post block. Keep at the bottom of this file.
 [[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh"
 export PATH="$HOME/.gem/ruby/2.6/bin:$PATH"
-eval "$(rbenv init - zsh)"
+
 # Load rbenv
+eval "$(rbenv init - zsh)"
+
+# Activate mise
+eval "$(mise activate zsh)"
