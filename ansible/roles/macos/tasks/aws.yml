@@ -30,6 +30,7 @@
   when: 
     - amazon_q_binary_check.stat.exists
     - q_cli_check.rc == 0
+    - amazon_q_install_input_method | bool
   register: q_wezterm_integration
   changed_when: "'already installed' not in q_wezterm_integration.stdout"
   failed_when: false

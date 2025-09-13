@@ -22,3 +22,6 @@
 
 - name: Import development tasks
   import_tasks: development.yml
+
+- name: Import Jekyll tasks
+  import_tasks: jekyll.yml

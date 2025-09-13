@@ -1,6 +1,10 @@
 [tools]
 node = { version = "22", postinstall = "corepack enable" }
+# ruby = "latest"
 # claude-code = "latest"
 # gemini-cli = "latest"
 # awscli = "latest"
 # gcloud = "latest"
+
+# [env]
+# RUBY_CONFIGURE_OPTS = "--with-openssl-dir=/opt/homebrew/opt/openssl@3"
