@@ -16,6 +16,8 @@ macos_formulae_packages:
   - gemini-cli
   - uv
   - node
+  - rbenv  # Ruby version manager for better Ruby version control
+  - ruby-build  # Plugin for rbenv to install Ruby versions
   - eza
   - gsed
   - bash  # Modern Bash (5.x) to replace macOS default 3.2.57
@@ -25,3 +27,14 @@ macos_formulae_packages:
   - zsh-vi-mode
   - mise
   - lazygit
+  - openssl
+  - readline
+  - libyaml
+  - libffi
+
+# Amazon Q configuration
+amazon_q_install_input_method: false  # Set to true to enable input method (triggers macOS security popup)
+
+# Ruby configuration
+ruby_version: "3.3.0"  # Latest stable Ruby version to install via rbenv
+
