@@ -21,7 +21,8 @@
       "Bash(grep:*)",
       "Bash(find:*)",
       "Bash(nvim:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(time zsh:*)"
     ],
     "deny": [],
     "ask": []

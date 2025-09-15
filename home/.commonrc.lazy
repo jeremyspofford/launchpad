@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# ============================================================================ #
+# .commonrc.lazy - Shell-agnostic deferred loading for heavy operations
+# ============================================================================ #
+# This file contains initialization for tools/operations that aren't needed
+# immediately at shell startup. Compatible with both bash and zsh.
+#
+# Usage:
+#   Manual: source ~/.commonrc.lazy
+#   Auto (zsh background): (sleep 0.1 && source ~/.commonrc.lazy 2>/dev/null) &!
+#   Auto (bash): (sleep 0.1 && source ~/.commonrc.lazy 2>/dev/null) &
+# ============================================================================ #
+
+# SSH Agent Management (moved from .commonrc for faster startup)
+# Only initialize if we're in an interactive session and haven't already done it
+if [ -t 0 ] && [ -z "$SSH_AGENT_INITIALIZED" ]; then
+    if command -v ssh-add >/dev/null 2>&1; then
+        # Start ssh-agent if not running
+        if ! pgrep -u "$USER" ssh-agent >/dev/null 2>/dev/null; then
+            ssh-agent >"${XDG_RUNTIME_DIR:-/tmp}/ssh-agent.env" 2>/dev/null
+            if [ -f "${XDG_RUNTIME_DIR:-/tmp}/ssh-agent.env" ]; then
+                . "${XDG_RUNTIME_DIR:-/tmp}/ssh-agent.env" >/dev/null
+            fi
+        fi
+
+        # Load SSH keys if they're not already loaded
+        if ssh-add -l >/dev/null 2>&1; then
+            # Keys are loaded
+            :
+        else
+            # Load SSH key with keychain support (macOS)
+            if [ "$(uname)" = "Darwin" ]; then
+                ssh-add --apple-use-keychain "${SSH_KEY_PATH:-$HOME/.ssh/id_ed25519_personal}" 2>/dev/null
+            else
+                ssh-add "${SSH_KEY_PATH:-$HOME/.ssh/id_ed25519_personal}" 2>/dev/null
+            fi
+        fi
+    fi
+    export SSH_AGENT_INITIALIZED=1
+fi
+
+# GPG TTY - set only when needed
+export GPG_TTY=$(tty 2>/dev/null)
+
+# Amazon Q (Zsh specific - check shell type)
+if [ -n "$ZSH_VERSION" ] && [ -z "$AMAZON_Q_LOADED" ]; then
+    [ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh" ] && . "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh"
+    [ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh" ] && . "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh"
+    export AMAZON_Q_LOADED=1
+fi
+
+# NVM - Node Version Manager (heavy initialization)
+# Only load if nvm is installed and not already loaded
+if [ -s "$NVM_DIR/nvm.sh" ] && ! command -v nvm >/dev/null 2>&1; then
+    . "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
+fi
+
+# 1Password CLI session caching (if using op CLI)
+# DISABLED: Automatic 1Password signin removed to prevent constant popups
+# Use 'sync-secrets' command to manually authenticate and sync secrets
+# if command -v op >/dev/null 2>&1 && [ -z "$OP_SESSION_INITIALIZED" ]; then
+#     # Cache session for faster operations
+#     eval "$(op signin --account my.1password.com 2>/dev/null)" || true
+#     export OP_SESSION_INITIALIZED=1
+# fi
+
+# Conda initialization (if installed)
+# if [ -f "$HOME/miniconda3/bin/conda" ]; then
+#     eval "$("$HOME/miniconda3/bin/conda" "shell.$(basename "$SHELL")" hook)"
+# fi
+
+# PyEnv - Python version management
+# if command -v pyenv >/dev/null 2>&1; then
+#     eval "$(pyenv init -)"
+#     eval "$(pyenv virtualenv-init -)"
+# fi
+
+# Google Cloud SDK
+# if [ -f "$HOME/google-cloud-sdk/path.bash.inc" ]; then
+#     . "$HOME/google-cloud-sdk/path.bash.inc"
+# fi
+# if [ -f "$HOME/google-cloud-sdk/completion.bash.inc" ]; then
+#     . "$HOME/google-cloud-sdk/completion.bash.inc"
+# fi
+
+# AWS CLI completion (shell-specific)
+# if command -v aws_completer >/dev/null 2>&1; then
+#     if [ -n "$ZSH_VERSION" ]; then
+#         autoload -U +X bashcompinit && bashcompinit
+#         complete -C aws_completer aws
+#     elif [ -n "$BASH_VERSION" ]; then
+#         complete -C aws_completer aws
+#     fi
+# fi
+
+# Kubernetes tools completion (shell-specific)
+# if command -v kubectl >/dev/null 2>&1; then
+#     if [ -n "$ZSH_VERSION" ]; then
+#         source <(kubectl completion zsh)
+#     elif [ -n "$BASH_VERSION" ]; then
+#         source <(kubectl completion bash)
+#     fi
+# fi
+
+# Docker completion (shell-specific)
+# if command -v docker >/dev/null 2>&1; then
+#     if [ -n "$ZSH_VERSION" ]; then
+#         source <(docker completion zsh)
+#     elif [ -n "$BASH_VERSION" ]; then
+#         source <(docker completion bash)
+#     fi
+# fi
+
+# Notify that lazy loading is complete (optional - comment out for silent loading)
+# echo "Lazy loading complete" >&2
+

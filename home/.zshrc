@@ -1,5 +1,4 @@
-# Amazon Q pre block. Keep at the top of this file.
-[[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.pre.zsh"
+# Amazon Q moved to .zshrc.lazy for faster startup
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
@@ -74,7 +73,7 @@ ZSH_THEME="robbyrussell"
 # Add wisely, as too many plugins slow down shell startup.
 
 plugins=(
-    git
+    # git
     # vi-mode
     zsh-autosuggestions
     zsh-syntax-highlighting
@@ -203,10 +202,10 @@ if ls ${ZDOTDIR:-$HOME}/.zcompdump* &>/dev/null; then
     ls -t ${ZDOTDIR:-$HOME}/.zcompdump* | tail -n +3 | xargs rm -f
 fi
 # Only rebuild completions once per day
-if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qNmh+24) ]]; then
-    compinit
+if [[ -f ${ZDOTDIR:-$HOME}/.zcompdump && ! ${ZDOTDIR:-$HOME}/.zcompdump -nt /usr/share/zsh ]]; then
+    compinit -C  # Skip security check when dump is fresh
 else
-    compinit -C  # Skip security check for faster startup
+    compinit
 fi
 
 # Completion styling
@@ -259,18 +258,41 @@ bindkey '^X^E' edit-command-line
 # Welcome Message
 # ============================================================================ #
 
-# Moved welcome message to be faster and only show essential info
-if [[ -o interactive ]]; then
-    echo "Welcome to $(whoami)@$(hostname -s)!"
-    # Removed slower system info calls for faster startup
-fi
+# Removed welcome message for faster startup
+# Uncomment below if you want it back:
+# if [[ -o interactive ]]; then
+#     echo "Welcome to $(whoami)@$(hostname -s)!"
+# fi
 
-# Amazon Q post block. Keep at the bottom of this file.
-[[ -f "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/amazon-q/shell/zshrc.post.zsh"
-export PATH="$HOME/.gem/ruby/2.6/bin:$PATH"
+# ============================================================================ #
+# Deferred/Lazy Loading
+# ============================================================================ #
 
-# Load rbenv
-eval "$(rbenv init - zsh)"
+# Load shell-agnostic lazy operations (SSH agent, GPG, etc.)
+# Option 1: Load heavy tools in background after 0.1 seconds (recommended)
+(sleep 0.1 && source ~/.commonrc.lazy 2>/dev/null) &!
 
-# Activate mise
-eval "$(mise activate zsh)"
+# Option 2: Manual loading - uncomment if you prefer to load on-demand
+# alias load-lazy='source ~/.commonrc.lazy'
+
+# Option 3: Load synchronously (if you need everything immediately)
+# source ~/.commonrc.lazy
+# Ruby path managed by rbenv/mise instead of hardcoded path
+# export PATH="$HOME/.gem/ruby/2.6/bin:$PATH"  # Deprecated - using rbenv/mise
+
+# Lazy load rbenv - only initialize when first used
+rbenv() {
+    unset -f rbenv
+    eval "$(command rbenv init - zsh)"
+    rbenv "$@"
+}
+
+# Lazy load mise - only initialize when first used
+mise() {
+    unset -f mise
+    eval "$(command mise activate zsh)"
+    mise "$@"
+}
+
+# Load aliases immediately - they're lightweight and expected to be available
+source ~/.aliases

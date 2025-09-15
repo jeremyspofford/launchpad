@@ -1,5 +1,6 @@
 [tools]
 node = { version = "22", postinstall = "corepack enable" }
+localstack = "latest"
 # ruby = "latest"
 # claude-code = "latest"
 # gemini-cli = "latest"

@@ -80,32 +80,12 @@ export ENABLE_CORRECTION="false"
 export COMPLETION_WAITING_DOTS="true"
 
 # Security
-export GPG_TTY=$(tty)
+# GPG_TTY moved to .commonrc.lazy for faster startup
+# export GPG_TTY=$(tty)
 
 # SSH Key Management
-# Ensure SSH agent is running and keys are loaded
-if command -v ssh-add >/dev/null 2>&1; then
-    # Start ssh-agent if not running
-    if ! pgrep -u "$USER" ssh-agent > /dev/null; then
-        ssh-agent > "$XDG_RUNTIME_DIR/ssh-agent.env" 2>/dev/null
-        if [[ -f "$XDG_RUNTIME_DIR/ssh-agent.env" ]]; then
-            . "$XDG_RUNTIME_DIR/ssh-agent.env" >/dev/null
-        fi
-    fi
-    
-    # Load SSH keys if they're not already loaded
-    if ssh-add -l >/dev/null 2>&1; then
-        # Keys are loaded
-        :
-    else
-        # Load SSH key with keychain support (macOS)
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            ssh-add --apple-use-keychain "${SSH_KEY_PATH}" 2>/dev/null
-        else
-            ssh-add "${SSH_KEY_PATH}" 2>/dev/null
-        fi
-    fi
-fi
+# Moved to .commonrc.lazy for faster startup - SSH agent operations are expensive
+# The SSH_KEY_PATH variable is still set here for reference
 
 # Locale settings
 export LANG="en_US.UTF-8"
@@ -114,9 +94,8 @@ export LC_CTYPE="en_US.UTF-8"
 
 # Pager settings
 export PAGER="less"
-if command -v bat >/dev/null; then
-    export PAGER="bat"
-fi
+# Bat check moved to lazy loading for micro-optimization
+# export PAGER="bat"  # Uncomment if you always want bat
 
 # Platform-specific environment variables and aliases
 case "$OSTYPE" in
@@ -161,38 +140,6 @@ export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 export PATH="$HOME/.cursor/bin:$PATH" 
 export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
 
-# Common Aliases
-# File listing aliases
-alias ll='ls -AlF'
-alias la='ls -A'
-alias l='ls -CF'
-
-# Add an "alert" alias for long running commands.  Use like so:
-#   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e ''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'')"'
-
-# ANSIBLE ALIASES
-alias ap="ansible-playbook"
-
-# TERRAFORM ALIASES
-alias tf="terraform"
-alias tfp="terraform plan"
-alias tfa="terraform apply"
-
-# TERRAGRUN ALIASES
-alias tg="terragrunt"
-
-# Language aliases  
-alias python="python3"
-alias pip="pip3"
-
-# NeoVim configurations
-alias craftzdog="NVIM_APPNAME=craftzdog/dotfiles-public/.config/nvim nvim"
-alias starter="NVIM_APPNAME=starter nvim"
-alias xero="NVIM_APPNAME=xero/dotfiles/neovim/.config/nvim nvim"
-alias kickstart='NVIM_APPNAME="nvim-kickstart" nvim'
-alias nvchad="NVIM_APPNAME=nvchad nvim"
-
 # Dotfiles sync function (forwards all arguments)
 # Dynamically finds the dotfiles directory based on the sync.sh script location
 sync() {
@@ -219,35 +166,63 @@ sync() {
     "$sync_script" "$@"
 }
 
-# Platform-specific clipboard aliases
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    alias pbpaste="xclip -selection clipboard -o"
-    alias pbcopy="xclip -selection clipboard"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-    # pbpaste/pbcopy already available on macOS
-    :
-fi
-
 # 1Password Secrets Management
 # Source secrets file if it exists (created by scripts/sync-secrets.sh)
+# Always auto-load local secrets file (no 1Password authentication required)
 if [[ -f "$HOME/.secrets" ]]; then
     source "$HOME/.secrets"
+    # Only show message if secrets weren't already loaded
+    if [[ -z "${SECRETS_LOADED:-}" ]]; then
+        echo "✅ Secrets loaded from ~/.secrets (run 'sync-secrets' to refresh from 1Password)"
+        echo "run 'verify_secrets' to list loaded secrets"
+    fi
+else
+    echo "💡 No secrets file found. Run 'sync-secrets' to create one from 1Password"
 fi
 
-# Function to sync secrets from 1Password
+# Function to load existing secrets (no 1Password authentication)
+load-secrets() {
+    if [[ -f "$HOME/.secrets" ]]; then
+        source "$HOME/.secrets"
+        echo "✅ Secrets loaded from ~/.secrets"
+    else
+        echo "❌ No secrets file found. Run 'sync-secrets' to create one from 1Password"
+        return 1
+    fi
+}
+
+# Function to sync secrets from 1Password (requires authentication)
 sync-secrets() {
     local dotfiles_dir="${DOTFILES_DIR:-$HOME/workspace/dotfiles}"
     local sync_script="$dotfiles_dir/scripts/sync-secrets.sh"
     
     if [[ -x "$sync_script" ]]; then
+        echo "🔐 Authenticating with 1Password..."
         "$sync_script" "$@"
         # Reload secrets after syncing
         if [[ -f "$HOME/.secrets" ]]; then
             source "$HOME/.secrets"
-            echo "Secrets reloaded in current shell"
+            echo "✅ Secrets synced and loaded in current shell"
         fi
     else
         echo "Error: sync-secrets.sh not found at $sync_script" >&2
         return 1
     fi
+}
+
+# Convenience aliases
+alias sync="sync-secrets"  # Short alias for sync-secrets
+alias load="load-secrets"  # Short alias for load-secrets
+
+# AWS SSO
+function sso() {
+  PS3="Please select your AWS profile: "
+  COLUMNS=12
+  profiles=`awk '/^\[profile [^#]/ { gsub(/\[profile |\]/, ""); print }' ~/.aws/config | sort`
+  select profile in $profiles
+  do
+    echo $profile
+    $HOME/workspace/dotfiles/scripts/aws_sso.py $profile
+    break;
+  done
 }
