@@ -85,7 +85,7 @@ def update_aws_credentials(profile_name, profile, credentials):
     config.add_section(profile_name)
     config.set(profile_name, "region", region)
     config.set(profile_name, "aws_access_key_id", credentials["accessKeyId"])
-    config.set(profile_name, "aws_secret_access_key ", credentials["secretAccessKey"])
+    config.set(profile_name, "aws_secret_access_key", credentials["secretAccessKey"])
     config.set(profile_name, "aws_session_token", credentials["sessionToken"])
     write_config(AWS_CREDENTIAL_PATH, config)
 
