@@ -1,0 +1,25 @@
+return {
+  "nvim-treesitter/nvim-treesitter",
+  build = "TSUpdate",
+  event = { "LazyFile", "VeryLazy" },
+  opts = {
+    highlight = { enable = true },
+    indent = { enable = true },
+    ensure_installed = {
+      "bash",
+      "html",
+      "javascript",
+      "json",
+      "lua",
+      "luadoc",
+      "markdown",
+      "markdown_inline",
+      "python",
+      "toml",
+      "tsx",
+      "typescript",
+      "vim",
+      "yaml",
+    },
+  },
+}
