@@ -53,3 +53,4 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 
 alias sso="python $HOME/workspace/dotfiles/scripts/aws_sso.py"
+
