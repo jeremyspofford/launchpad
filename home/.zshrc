@@ -296,3 +296,17 @@ mise() {
 
 # Load aliases immediately - they're lightweight and expected to be available
 source ~/.aliases
+
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/jeremyspofford/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+
+autoload bashcompinit && bashcompinit
+autoload -Uz compinit && compinit
+
+complete -C '/opt/homebrew/bin/aws_completer' aws
+complete -C '/opt/homebrew/bin/aws_completer' awslocal
+
+complete -C '$HOME/.local/bin/cdk' cdk
+complete -C '$HOME/.local/bin/cdk' cdklocal

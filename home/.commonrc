@@ -210,19 +210,15 @@ sync-secrets() {
     fi
 }
 
-# Convenience aliases
-alias sync="sync-secrets"  # Short alias for sync-secrets
-alias load="load-secrets"  # Short alias for load-secrets
-
 # AWS SSO
-function sso() {
-  PS3="Please select your AWS profile: "
-  COLUMNS=12
-  profiles=`awk '/^\[profile [^#]/ { gsub(/\[profile |\]/, ""); print }' ~/.aws/config | sort`
-  select profile in $profiles
-  do
-    echo $profile
-    $HOME/workspace/dotfiles/scripts/aws_sso.py $profile
-    break;
-  done
-}
+# function sso() {
+#   PS3="Please select your AWS profile: "
+#   COLUMNS=12
+#   profiles=`awk 'match($0, /\[profile (.+)\]/, captured) { print captured[1] }' ~/.aws/config | sort`
+#   select profile in $profiles
+#   do
+#     echo $profile
+#     ~/.aws_sso.py $profile
+#     break;
+#   done
+# }
