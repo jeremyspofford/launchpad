@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/jeremyspofford/.local/share/nvim/lazy/LazyVim/**)",
+      "Read(//Users/jeremyspofford/.local/share/nvim/lazy/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

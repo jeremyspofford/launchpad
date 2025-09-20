@@ -79,6 +79,10 @@ secrets/
 private/
 local/
 
+# AWS credentials and config
+.aws/config
+.aws/credentials
+
 # Test artifacts
 test-results/
 *.test

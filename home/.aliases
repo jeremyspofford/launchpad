@@ -1,0 +1,56 @@
+# Convenience aliases
+alias sync="sync-secrets"  # Short alias for sync-secrets
+alias load="load-secrets"  # Short alias for load-secrets
+
+alias terraform='docker run --rm -v $(pwd):/workspace -w /workspace hashicorp/terraform:latest'
+alias terragrunt='docker run --rm -v $(pwd):/workspace -w /workspace gruntwork/terragrunt'
+
+# Common Aliases
+# File listing aliases
+alias ll='ls -AlF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e ''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'')"'
+
+# ANSIBLE ALIASES
+alias ap="ansible-playbook"
+
+# AWS ALIASES
+alias awslocal="aws --endpoint-url=http://localhost:4566 --profile localstack"
+
+# DOCKER ALIASES
+alias dc="docker-compose"
+
+# TERRAFORM ALIASES
+alias tf="terraform"
+alias tfp="terraform plan"
+alias tfa="terraform apply"
+
+# TERRAGRUN ALIASES
+alias tg="terragrunt"
+
+# Language aliases  
+alias python="python3"
+alias pip="pip3"
+
+# NeoVim configurations
+alias craftzdog="NVIM_APPNAME=craftzdog/dotfiles-public/.config/nvim nvim"
+alias starter="NVIM_APPNAME=starter nvim"
+alias xero="NVIM_APPNAME=xero/dotfiles/neovim/.config/nvim nvim"
+alias kickstart='NVIM_APPNAME="nvim-kickstart" nvim'
+alias nvchad="NVIM_APPNAME=nvchad nvim"
+
+# Platform-specific clipboard aliases
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    alias pbpaste="xclip -selection clipboard -o"
+    alias pbcopy="xclip -selection clipboard"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # pbpaste/pbcopy already available on macOS
+    :
+fi
+
+alias sso="python $HOME/workspace/dotfiles/scripts/aws_sso.py"
+
