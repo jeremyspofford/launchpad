@@ -1,5 +1,3 @@
-# Amazon Q moved to .zshrc.lazy for faster startup
-
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
@@ -10,8 +8,8 @@ export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="robbyrussell"
 
 plugins=(
-    # git
     vi-mode
+    # git
     zsh-autosuggestions
     zsh-syntax-highlighting
     colored-man-pages
@@ -177,8 +175,6 @@ bindkey '^X^E' edit-command-line
 # Deferred/Lazy Loading
 # ============================================================================ #
 
-# Load shell-agnostic lazy operations (SSH agent, GPG, etc.)
-
 # Load heavy tools in background after 0.1 seconds (recommended)
 (sleep 0.1 && source ~/.commonrc.lazy 2>/dev/null) &!
 
@@ -211,5 +207,4 @@ complete -C '/opt/homebrew/bin/aws_completer' aws
 complete -C '/opt/homebrew/bin/aws_completer' awslocal
 
 complete -C '$HOME/.local/bin/cdk' cdk
-complete -C '$HOME/.local/bin/cdk' cdklocal
 complete -C '$HOME/.local/bin/cdk' cdklocal
