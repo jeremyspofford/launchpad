@@ -176,6 +176,7 @@ bindkey '^X^E' edit-command-line
 # ============================================================================ #
 
 # Load shell-agnostic lazy operations (SSH agent, GPG, etc.)
+
 # Load heavy tools in background after 0.1 seconds (recommended)
 (sleep 0.1 && source ~/.commonrc.lazy 2>/dev/null) &!
 

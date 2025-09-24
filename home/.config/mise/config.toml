@@ -1,5 +1,5 @@
 [tools]
-node = { version = "24", postinstall = "corepack enable" }
+node = { version = "22", postinstall = "corepack enable" }
 localstack = "latest"
 docker-compose = "latest"
 lazydocker = "latest"
