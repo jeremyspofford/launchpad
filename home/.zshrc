@@ -99,51 +99,15 @@ setopt PROMPT_SUBST
 setopt VI
 
 # ============================================================================ #
-# Completions
+# Completions - moved to .commonrc.lazy for faster startup
 # ============================================================================ #
 
-# Initialize completion system (optimized)
-autoload -Uz compinit
-# Clean up old completion dumps (keep only 2 newest)
-if ls ${ZDOTDIR:-$HOME}/.zcompdump* &>/dev/null; then
-    ls -t ${ZDOTDIR:-$HOME}/.zcompdump* | tail -n +3 | xargs rm -f
-fi
-# Only rebuild completions once per day
-if [[ -f ${ZDOTDIR:-$HOME}/.zcompdump && ! ${ZDOTDIR:-$HOME}/.zcompdump -nt /usr/share/zsh ]]; then
-    compinit -C  # Skip security check when dump is fresh
-else
-    compinit
-fi
-
-# Completion styling
-zstyle ':completion:*' menu select
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
-zstyle ':completion:*' list-colors
-zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
-zstyle ':completion:*:warnings' format '%F{red}-- no matches found --%f'
-
-# Speed up completions
-zstyle ':completion:*' accept-exact '*(N)'
-zstyle ':completion:*' use-cache on
-zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/zcompcache"
-
 # ============================================================================ #
-# Key Bindings
+# Key Bindings - moved to .commonrc.lazy for faster startup
 # ============================================================================ #
 
-# Use emacs key bindings
+# Use emacs key bindings (needed immediately)
 bindkey -e
-
-# Better history search
-bindkey '^[[A' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
-bindkey '^P' history-substring-search-up
-bindkey '^N' history-substring-search-down
-
-# Edit command in editor
-autoload -z edit-command-line
-zle -N edit-command-line
-bindkey '^X^E' edit-command-line
 
 # ============================================================================ #
 # Additional Plugin Configuration
@@ -194,15 +158,3 @@ mise() {
 
 # Load aliases immediately - they're lightweight and expected to be available
 [ -f ~/.aliases ] && source ~/.aliases
-
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
-fpath=($XDG_DATA_HOME/docker/completions $fpath)
-
-autoload bashcompinit && bashcompinit
-autoload -Uz compinit && compinit
-
-complete -C '/opt/homebrew/bin/aws_completer' aws
-complete -C '/opt/homebrew/bin/aws_completer' awslocal
-
-complete -C '$HOME/.local/bin/cdk' cdk
-complete -C '$HOME/.local/bin/cdk' cdklocal
