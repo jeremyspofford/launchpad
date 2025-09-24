@@ -193,12 +193,10 @@ mise() {
 }
 
 # Load aliases immediately - they're lightweight and expected to be available
-source ~/.aliases
+[ -f ~/.aliases ] && source ~/.aliases
 
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
-fpath=(/Users/jeremyspofford/.docker/completions $fpath)
-autoload -Uz compinit
-compinit
+fpath=($XDG_DATA_HOME/docker/completions $fpath)
 
 autoload bashcompinit && bashcompinit
 autoload -Uz compinit && compinit
