@@ -112,6 +112,73 @@ fi
 #     fi
 # fi
 
-# Notify that lazy loading is complete (optional - comment out for silent loading)
-# echo "Lazy loading complete" >&2
+# Zsh completion initialization (moved from .zshrc for faster startup)
+if [ -n "$ZSH_VERSION" ] && [ -z "$ZSH_COMPINIT_LOADED" ]; then
+    autoload bashcompinit && bashcompinit
+    autoload -Uz compinit && compinit
+    export ZSH_COMPINIT_LOADED=1
+fi
+
+# AWS CLI completions (moved from .zshrc for faster startup)
+if [ -n "$ZSH_VERSION" ] && [ -z "$AWS_COMPLETIONS_LOADED" ]; then
+    [[ -f /opt/homebrew/bin/aws_completer ]] && complete -C '/opt/homebrew/bin/aws_completer' aws
+    [[ -f /opt/homebrew/bin/aws_completer ]] && complete -C '/opt/homebrew/bin/aws_completer' awslocal
+    export AWS_COMPLETIONS_LOADED=1
+fi
+
+# CDK completions (moved from .zshrc for faster startup)
+if [ -n "$ZSH_VERSION" ] && [ -z "$CDK_COMPLETIONS_LOADED" ]; then
+    [[ -f $HOME/.local/bin/cdk ]] && complete -C '$HOME/.local/bin/cdk' cdk
+    [[ -f $HOME/.local/bin/cdk ]] && complete -C '$HOME/.local/bin/cdk' cdklocal
+    export CDK_COMPLETIONS_LOADED=1
+fi
+
+# Zsh completion system (moved from .zshrc for faster startup)
+if [ -n "$ZSH_VERSION" ] && [ -z "$ZSH_COMPLETION_SYSTEM_LOADED" ]; then
+    # Initialize completion system (optimized)
+    autoload -Uz compinit
+    # Clean up old completion dumps (keep only 2 newest)
+    if ls ${ZDOTDIR:-$HOME}/.zcompdump* &>/dev/null; then
+        ls -t ${ZDOTDIR:-$HOME}/.zcompdump* | tail -n +3 | xargs rm -f
+    fi
+    # Only rebuild completions once per day
+    if [[ -f ${ZDOTDIR:-$HOME}/.zcompdump && ! ${ZDOTDIR:-$HOME}/.zcompdump -nt /usr/share/zsh ]]; then
+        compinit -C  # Skip security check when dump is fresh
+    else
+        compinit
+    fi
+
+    # Completion styling
+    zstyle ':completion:*' menu select
+    zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
+    zstyle ':completion:*' list-colors
+    zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
+    zstyle ':completion:*:warnings' format '%F{red}-- no matches found --%f'
+
+    # Speed up completions
+    zstyle ':completion:*' accept-exact '*(N)'
+    zstyle ':completion:*' use-cache on
+    zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/zcompcache"
+    
+    export ZSH_COMPLETION_SYSTEM_LOADED=1
+fi
+
+# Zsh key bindings (moved from .zshrc for faster startup)
+if [ -n "$ZSH_VERSION" ] && [ -z "$ZSH_KEYBINDINGS_LOADED" ]; then
+    # Better history search
+    bindkey '^[[A' history-substring-search-up
+    bindkey '^[[B' history-substring-search-down
+    bindkey '^P' history-substring-search-up
+    bindkey '^N' history-substring-search-down
+
+    # Edit command in editor
+    autoload -z edit-command-line
+    zle -N edit-command-line
+    bindkey '^X^E' edit-command-line
+    
+    export ZSH_KEYBINDINGS_LOADED=1
+fi
+
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=($XDG_DATA_HOME/docker/completions $fpath)
 
