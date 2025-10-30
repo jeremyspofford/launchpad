@@ -1,3 +1,15 @@
+[include]
+    path = ~/.gitconfig-private
+
+[include]
+    path = ~/.config/git/work.gitconfig
+
+[includeIf "gitdir:~/personal/"]
+    path = ~/.config/git/personal.gitconfig
+
+[includeIf "gitdir:~/workspace/dotfiles/"]
+    path = ~/.config/git/personal.gitconfig
+
 [user]
     name = "Jeremy Spofford"
 
@@ -20,9 +32,6 @@
 
 [url "git@gitlab.com:"]
     insteadOf = https://gitlab.com/
-
-[url "git@gitlab-vividcloud:vividcloud/"]
-    insteadOf = https://gitlab.com/vividcloud/
 
 [pull]
     rebase = true
@@ -82,31 +91,6 @@
     # Sync shortcuts
     sync = !git fetch --all && git pull
     pushf = push --force-with-lease
-
-[include]
-    path = ~/.config/git/work.gitconfig
-
-[includeIf "gitdir:~/personal/"]
-    path = ~/.config/git/personal.gitconfig
-
-[includeIf "gitdir:~/workspace/dotfiles/"]
-    path = ~/.config/git/personal.gitconfig
-
-# # Override with work config for dotfiles (work computer)
-# [includeIf "gitdir:~/workspace/"]
-#     path = ~/.config/git/work.gitconfig
-
-# # Override with personal config if dotfiles repo exists (personal computer)
-# [includeIf "gitdir:~/workspace/dotfiles/"]
-#     path = ~/.config/git/personal.gitconfig
-
-# # Override with personal config if dotfiles repo exists (personal computer)
-# [includeIf "gitdir:~/personal/"]
-#     path = ~/.config/git/personal.gitconfig
-
-# Work repositories - any directory under ~/work/
-; [includeIf "gitdir:~/workspace/clients/"]
-;     path = ~/.config/git/work.gitconfig
 
 [color]
     ui = true

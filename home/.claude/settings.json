@@ -6,17 +6,46 @@
       "Bash(gh pr list:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr diff:*)",
+      "Bash(npm run build:*)",
+      "Bash(brew list:*)",
+      "Read(//Users/jeremyspofford/.claude/**)",
+      "Bash(osascript:*)",
+      "Bash(tree:*)",
+      "Bash(ls:*)",
+      "Bash(npm config:*)",
+      "Bash(claude --version)",
       "Edit(*.md)",
-      "Find"
+      "Find",
+      "Read(//opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/**)",
+      "Read(//Users/jeremyspofford/.local/lib/node_modules/@anthropic-ai/claude-code/**)",
+      "Read(//Users/jeremyspofford/**)"
     ],
     "deny": [],
     "ask": []
   },
-  "statusLine": {
-    "type": "command",
-    "command": "printf '\\033[01;32m%s@%s\\033[00m: \\033[01;34m%s\\033[00m' \"$(whoami)\" \"$(hostname -s)\" \"$(pwd)\""
-  },
   "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [[ -n \"$SLACK_WEBHOOK_URL\" ]]; then curl -s -X POST -H 'Content-type: application/json' --data '{\"text\":\"🤖 *Claude Code*: Awaiting your input\"}' \"$SLACK_WEBHOOK_URL\"; fi; if [[ -n \"$TEAMS_WEBHOOK_URL\" ]]; then curl -s -X POST -H 'Content-Type: application/json' -d '{\"title\": \"Claude Code\", \"text\": \"🤖 Awaiting your input\"}' \"$TEAMS_WEBHOOK_URL\"; fi; if [[ \"$OSTYPE\" == \"darwin\"* ]]; then osascript -e 'display notification \"Awaiting your input\" with title \"Claude Code\" sound name \"Ping\"' 2>/dev/null; elif grep -qi microsoft /proc/version 2>/dev/null; then powershell.exe -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('Awaiting your input', 'Claude Code', 0, [System.Windows.Forms.MessageBoxIcon]::Information)\" 2>/dev/null; elif command -v notify-send &>/dev/null; then notify-send 'Claude Code' 'Awaiting your input'; fi"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__memory__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Memory operation initiated' >> ~/mcp-operations.log"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write",
@@ -49,5 +78,10 @@
         ]
       }
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline-command.sh"
+  },
+  "alwaysThinkingEnabled": true
 }

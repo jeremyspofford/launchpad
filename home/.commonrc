@@ -142,10 +142,11 @@ export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
 
 # Dotfiles sync function (forwards all arguments)
 # Dynamically finds the dotfiles directory based on the sync.sh script location
-sync() {
+# Note: Named dotfiles-sync to avoid conflict with 'sync' alias in .aliases
+dotfiles-sync() {
     # Try to find sync.sh in common locations
     local sync_script=""
-    
+
     # Check if DOTFILES_DIR is set
     if [[ -n "$DOTFILES_DIR" ]] && [[ -x "$DOTFILES_DIR/scripts/sync.sh" ]]; then
         sync_script="$DOTFILES_DIR/scripts/sync.sh"
@@ -162,7 +163,7 @@ sync() {
         echo "Error: sync.sh not found. Please set DOTFILES_DIR or ensure dotfiles are in ~/workspace/dotfiles" >&2
         return 1
     fi
-    
+
     "$sync_script" "$@"
 }
 

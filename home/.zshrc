@@ -105,9 +105,8 @@ setopt VI
 # ============================================================================ #
 # Key Bindings - moved to .commonrc.lazy for faster startup
 # ============================================================================ #
-
-# Use emacs key bindings (needed immediately)
-bindkey -e
+bindkey -e  # Use emacs key bindings (needed immediately)
+bindkey -v  # vi key bindings
 
 # ============================================================================ #
 # Additional Plugin Configuration
@@ -158,3 +157,11 @@ mise() {
 
 # Load aliases immediately - they're lightweight and expected to be available
 [ -f ~/.aliases ] && source ~/.aliases
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/jeremyspofford/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
+
+export TEAMS_WEBHOOK_URL="https://REDACTED_DOMAIN:443/powerautomate/automations/direct/workflows/08da888b32f64478ab95edb494c09c8f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=***REDACTED***"
+

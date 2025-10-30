@@ -186,7 +186,13 @@ def script_handler(args):
         # No profile specified, show selection menu
         profile_name = select_profile()
         print(f"\nUsing profile: {profile_name}")
-    else:
+        subprocess.run(["aws", "configure", "export-credentials", "--profile", profile_name, "--format", "env"])
+        print("-------------------------------")
+        print("To activate your alias for this profile in the current shell, run:")
+        print(f"    {profile_name}")
+        print("-------------------------------")
+        print("")
+    # else:
         print("Usage: sso [profile_name]")
         sys.exit(1)
     
