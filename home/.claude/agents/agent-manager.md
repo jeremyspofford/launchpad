@@ -259,6 +259,38 @@ Each agent should have ONE clear purpose. If an agent does too many things, spli
 
 - debug-agent: Finds problems AND fixes them AND verifies
 
+### 5. Background Execution Ready
+
+Agents should be designed to support async background execution when appropriate.
+
+**Design for Background:**
+
+```markdown
+# Emit progress markers
+[PROGRESS] Starting comprehensive scan...
+[PROGRESS:25] Analyzed authentication layer
+[PROGRESS:50] Analyzed API endpoints
+[PROGRESS:75] Analyzing database queries
+[RESULT] Analysis complete
+
+## Findings
+...
+```
+
+**When to Support Background:**
+
+- ✅ Long-running operations (>2 minutes)
+- ✅ Independent analysis tasks (security scans, cost analysis)
+- ✅ Monitoring/watching operations
+- ✅ Resource-intensive operations
+
+**When to Stay Synchronous:**
+
+- ❌ Quick operations (<30 seconds)
+- ❌ Interactive operations requiring user input
+- ❌ Operations that modify critical state
+- ❌ Agents that coordinate other agents
+
 ### 2. Clear Triggers
 
 Agent descriptions must clearly state when to use them.
@@ -389,6 +421,7 @@ Analysis:
 - Need: Specialized knowledge of Docker operations
 - Scope: Container management, networking, volumes
 - Triggers: Docker errors, container issues, compose problems
+- Background Support: Yes - container builds can be long-running
 
 Implementation:
 
@@ -399,15 +432,22 @@ Implementation:
    - Workflow section (diagnostic steps)
    - Common Tasks section (start/stop/logs/debug)
    - Output Format section
+   - Progress Markers section (for background execution)
 
 2. Update .claude/agents/README.md:
    - Add docker-agent to agent list
    - Add example usage scenario
    - Update hierarchy diagram
+   - Note background execution support
 
 3. Update CLAUDE.md:
    - Add rule: "When facing Docker issues, call docker-agent"
    - Add example workflow showing orchestrator → docker-agent
+   - Add background execution example for long builds
+
+4. Add to ASYNC_AGENTS_SPEC.md:
+   - Document docker-agent as background-ready
+   - Add usage examples for async container builds
 
 ```
 

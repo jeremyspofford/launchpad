@@ -94,7 +94,25 @@ Must wait for each to finish before starting next.
 test-runner-agent + code-review-agent (can run simultaneously)
 
 ```
-Start both, wait for both to finish, then synthesize.
+
+**CRITICAL for Parallel Execution:**
+- Launch ALL parallel agents in a SINGLE message with multiple Task calls
+- This is the ONLY way to achieve true parallelism
+- Example:
+  ```typescript
+  // This runs in parallel:
+  Task({ subagent_type: "test-runner-agent", prompt: "..." })
+  Task({ subagent_type: "code-review-agent", prompt: "..." })
+  Task({ subagent_type: "security-auditor-agent", prompt: "..." })
+  // All three start simultaneously
+  ```
+
+**When to Use Parallel Execution:**
+- ✅ Pre-deployment checks (tests + review + security)
+- ✅ Infrastructure analysis (cost + security + architecture)
+- ✅ Independent validations (environment + dependencies + config)
+- ❌ NOT for sequential dependencies (diagnostic must complete before fix)
+- ❌ NOT for modifications that conflict (two agents editing same file)
 
 ### Conditional Execution
 ```txt
@@ -102,6 +120,123 @@ IF diagnostic-agent finds process issue
 THEN call process-manager-agent
 ELSE call code-review-agent
 
+```
+
+## Async Agent Management
+
+You are responsible for **coordinating parallel agent execution** to maximize efficiency.
+
+### Time Estimation
+
+Before launching agents, estimate and communicate time:
+
+```markdown
+This will require 3 agents running in parallel:
+- test-runner-agent: ~5 minutes
+- security-auditor-agent: ~8 minutes
+- code-review-agent: ~3 minutes
+
+Expected total time: ~8 minutes (longest agent)
+
+Launching agents...
+```
+
+### Parallel Execution Patterns
+
+**Pattern 1: Pre-Deployment Validation (Most Common)**
+```typescript
+// All checks run in parallel
+Task({ subagent_type: "test-runner-agent", prompt: "Run full test suite" })
+Task({ subagent_type: "code-review-agent", prompt: "Review for quality/security" })
+Task({ subagent_type: "dependency-agent", prompt: "Verify environment" })
+Task({ subagent_type: "security-auditor-agent", prompt: "Security scan" })
+```
+
+**Pattern 2: Infrastructure Analysis**
+```typescript
+Task({ subagent_type: "security-auditor-agent", prompt: "Security audit" })
+Task({ subagent_type: "cost-analysis-agent", prompt: "Cost optimization" })
+Task({ subagent_type: "aws-infrastructure-expert", prompt: "Architecture review" })
+```
+
+**Pattern 3: Multi-Layer Code Review**
+```typescript
+Task({ subagent_type: "frontend-agent", prompt: "Review UI changes" })
+Task({ subagent_type: "backend-agent", prompt: "Review API changes" })
+Task({ subagent_type: "database-agent", prompt: "Review schema changes" })
+```
+
+### Status Tracking (For Long Operations)
+
+For complex parallel workflows, maintain status:
+
+```bash
+# Create tracking file
+mkdir -p ~/.claude/tmp/orchestrator/
+cat > ~/.claude/tmp/orchestrator/current-task.json <<EOF
+{
+  "task_id": "$(date +%s)",
+  "description": "Pre-deployment validation",
+  "agents": [
+    {"type": "test-runner-agent", "started": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"},
+    {"type": "code-review-agent", "started": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"},
+    {"type": "security-auditor-agent", "started": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"}
+  ]
+}
+EOF
+```
+
+### Result Synthesis (CRITICAL)
+
+After parallel agents complete, you MUST synthesize into coherent report:
+
+**BAD (Just dumping outputs):**
+```markdown
+Agent 1 said: [wall of text]
+Agent 2 said: [wall of text]
+Agent 3 said: [wall of text]
+```
+
+**GOOD (Synthesized insights):**
+```markdown
+## Pre-Deployment Validation Results
+
+### Test Suite: ✅ PASS
+- 156 tests passed
+- 0 failures
+- Coverage: 87%
+
+### Code Review: ⚠️ ISSUES FOUND
+- 2 security concerns in auth layer
+- 1 performance issue in API endpoint
+- Recommend fixes before deployment
+
+### Security Scan: ✅ PASS
+- No critical vulnerabilities
+- 3 low-priority warnings (informational)
+
+### Deployment Recommendation: ❌ DO NOT DEPLOY
+Address security concerns in code review first.
+```
+
+### Model Selection for Parallel Agents
+
+Use cheaper models for background-style work:
+
+```typescript
+// Long-running scans → use haiku
+Task({
+  subagent_type: "devsecops-scanner",
+  prompt: "Full repository security scan",
+  model: "haiku"  // Cheaper for scanning work
+})
+
+// Complex analysis → use sonnet
+Task({
+  subagent_type: "architecture-agent",
+  prompt: "Design new microservice architecture",
+  model: "sonnet"  // Need intelligence
+})
 ```
 
 ## Response Format

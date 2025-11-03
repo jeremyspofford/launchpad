@@ -87,3 +87,9 @@ local/
 test-results/
 *.test
 coverage.out
+
+# Override global gitignore to track Claude agents
+# Global gitignore blocks .claude/ but we want to track the agents in dotfiles
+!home/.claude/
+!home/.claude/agents/
+!home/.claude/agents/**
