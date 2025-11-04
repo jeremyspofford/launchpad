@@ -92,4 +92,4 @@ coverage.out
 # Global gitignore blocks .claude/ but we want to track the agents in dotfiles
 !home/.claude/
 !home/.claude/agents/
-!home/.claude/agents/**
+!home/.claude/agents/**.claude/settings.local.json

@@ -53,6 +53,6 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     :
 fi
 
-alias sso="python $HOME/workspace/dotfiles/scripts/aws_sso.py"
+alias sso="/usr/bin/python3 $HOME/workspace/dotfiles/scripts/aws_sso.py"
 
 [[ -f ~/.aliases.local ]] && source ~/.aliases.local

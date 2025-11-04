@@ -165,3 +165,6 @@ compinit
 
 export TEAMS_WEBHOOK_URL="https://REDACTED_DOMAIN:443/powerautomate/automations/direct/workflows/08da888b32f64478ab95edb494c09c8f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=***REDACTED***"
 
+
+# opencode
+export PATH=/Users/jeremyspofford/.opencode/bin:$PATH

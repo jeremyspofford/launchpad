@@ -1,0 +1,125 @@
+# Project-Level Claude Code Configuration
+
+> This file inherits all settings from `~/.claude/CLAUDE.md` (global configuration, tool permissions, agent system, MCP tools).
+> Add project-specific instructions below.
+
+## Project Overview
+
+**Project Name**: [Your project name]
+**Type**: [e.g., Full-stack web app, API service, Infrastructure, CLI tool]
+**Tech Stack**: [e.g., React, Node.js, PostgreSQL, AWS]
+
+## Project-Specific Preferences
+
+### Code Style & Conventions
+- [Add any project-specific coding standards]
+- [e.g., "Use functional components with hooks, not class components"]
+- [e.g., "All API responses must follow the standard envelope format"]
+
+### Architecture Notes
+- [Document key architectural decisions]
+- [e.g., "Backend follows repository pattern with services layer"]
+- [e.g., "Frontend uses atomic design methodology"]
+
+### Testing Requirements
+- [Specify testing standards]
+- [e.g., "All API endpoints require integration tests"]
+- [e.g., "Components need at least 80% test coverage"]
+
+## Important Files & Locations
+
+**Configuration:**
+- [e.g., `config/database.ts` - Database connection settings]
+- [e.g., `.env.example` - Required environment variables]
+
+**Core Modules:**
+- [e.g., `src/services/auth.ts` - Authentication logic]
+- [e.g., `src/lib/db.ts` - Database client]
+
+**Documentation:**
+- [e.g., `docs/api.md` - API documentation]
+- [e.g., `docs/deployment.md` - Deployment guide]
+
+## Development Workflow
+
+### Setup
+```bash
+# Add project-specific setup commands
+npm install
+cp .env.example .env
+npm run db:migrate
+```
+
+### Running Locally
+```bash
+# Add commands to run the project
+npm run dev        # Start development server
+npm run test       # Run tests
+npm run build      # Build for production
+```
+
+### Deployment
+- [Describe deployment process]
+- [e.g., "Deploy to dev: `npm run deploy:dev`"]
+- [e.g., "Merge to main triggers production deploy via GitHub Actions"]
+
+## Agent Preferences for This Project
+
+### Most Relevant Agents
+- [List agents most useful for this project]
+- [e.g., `frontend-agent` - React UI work]
+- [e.g., `backend-agent` - API endpoints]
+- [e.g., `database-agent` - Schema changes]
+- [e.g., `aws-infrastructure-expert` - Infrastructure work]
+
+### Project-Specific Agent Workflows
+- [Document custom agent workflows]
+- [e.g., "For new features: project-manager → orchestrator → database-agent → backend-agent → frontend-agent → verification-agent"]
+
+## Known Issues & Workarounds
+
+- [Document any quirks or known issues]
+- [e.g., "Hot reload sometimes fails - restart dev server if changes don't appear"]
+- [e.g., "S3 bucket permissions require manual setup - see docs/aws-setup.md"]
+
+## External Dependencies & APIs
+
+**Third-Party Services:**
+- [e.g., Stripe API - Payment processing]
+- [e.g., SendGrid - Email delivery]
+- [e.g., Auth0 - Authentication]
+
+**Required Credentials:**
+- [List environment variables needed, but never include actual values]
+- [e.g., `STRIPE_SECRET_KEY` - Stripe API secret]
+- [e.g., `DATABASE_URL` - PostgreSQL connection string]
+
+## Current Work & Context
+
+### Active Branches
+- [Document current feature branches]
+- [e.g., `feature/user-auth` - Adding JWT authentication]
+- [e.g., `bugfix/api-timeout` - Fixing timeout issues]
+
+### Recent Changes
+- [Keep a log of major recent changes]
+- [e.g., "2025-10-28: Migrated from REST to GraphQL"]
+- [e.g., "2025-10-25: Added Redis caching layer"]
+
+### TODO / Backlog
+- [High-level tasks or features]
+- [e.g., "Add rate limiting to API"]
+- [e.g., "Implement user profile page"]
+- [e.g., "Add monitoring and alerting"]
+
+---
+
+## Notes for Claude
+
+[Add any specific instructions for Claude when working in this project]
+
+**Examples:**
+- "Always run tests before making changes to authentication code"
+- "When modifying database schema, update Prisma schema first, then generate migration"
+- "Frontend changes should be tested in both desktop and mobile viewports"
+- "Infrastructure changes should be reviewed by aws-infrastructure-expert agent before deployment"

@@ -1,0 +1,24 @@
+# Runtime directories and files (transient, machine-specific)
+debug/
+file-history/
+downloads/
+projects/
+shell-snapshots/
+todos/
+session-env/
+statsig/
+ide/
+plugins/repos/
+
+# Runtime files
+.update.lock
+.DS_Store
+history.jsonl
+settings.local.json
+
+# Transient analysis/documentation files
+ANALYSIS_INDEX.md
+ASYNC_IMPROVEMENTS.md
+DIRECTORY_ANALYSIS.md
+ORCHESTRATOR_SETUP_COMPLETE.md
+STRUCTURE_SUMMARY.txt
