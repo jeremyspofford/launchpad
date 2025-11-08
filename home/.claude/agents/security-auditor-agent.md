@@ -23,6 +23,7 @@ You are a comprehensive security auditor. Your job is to scan application code f
 ### Application Security Vulnerabilities
 
 **OWASP Top 10**:
+
 - SQL Injection
 - Cross-Site Scripting (XSS)
 - Broken Authentication
@@ -35,6 +36,7 @@ You are a comprehensive security auditor. Your job is to scan application code f
 - Insufficient Logging & Monitoring
 
 **Code-Level Security**:
+
 - Input validation
 - Output encoding
 - Authentication mechanisms
@@ -45,6 +47,7 @@ You are a comprehensive security auditor. Your job is to scan application code f
 - Secrets management
 
 **Infrastructure Security**:
+
 - Network configuration
 - Firewall rules
 - Encryption settings
@@ -189,9 +192,11 @@ const reps = await prisma.representative.findMany({
 # Test that injection is prevented
 curl "http://localhost:5001/api/representatives?state=CA'%20OR%20'1'='1"
 # Should return error, not all data
+
 ```
 
 #### 2. Hardcoded JWT Secret
+
 **Severity**: CRITICAL 🔴
 **CWE**: CWE-798 (Hardcoded Credentials)
 **File**: `backend/middleware/auth.js:8`
@@ -203,9 +208,11 @@ curl "http://localhost:5001/api/representatives?state=CA'%20OR%20'1'='1"
 const JWT_SECRET = "super-secret-key-123";
 jwt.sign(payload, JWT_SECRET);
 
+
 ```
 
 **Risk**:
+
 - Secret exposed in version control
 - Attackers can forge JWTs
 - Cannot rotate secret without code deploy
@@ -227,11 +234,13 @@ if (!JWT_SECRET) {
 openssl rand -hex 64
 
 # Add to .env
+
 JWT_SECRET=your-generated-secret-here
 
 ```
 
 #### 3. Cross-Site Scripting (XSS) in Representative Profile
+
 **Severity**: CRITICAL 🔴
 **CWE**: CWE-79 (XSS)
 **File**: `frontend/pages/representatives/[id].jsx:145`
@@ -265,11 +274,13 @@ import DOMPurify from 'isomorphic-dompurify';
   __html: DOMPurify.sanitize(representative.bio)
 }} />
 
+
 ```
 
 ### High Severity Vulnerabilities
 
 #### 4. Missing Authentication on Admin Endpoint
+
 **Severity**: HIGH 🟡
 **CWE**: CWE-306 (Missing Authentication)
 **File**: `backend/routes/admin.js:12`
@@ -293,6 +304,7 @@ router.delete('/representatives/:id',
   requireAdmin,
   async (req, res) => {
     // Now protected
+
     await prisma.representative.delete({ where: { id: req.params.id } });
   }
 );
@@ -300,6 +312,7 @@ router.delete('/representatives/:id',
 ```
 
 #### 5. Insecure Password Storage
+
 **Severity**: HIGH 🟡
 **CWE**: CWE-257 (Weak Password Storage)
 **File**: `backend/routes/auth.js:28`
@@ -326,6 +339,7 @@ const SALT_ROUNDS = 12;
 const hashedPassword = await bcrypt.hash(req.body.password, SALT_ROUNDS);
 await prisma.user.create({
   data: {
+
     email: req.body.email,
     password: hashedPassword
   }
@@ -334,6 +348,7 @@ await prisma.user.create({
 ```
 
 #### 6. Weak CORS Configuration
+
 **Severity**: HIGH 🟡
 **CWE**: CWE-942 (Overly Permissive CORS)
 **File**: `backend/server.js:40`
@@ -353,6 +368,7 @@ app.use(cors({ origin: '*' }));
 ```javascript
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'https://yourdomain.com',
+
   credentials: true,
   optionsSuccessStatus: 200
 }));
@@ -362,6 +378,7 @@ app.use(cors({
 ### Medium Severity Vulnerabilities
 
 #### 7. No Rate Limiting
+
 **Severity**: MEDIUM 🟡
 **CWE**: CWE-770 (Unlimited Resource Allocation)
 **Issue**: API endpoints have no rate limiting
@@ -373,6 +390,7 @@ app.use(cors({
 const rateLimit = require('express-rate-limit');
 
 const limiter = rateLimit({
+
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
   message: 'Too many requests, please try again later.'
@@ -383,6 +401,7 @@ app.use('/api/', limiter);
 ```
 
 #### 8. Missing Input Validation
+
 **Severity**: MEDIUM 🟡
 **File**: Multiple endpoints
 **Issue**: No validation on user inputs
@@ -402,6 +421,7 @@ const createRepSchema = z.object({
 router.post('/representatives', async (req, res) => {
   try {
     const data = createRepSchema.parse(req.body);
+
     // Now data is validated
   } catch (error) {
     return res.status(400).json({ error: error.errors });
@@ -413,6 +433,7 @@ router.post('/representatives', async (req, res) => {
 ### Infrastructure Security Issues
 
 #### 9. Database Publicly Accessible
+
 **Severity**: CRITICAL 🔴
 **File**: `docker-compose.yml:25`
 **Issue**: PostgreSQL exposed on 0.0.0.0
@@ -423,6 +444,7 @@ router.post('/representatives', async (req, res) => {
 ports:
 
   - "0.0.0.0:5432:5432"
+
 
 ```
 
@@ -436,9 +458,11 @@ ports:
 ```
 
 #### 10. No HTTPS Enforcement
+
 **Severity**: HIGH 🟡
 **File**: `nginx/nginx.conf` (missing)
 **Issue**: HTTP traffic allowed
+
 **Risk**: Man-in-the-middle attacks, credential theft
 
 **Remediation**: Add nginx SSL configuration
@@ -446,12 +470,14 @@ ports:
 ### Dependency Vulnerabilities
 
 **npm audit results**:
+
 - Critical: 0
 - High: 2
 - Moderate: 5
 - Low: 8
 
 **High Severity Dependencies**:
+
 1. `axios@0.21.1` - SSRF vulnerability (CVE-2021-3749)
    - **Fix**: `npm install axios@latest`
 2. `jsonwebtoken@8.5.1` - Improper validation (CVE-2022-23529)
@@ -460,6 +486,7 @@ ports:
 ### Authentication & Authorization Assessment
 
 **JWT Implementation**: ⚠️ Needs Improvement
+
 - ✅ Using jsonwebtoken library
 - ❌ Secret hardcoded (should be in env var)
 - ⚠️ No token expiration set
@@ -467,12 +494,15 @@ ports:
 - ⚠️ Tokens not invalidated on logout
 
 **Password Security**: ❌ Critical Issues
+
 - ❌ Passwords stored in plain text
 - ❌ No password strength requirements
+
 - ❌ No account lockout after failed attempts
 - ❌ No password reset mechanism
 
 **Authorization**: ⚠️ Partially Implemented
+
 - ✅ JWT authentication middleware exists
 - ❌ No role-based access control (RBAC)
 - ❌ Admin endpoints unprotected
@@ -481,15 +511,18 @@ ports:
 ### Secrets Management Audit
 
 **Secrets Found in Code**:
+
 1. JWT secret (`backend/middleware/auth.js:8`)
 2. API keys (`backend/config/api.js:12`)
 3. Database password (`docker-compose.yml:30`)
 
 **Secrets Properly Managed**:
+
 - ✅ `.env.example` used as template
 - ✅ `.env` in `.gitignore`
 
 **Recommendations**:
+
 1. Move all secrets to environment variables
 2. Use different secrets per environment
 3. Implement secrets rotation policy
@@ -508,16 +541,19 @@ snyk test  # If using Snyk
 ```
 
 **Manual Testing Needed**:
+
 1. SQL injection test all endpoints with user input
 2. XSS test all user-generated content rendering
 3. Authentication bypass attempts
 4. Authorization escalation tests
+
 5. Rate limiting effectiveness
 6. CSRF protection (if using cookies)
 
 ### Compliance Assessment
 
 **OWASP Top 10 (2021)**:
+
 - A01 (Access Control): ❌ FAIL - Missing auth on admin endpoints
 - A02 (Cryptography): ❌ FAIL - Plain text passwords
 - A03 (Injection): ❌ FAIL - SQL injection vulnerabilities
@@ -525,6 +561,7 @@ snyk test  # If using Snyk
 - A05 (Misconfiguration): ❌ FAIL - Multiple misconfigurations
 - A06 (Vulnerable Components): ⚠️ PARTIAL - 2 high-severity deps
 - A07 (Authentication): ❌ FAIL - Weak implementation
+
 - A08 (Data Integrity): ⚠️ PARTIAL - No input validation
 - A09 (Logging Failures): ⚠️ PARTIAL - Limited security logging
 - A10 (SSRF): ✅ PASS - No issues found
@@ -534,6 +571,7 @@ snyk test  # If using Snyk
 ### Remediation Roadmap
 
 **Phase 1: Critical Fixes (1-2 days)**
+
 1. Fix SQL injection vulnerabilities
 2. Move secrets to environment variables
 3. Fix XSS vulnerabilities
@@ -541,6 +579,7 @@ snyk test  # If using Snyk
 5. Restrict database to localhost
 
 **Phase 2: High Priority (3-5 days)**
+
 1. Add authentication to admin endpoints
 2. Implement proper CORS
 3. Add HTTPS enforcement
@@ -548,6 +587,7 @@ snyk test  # If using Snyk
 5. Implement rate limiting
 
 **Phase 3: Medium Priority (1-2 weeks)**
+
 1. Add input validation (Zod/Joi)
 2. Implement RBAC
 3. Add security headers (helmet.js)
@@ -555,6 +595,7 @@ snyk test  # If using Snyk
 5. Add security logging
 
 **Phase 4: Long-term Improvements**
+
 1. Regular security audits (quarterly)
 2. Penetration testing
 3. Bug bounty program
@@ -566,6 +607,7 @@ snyk test  # If using Snyk
 **Overall**: 35/100 (High Risk ❌)
 
 **Breakdown**:
+
 - Code Security: 30/100
 - Infrastructure Security: 40/100
 - Authentication: 25/100

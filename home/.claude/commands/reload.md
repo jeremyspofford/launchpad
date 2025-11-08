@@ -6,7 +6,7 @@ description: Reload agent configurations and validate setup (requires new sessio
 
 Claude Code loads agent configurations at **session start only**. Configuration changes won't affect the current session.
 
-## To Apply Configuration Changes:
+## To Apply Configuration Changes
 
 1. **End this session** (Ctrl+C or exit command)
 2. **Start a new Claude Code session**
@@ -139,12 +139,14 @@ find ~/.claude/agents -name "*.md" -mtime -7 -exec ls -lht {} \; | head -10
 **Start new session**: Exit this session and run `claude` again
 
 **Your configurations**:
+
 - Agents: `~/.claude/agents/`
 - Global config: `~/.claude/CLAUDE.md`
 - Settings: `~/.claude/settings.json`
 - Commands: `~/.claude/commands/`
 
 **Async agent capabilities**:
+
 - Orchestrator has parallel execution built-in
 - Use orchestrator-agent for coordinated parallel workflows
 - See ASYNC_WORKFLOW_EXAMPLES.md for usage patterns

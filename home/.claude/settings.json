@@ -9,21 +9,39 @@
       "Bash(npm run build:*)",
       "Bash(brew list:*)",
       "Read(//Users/jeremyspofford/.claude/**)",
+      "Read(//opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/**)",
+      "Read(//Users/jeremyspofford/.local/lib/node_modules/@anthropic-ai/claude-code/**)",
+      "Read(//Users/jeremyspofford/**)",
       "Bash(osascript:*)",
       "Bash(tree:*)",
       "Bash(ls:*)",
       "Bash(npm config:*)",
       "Bash(claude --version)",
       "Edit(*.md)",
-      "Find",
-      "Read(//opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/**)",
-      "Read(//Users/jeremyspofford/.local/lib/node_modules/@anthropic-ai/claude-code/**)",
-      "Read(//Users/jeremyspofford/**)"
+      "Edit(*.json)",
+      "Edit(//Users/jeremyspofford/.claude/**)",
+      "Write(*.md)",
+      "Write(*.json)",
+      "Write(//Users/jeremyspofford/.claude/**)",
+      "Write(//Users/jeremyspofford/.cursor/**)",
+      "MultiEdit(*)",
+      "Find"
     ],
     "deny": [],
     "ask": []
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\n⚠️  ROUTING POLICY REMINDER ⚠️\n\nBefore responding, check the decision tree in CLAUDE.md:\n1. Simple info query? → Handle directly\n2. Trivial command? → Handle directly  \n3. User named specific agent? → Use that agent\n4. Project planning? → Use project-manager\n5. ANYTHING ELSE? → USE ORCHESTRATOR-AGENT\n\n⚠️  If doing technical work directly, you should have used orchestrator!\n' >&2"
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "matcher": "",
@@ -42,6 +60,19 @@
           {
             "type": "command",
             "command": "echo 'Memory operation initiated' >> ~/mcp-operations.log"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/validate-routing.sh '{{toolName}}' '{{filePath}}'"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/log-routing-decision.sh 'DIRECT' 'tool-use' '{{toolName}}' '{{filePath}}'"
           }
         ]
       }
@@ -89,6 +120,17 @@
             "type": "command",
             "command": "~/.claude/scripts/markdown-lint-hook.sh '{{filePath}}'",
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/log-routing-decision.sh 'SESSION_END' 'session-complete' 'various'"
           }
         ]
       }

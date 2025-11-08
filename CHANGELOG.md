@@ -8,15 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.1.0] - 2025-01-15
 
 ### ✨ Added
+
 - **LazyVim Neovim Configuration** - Modern Neovim setup with LazyVim framework and LSP support
 - **Enhanced Documentation** - Updated all README files to reflect current GNU Stow architecture
 - **Test Suite Foundation** - Basic testing infrastructure for sync script validation
 
 ### 🔧 Changed  
+
 - **Documentation Updates** - All markdown files updated to reflect current project state
 - **Repository Status** - Marked chezmoi migration as fully complete and working
 
 ### 🐛 Fixed
+
 - **Documentation Accuracy** - Corrected outdated references to chezmoi in various docs
 
 ## [3.0.0] - 2024-09-09
@@ -24,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🚀 Major Migration: Chezmoi to GNU Stow
 
 ### ✨ Added
+
 - **GNU Stow integration** - Complete migration from chezmoi to stow for dotfile management
 - **Streamlined shell configuration** - New `.commonrc` for shared bash/zsh configurations
 - **OS-adaptive aliases** - Platform-specific commands (start=open/explorer.exe/xdg-open)
@@ -31,12 +35,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Oh My Zsh plugin management** - Proper plugin loading without conflicts
 
 ### 🔧 Changed
+
 - **Repository structure** - `home/` directory now directly mirrors `~/` for stow compatibility  
 - **Shell configuration architecture** - Eliminated duplication between `.bashrc` and `.zshrc`
 - **Setup process** - Simplified from complex chezmoi workflow to single script execution
 - **Documentation** - Updated README.md and CLAUDE.md to reflect new stow-based workflow
 
 ### 🗑️ Removed
+
 - **Chezmoi dependencies** - Completely removed chezmoi configuration and templates
 - **Fabric integration** - Removed all fabric-related aliases and configurations
 - **Obsidian aliases** - Cleaned out obsidian-specific shortcuts
@@ -44,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Legacy plugin loading** - Removed manual zsh plugin loading that conflicted with Oh My Zsh
 
 ### 🐛 Fixed
+
 - **Zsh exit code 130** - Resolved plugin loading conflicts causing terminal crashes
 - **Stow package structure** - Fixed directory organization for proper symlink creation
 - **Ansible playbook** - Corrected gnu_stow task configuration
@@ -51,7 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Platform detection** - Improved WSL vs native Linux detection
 
 ### 📋 Migration Notes
+
 This is a **breaking change** for existing users. The repository has been completely restructured around GNU Stow. Users should:
+
 1. Back up existing configurations
 2. Run `./scripts/setup.sh` for fresh installation
 3. Verify symlinks with `ls -la ~ | grep '\->'`
@@ -61,16 +70,19 @@ This is a **breaking change** for existing users. The repository has been comple
 ### 🧹 Major Cleanup & UX Improvements
 
 ### ✨ Added
-- **Enhanced SSH key generation UX** - colorized output with clear GitHub instructions and direct link to https://github.com/settings/keys
+
+- **Enhanced SSH key generation UX** - colorized output with clear GitHub instructions and direct link to <https://github.com/settings/keys>
 - **Improved error handling** - better chezmoi template variable management and robust installation
 - **Streamlined repository** - removed 2.9MB of unused files and configurations
 
 ### 🔧 Changed  
+
 - **SSH key setup** - beautiful colored interface with step-by-step GitHub integration
 - **Documentation consolidation** - unified README replaces multiple versions
 - **Repository structure** - removed legacy development artifacts and unused configs
 
 ### 🗑️ Removed  
+
 - **Legacy documentation** - old `docs/` directory (faq, installation, troubleshooting, usage)
 - **Development artifacts** - Dockerfiles, test scripts, verification tools  
 - **Unused configurations** - VS Code, Kitty, duplicate tmux configs
@@ -78,6 +90,7 @@ This is a **breaking change** for existing users. The repository has been comple
 - **Testing infrastructure** - Docker containers, verification scripts
 
 ### 🐛 Fixed
+
 - **Neovim installation conflicts** - robust handling of broken symlinks and existing configs
 - **chezmoi template errors** - proper variable initialization for SSH key generation
 - **GitHub Actions reliability** - improved YAML syntax and error handling
@@ -86,6 +99,7 @@ This is a **breaking change** for existing users. The repository has been comple
 ## [Unreleased] - 2024-08-07
 
 ### Added
+
 - **New streamlined installer** (`install-new.sh`) with single-command setup
 - **GitHub CLI integration** with automatic installation and useful aliases (`ghpr`, `ghpv`, etc.)
 - **JetBrainsMono Nerd Font** automatic installation across platforms
@@ -100,6 +114,7 @@ This is a **breaking change** for existing users. The repository has been comple
 - **Linting aliases** and quality assurance tools built into shell
 
 ### Changed
+
 - **BREAKING**: Streamlined from complex multi-config to essential-tools-only approach
 - **Removed 2.7MB of fabric patterns** - kept only core productivity tools
 - **Simplified nvim setup** - removed multiple configurations, uses kickstart.nvim instead
@@ -110,6 +125,7 @@ This is a **breaking change** for existing users. The repository has been comple
 - **Streamlined starship config** from complex themed to clean minimal design
 
 ### Removed
+
 - **Fabric AI patterns directory** (home/dot_config/fabric/ - 2.7MB freed)
 - **Multiple nvim configurations** (craftzdog, nvchad, xero configs)
 - **Legacy shell configurations** (consolidated into single modern zshrc)
@@ -117,6 +133,7 @@ This is a **breaking change** for existing users. The repository has been comple
 - **Complex installation menus** (replaced with smart defaults)
 
 ### Security
+
 - **Security audit completed** - no critical vulnerabilities or secrets found
 - **Shell script security** enhanced following shellcheck recommendations
 - **Proper secrets management** with comprehensive .gitignore
@@ -124,6 +141,7 @@ This is a **breaking change** for existing users. The repository has been comple
 - **Supply chain security** noted for future improvements
 
 ### Technical Improvements
+
 - **All files now end with blank lines** (enforced coding standard)
 - **Trailing whitespace removed** from all configurations
 - **Consistent indentation** applied throughout
@@ -134,12 +152,14 @@ This is a **breaking change** for existing users. The repository has been comple
 ## [2.0.0] - 2025-01-13
 
 ### Changed
+
 - **BREAKING**: Migrated from GNU Stow to chezmoi for dotfile management
 - **BREAKING**: Reorganized all dotfiles into `home/` directory structure
 - Updated installation process to use chezmoi initialization
 - Replaced manual stow commands with chezmoi apply workflow
 
 ### Added
+
 - Cross-platform compatibility (macOS, Linux, Windows)
 - Template-based configuration system via chezmoi
 - Automated package installation via Ansible playbooks
@@ -152,17 +172,20 @@ This is a **breaking change** for existing users. The repository has been comple
 - Comprehensive documentation updates
 
 ### Enhanced
+
 - Installation script (`install.sh`) with better error handling
 - Git configuration now uses templates for cross-platform compatibility
 - SSH key management with automated generation
 - Zsh configuration with modern tool integration
 
 ### Removed
+
 - Legacy directory structure (`bash/`, `git/`, `zsh/`, `nvim/`, etc.)
 - GNU Stow dependency and configuration
 - Platform-specific installation scripts (consolidated into single script)
 
 ### Migration Notes
+
 - Users upgrading from v1.x should backup existing configurations
 - Run `./install.sh` to migrate to the new chezmoi-based system
 - Legacy dotfiles will be automatically backed up during installation
@@ -171,6 +194,7 @@ This is a **breaking change** for existing users. The repository has been comple
 ## [1.x.x] - Historical
 
 ### Features (Legacy Stow-based System)
+
 - GNU Stow-based dotfile management
 - Basic shell configuration (bash/zsh)
 - Git configuration
@@ -190,6 +214,7 @@ This is a **breaking change** for existing users. The repository has been comple
 6. **Remove legacy backups**: After confirming everything works
 
 ### New Commands to Learn
+
 - `chezmoi apply` - Apply configuration changes
 - `chezmoi edit <file>` - Edit dotfiles with template support
 - `chezmoi update` - Pull and apply remote changes

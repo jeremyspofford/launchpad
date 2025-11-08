@@ -22,7 +22,8 @@
       "Bash(find:*)",
       "Bash(nvim:*)",
       "WebFetch(domain:github.com)",
-      "Bash(time zsh:*)"
+      "Bash(time zsh:*)",
+      "Bash(markdownlint-cli2:*)"
     ],
     "deny": [],
     "ask": []

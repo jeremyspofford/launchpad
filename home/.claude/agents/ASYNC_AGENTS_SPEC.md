@@ -28,6 +28,7 @@ Background agents require temporary storage for state and output:
 ```
 
 **metadata.json structure:**
+
 ```json
 {
   "agent_id": "agent-1730654321-abc",
@@ -71,6 +72,7 @@ Task({
 ```
 
 **Returns (when `run_in_background: true`):**
+
 ```json
 {
   "agent_id": "agent-1730654321-abc",
@@ -80,6 +82,7 @@ Task({
 ```
 
 **Returns (when `run_in_background: false` or unset):**
+
 ```
 [Normal synchronous agent response with full output]
 ```
@@ -89,21 +92,26 @@ Task({
 Retrieves output from a running or completed background agent.
 
 **Parameters:**
+
 ```typescript
 {
   agent_id: string,        // Required: The agent ID to check
   filter?: string          // Optional: Regex filter (like BashOutput)
+
 }
 ```
 
 **Example Usage:**
+
 ```typescript
 AgentOutput({
+
   agent_id: "agent-1730654321-abc"
 })
 ```
 
 **Returns:**
+
 ```json
 {
   "agent_id": "agent-1730654321-abc",
@@ -112,17 +120,20 @@ AgentOutput({
   "progress": {
     "current_step": "Analyzing authentication/",
     "percent_complete": 65,
+
     "last_update": "2025-11-03T14:26:30Z"
   }
 }
 ```
 
 **When Complete:**
+
 ```json
 {
   "agent_id": "agent-1730654321-abc",
   "status": "completed",
   "exit_code": 0,
+
   "output": "[RESULT] Security scan complete.\n\n## Findings\n...",
   "completed_at": "2025-11-03T14:28:12Z",
   "duration_seconds": 267
@@ -130,9 +141,11 @@ AgentOutput({
 ```
 
 **When Failed:**
+
 ```json
 {
   "agent_id": "agent-1730654321-abc",
+
   "status": "failed",
   "exit_code": 1,
   "error": "Failed to access repository: Permission denied",
@@ -141,6 +154,7 @@ AgentOutput({
 ```
 
 **Behavior:**
+
 - Returns only NEW output since last check (like BashOutput)
 - If `filter` provided, only matching lines returned
 - Always includes current status and progress
@@ -150,13 +164,16 @@ AgentOutput({
 Lists all background agents (running and recent completed).
 
 **Parameters:**
+
 ```typescript
 {
   status?: "running" | "completed" | "failed" | "all"  // Default: "all"
 }
+
 ```
 
 **Example Usage:**
+
 ```typescript
 ListAgents()
 // or
@@ -164,6 +181,7 @@ ListAgents({ status: "running" })
 ```
 
 **Returns:**
+
 ```
 Background Agents:
 
@@ -174,6 +192,7 @@ RUNNING:
 COMPLETED (last 24h):
   agent-1730650000-ghi  code-review-agent    Review API changes (completed 1h ago)
   agent-1730648000-jkl  test-runner-agent    Integration tests (completed 2h ago)
+
 
 FAILED:
   agent-1730652000-mno  aws-infrastructure-expert  Deploy to prod (failed 45m ago)
@@ -187,6 +206,7 @@ Use KillAgent(agent_id) to terminate running agents.
 Terminates a running background agent.
 
 **Parameters:**
+
 ```typescript
 {
   agent_id: string  // Required: The agent ID to kill
@@ -194,11 +214,14 @@ Terminates a running background agent.
 ```
 
 **Example Usage:**
+
 ```typescript
 KillAgent({ agent_id: "agent-1730654321-abc" })
+
 ```
 
 **Returns:**
+
 ```json
 {
   "agent_id": "agent-1730654321-abc",
@@ -210,6 +233,7 @@ KillAgent({ agent_id: "agent-1730654321-abc" })
 ```
 
 **Behavior:**
+
 - Gracefully terminates agent process
 - Preserves partial output for review
 - Updates metadata.json with "terminated" status
@@ -534,6 +558,7 @@ Agents don't need modification to support background execution, but should be up
 ## Documentation Requirements
 
 1. Update main CLAUDE.md with async agent patterns
+
 2. Update agent-manager.md with background agent creation guidelines
 3. Update each agent's README with background execution notes
 4. Create user-facing docs on when/how to use background agents
@@ -550,6 +575,7 @@ Agents don't need modification to support background execution, but should be up
 ## Implementation Priority
 
 **P0 (MVP):**
+
 - Task tool `run_in_background` parameter
 - AgentOutput tool
 - ListAgents tool
@@ -557,6 +583,7 @@ Agents don't need modification to support background execution, but should be up
 - Output streaming to logs
 
 **P1 (Enhanced):**
+
 - KillAgent tool
 - Progress percentage extraction
 - Timeout enforcement
@@ -564,6 +591,7 @@ Agents don't need modification to support background execution, but should be up
 - Cleanup daemon
 
 **P2 (Polish):**
+
 - OS notifications on completion
 - Progress bars in CLI
 - Agent dependencies/pipelines

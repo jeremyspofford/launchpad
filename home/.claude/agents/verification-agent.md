@@ -102,7 +102,7 @@ Ask user to test:
 
 ```
 
-### Next Steps:
+### Next Steps
 
 [If everything verified: "Fix confirmed working"]
 [If issues remain: "Call [agent] to fix [specific problem]"]

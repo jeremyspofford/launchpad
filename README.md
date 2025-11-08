@@ -24,6 +24,7 @@ cd ~/dotfiles
 ```
 
 **Advanced Usage:**
+
 ```bash
 ./scripts/setup.sh --help              # Show detailed help
 ./scripts/setup.sh --force             # Force all tasks to run
@@ -31,6 +32,7 @@ DOTFILES_REPO=myuser/dotfiles ./scripts/setup.sh  # Custom repository
 ```
 
 This script will:
+
 - Auto-detect your operating system (macOS, Linux, WSL)
 - Install prerequisites (Homebrew on macOS, Ansible, etc.)
 - Install Oh My Zsh and essential tools (bat, delta, fzf, etc.)
@@ -40,11 +42,13 @@ This script will:
 ### What Gets Installed
 
 **Prerequisites that `setup.sh` installs automatically:**
+
 - **macOS**: Homebrew, Ansible via brew
 - **Linux/WSL**: Ansible via apt, GitHub CLI
 - GNU Stow, Oh My Zsh, Ansible collections
 
 **Essential tools via Ansible:**
+
 - Modern CLI tools: `bat`, `delta`, `fzf`, `ripgrep`, `jq`
 - Development tools: `neovim`, `tmux`, `shellcheck`
 - Runtime management: `mise` (replaces asdf/nvm/rbenv/pyenv)
@@ -53,6 +57,7 @@ This script will:
 - 1Password CLI for secure secrets management
 
 **For updates after initial setup:**
+
 ```bash
 cd ~/dotfiles
 ./scripts/setup.sh          # Normal update
@@ -94,7 +99,8 @@ dotfiles/
 
 **GNU Stow Structure:** The `home/` directory exactly mirrors your home directory (`~`). When you run `stow home`, it creates symlinks from `~/` to `~/dotfiles/home/` for each file.
 
-**Streamlined Shell Configuration:** 
+**Streamlined Shell Configuration:**
+
 - `.commonrc` contains all shared configurations between bash and zsh
 - `.zshrc` includes Oh My Zsh setup and sources `.commonrc`
 - `.bashrc` contains bash-specific settings and sources `.commonrc`
@@ -106,6 +112,7 @@ dotfiles/
 ## 🔄 Daily Usage
 
 ### Editing Dotfiles
+
 Edit files directly in `~/dotfiles/home/` - changes appear immediately via symlinks:
 
 ```bash
@@ -116,6 +123,7 @@ vim ~/dotfiles/home/.zshrc
 ```
 
 ### Syncing Across Machines
+
 ```bash
 # Commit your changes
 cd ~/dotfiles
@@ -130,6 +138,7 @@ git pull
 ```
 
 ### Managing Stow Packages
+
 ```bash
 # Unstow (remove symlinks)
 stow -D home
@@ -144,12 +153,14 @@ stow -n home
 ## 🎯 Platform Support
 
 ### macOS
+
 - Uses Homebrew for package management
 - **Modern Bash Installation**: Automatically installs Bash 5.x via Homebrew (macOS ships with ancient 3.2.57 from 2007)
 - Includes macOS-specific shell configurations and aliases
 - `bash` command automatically uses modern version after setup
 
 ### Linux (Ubuntu/Debian/WSL2)  
+
 - Uses apt for system packages
 - Includes Linux-specific optimizations
 
@@ -224,6 +235,7 @@ sync-secrets
 ### Usage Examples
 
 **Initial Setup:**
+
 ```bash
 # 1. First, sign in to 1Password
 op signin
@@ -236,6 +248,7 @@ verify_secrets
 ```
 
 **Daily Usage:**
+
 ```bash
 # Update secrets when they change
 sync-secrets
@@ -248,6 +261,7 @@ curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user
 ```
 
 **Automatic Loading:**
+
 - Secrets are automatically loaded when you start a new shell session
 - The `sync-secrets` function is available in all shells for easy updates
 - Your actual `.secrets` file is never committed to git (it's in `.gitignore`)
@@ -267,12 +281,14 @@ curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user
 [mise](https://mise.jdx.dev/) is a universal runtime manager that replaces tools like asdf, nvm, rbenv, and pyenv with a single, fast tool.
 
 **Key Features:**
+
 - **Multi-language support**: Node.js, Python, Ruby, Go, Java, and more
 - **Project-specific versions**: Automatically switch versions per project
 - **Fast performance**: Written in Rust, significantly faster than alternatives
 - **Compatible**: Works with existing `.nvmrc`, `.python-version`, etc. files
 
 **Usage:**
+
 ```bash
 # Install a runtime
 mise install node@20
@@ -296,6 +312,7 @@ mise list-remote node
 [lazygit](https://github.com/jesseduffield/lazygit) provides a beautiful terminal UI for Git operations.
 
 **Key Features:**
+
 - **Visual Git workflow**: Stage, commit, push/pull with keyboard shortcuts
 - **Branch management**: Create, switch, merge branches visually
 - **Interactive staging**: Stage individual lines or hunks
@@ -303,12 +320,14 @@ mise list-remote node
 - **Commit history**: Browse and search commit history
 
 **Usage:**
+
 ```bash
 # Launch lazygit
 lazygit
 ```
 
 **Key shortcuts in lazygit:**
+
 - `space`: Stage/unstage files or hunks
 - `c`: Commit staged changes
 - `P`: Push to remote
@@ -323,6 +342,7 @@ The Neovim configuration includes modern AI-powered coding assistance plugins:
 #### Claude Code Plugin
 
 **Features:**
+
 - **Direct Claude Integration**: Chat with Claude directly from Neovim
 - **Code Generation**: Generate code based on natural language descriptions
 - **Diff Management**: Accept/reject AI-suggested changes with visual diffs
@@ -330,6 +350,7 @@ The Neovim configuration includes modern AI-powered coding assistance plugins:
 - **Model Selection**: Choose between different Claude models
 
 **Key Bindings:**
+
 - `<leader>cc`: Open Claude Code
 - `<leader>ca`: Accept Claude suggestion
 - `<leader>cr`: Reject Claude suggestion
@@ -341,17 +362,20 @@ The Neovim configuration includes modern AI-powered coding assistance plugins:
 #### GitLab Duo Plugin
 
 **Features:**
+
 - **Code Suggestions**: AI-powered code completion for Go, JavaScript, Python, Ruby
 - **GitLab Integration**: Seamless integration with GitLab's AI capabilities
 - **Token-based Authentication**: Uses `GITLAB_ACCESS_TOKEN` environment variable
 - **Statusline Integration**: Shows GitLab Duo status in Neovim statusline
 
 **Setup:**
+
 - Requires `GITLAB_ACCESS_TOKEN` environment variable (managed via 1Password)
 - Automatically activates for supported file types
 - Integrates with existing LazyVim configuration
 
 **Supported Languages:**
+
 - Go
 - JavaScript/TypeScript
 - Python
@@ -362,6 +386,7 @@ The Neovim configuration includes modern AI-powered coding assistance plugins:
 Multiple Git identities managed via conditional includes:
 
 **Main config** (`home/.gitconfig`):
+
 ```ini
 # Personal projects (default for most directories)
 [includeIf "gitdir:~/workspace/"]
@@ -376,6 +401,7 @@ Multiple Git identities managed via conditional includes:
 ```
 
 **Identity configs** (`home/.config/git/personal.gitconfig`, etc.):
+
 ```ini
 [user]
     name = Your Name
@@ -387,6 +413,7 @@ Multiple Git identities managed via conditional includes:
 The SSH configuration (`home/.ssh/config`) supports multiple SSH keys for different services and identities:
 
 **Multiple GitLab Keys:**
+
 ```bash
 # GitLab (tries both keys in order)
 Host gitlab.com
@@ -405,6 +432,7 @@ Host gitlab-vividcloud
 ```
 
 **GitHub Configuration:**
+
 ```bash
 # Personal GitHub (default)
 Host github.com
@@ -414,6 +442,7 @@ Host github.com
 ```
 
 **Key Features:**
+
 - **Automatic Key Loading**: SSH agent automatically loads keys with macOS Keychain support
 - **Multiple Identity Support**: Different keys for work, personal, and client projects
 - **Host Aliases**: Use `gitlab-vividcloud` to force a specific key
@@ -422,6 +451,7 @@ Host github.com
 ## 🐛 Troubleshooting  
 
 ### Stow Conflicts
+
 If `setup.sh` fails with stow conflicts, you have existing files that aren't symlinks:
 
 ```bash
@@ -433,13 +463,17 @@ rm ~/.zshrc ~/.bashrc  # etc.
 ```
 
 ### Tasks Not Running or Skipped
+
 Use the force flag to ensure all tasks run:
+
 ```bash
 ./scripts/setup.sh --force
 ```
 
 ### Command Not Found
+
 Restart your shell after installation:
+
 ```bash
 exec zsh
 ```
@@ -447,6 +481,7 @@ exec zsh
 ### 1Password Issues
 
 **1Password CLI not found:**
+
 ```bash
 # Install 1Password CLI
 brew install --cask 1password-cli  # macOS
@@ -456,6 +491,7 @@ op --version
 ```
 
 **Sign-in issues:**
+
 ```bash
 # Manual sign in
 op signin
@@ -465,6 +501,7 @@ op account list
 ```
 
 **Secrets not loading:**
+
 ```bash
 # Verify template file exists
 ls -la ~/dotfiles/home/.secrets.template
@@ -477,7 +514,9 @@ sync-secrets
 ```
 
 ### Need Help?
+
 Get detailed usage information:
+
 ```bash
 ./scripts/setup.sh --help
 ```
@@ -487,11 +526,13 @@ Get detailed usage information:
 **SSH Key Generation**: By default, SSH keys are generated **without passphrases** for automation convenience. This trade-off prioritizes ease of use over maximum security.
 
 **Security measures in place:**
+
 - Keys have 600 permissions (owner read/write only)
 - macOS keychain integration for secure storage
 - Ed25519 keys (modern, secure algorithm)
 
 **For higher security environments:**
+
 ```bash
 # Generate passphrase-protected keys manually
 ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_personal -C "user@hostname (personal)"
@@ -501,6 +542,7 @@ ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_personal -C "user@hostname (personal)
 ## 🔑 Testing Your Setup
 
 **Automated validation:**
+
 ```bash
 ./scripts/validate-setup.sh
 ```

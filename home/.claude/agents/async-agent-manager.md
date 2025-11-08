@@ -11,6 +11,7 @@ You are the async agent manager. You coordinate multiple agents running in paral
 ## Your Role
 
 Since Claude Code doesn't natively support async agent execution yet, you provide a **simulation** using:
+
 1. Parallel Task invocations in a single message
 2. File-based state tracking
 3. Status reporting
@@ -161,6 +162,7 @@ For these scenarios, true async (when implemented) would be better:
 For operations that might take a long time:
 
 1. **Suggest checkpoints**:
+
    ```markdown
    This analysis will take 20-30 minutes. Would you like me to:
    A) Run it now and wait
@@ -169,15 +171,18 @@ For operations that might take a long time:
    ```
 
 2. **Use cheaper models**:
+
    ```typescript
    Task({
      subagent_type: "cost-analysis-agent",
      prompt: "Analyze costs",
      model: "haiku"  // Faster, cheaper for background work
    })
+
    ```
 
 3. **Limit scope**:
+
    ```markdown
    Full infrastructure scan will take 30 minutes.
    Let's start with:

@@ -5,6 +5,7 @@ This document outlines coding standards and best practices for this repository. 
 ## General Principles
 
 ### Code Quality
+
 - **Always lint code** before committing
 - **Follow language-specific style guides** (e.g., PEP 8 for Python, JSDoc for JavaScript)
 - **Write self-documenting code** with clear variable and function names
@@ -12,6 +13,7 @@ This document outlines coding standards and best practices for this repository. 
 - **Keep functions small and focused** on a single responsibility
 
 ### File Standards
+
 - **🚨 CRITICAL: All files must end with a blank line** - This applies to EVERY file you create or edit, no exceptions
 - **Use UTF-8 encoding** for all text files
 - **Use Unix line endings** (LF, not CRLF)
@@ -19,7 +21,9 @@ This document outlines coding standards and best practices for this repository. 
 - **Use meaningful file and directory names**
 
 ### File Editing Requirements
+
 When editing ANY file:
+
 1. **ALWAYS ensure the file ends with a blank line** after your changes
 2. **Check for and remove trailing whitespace** on modified lines
 3. **Maintain consistent indentation** with the existing file
@@ -27,6 +31,7 @@ When editing ANY file:
 5. **Test that your changes don't break functionality**
 
 ### Documentation
+
 - **Every script must have a header** explaining its purpose
 - **Complex functions require docstrings/comments**
 - **Configuration files should include inline comments** explaining key settings
@@ -35,6 +40,7 @@ When editing ANY file:
 ## Language-Specific Standards
 
 ### Shell Scripts (Bash/Zsh)
+
 ```bash
 #!/usr/bin/env bash
 # Script description and purpose
@@ -61,6 +67,7 @@ fi
 ```
 
 **Standards:**
+
 - Always use `#!/usr/bin/env bash` shebang
 - Use `set -euo pipefail` for strict error handling
 - Quote variables to prevent word splitting
@@ -69,6 +76,7 @@ fi
 - Always end with blank line
 
 ### YAML Files
+
 ```yaml
 ---
 # Document purpose and structure
@@ -86,6 +94,7 @@ complex_setting:
 ```
 
 **Standards:**
+
 - Use 2-space indentation
 - Start with `---` document separator
 - Quote strings when necessary
@@ -93,6 +102,7 @@ complex_setting:
 - Add comments for complex configurations
 
 ### Markdown Files
+
 ```markdown
 # Title (H1 - only one per document)
 
@@ -115,6 +125,7 @@ echo "example"
 ```
 
 **Standards:**
+
 - One H1 per document
 - Use proper heading hierarchy
 - Include table of contents for long documents
@@ -124,12 +135,14 @@ echo "example"
 ### Configuration Files
 
 #### Dotfiles (.zshrc, .gitconfig, etc.)
+
 - **Organize in logical sections** with clear comments
 - **Use consistent formatting** and indentation
 - **Include explanatory comments** for complex configurations
 - **Group related settings** together
 
 #### Template Files (.tmpl)
+
 - **Use clear template variable names** that indicate purpose
 - **Add comments** explaining template logic
 - **Test templates** with sample data
@@ -137,6 +150,7 @@ echo "example"
 ## Repository Standards
 
 ### File Organization
+
 ```
 dotfiles/
 ├── CLAUDE.md              # Claude Code instructions
@@ -152,6 +166,7 @@ dotfiles/
 ```
 
 ### Git Standards
+
 - **Use semantic commit messages**:
   - `feat:` for new features
   - `fix:` for bug fixes
@@ -165,6 +180,7 @@ dotfiles/
 - **Test before committing**
 
 ### Testing Standards
+
 - **Test all scripts** before committing
 - **Verify cross-platform compatibility** (macOS, Linux, WSL2)
 - **Test installation on clean systems**
@@ -173,11 +189,13 @@ dotfiles/
 ## Linting and Validation
 
 ### Required Tools
+
 - **ShellCheck** for shell scripts: `shellcheck script.sh`
 - **yamllint** for YAML files: `yamllint file.yaml`
 - **markdownlint** for Markdown: `markdownlint file.md`
 
 ### Pre-commit Checks
+
 Before committing any file:
 
 1. **Run appropriate linters**
@@ -187,6 +205,7 @@ Before committing any file:
 5. **Test functionality**
 
 ### Automated Checks
+
 ```bash
 # Example pre-commit script
 #!/bin/bash
@@ -223,12 +242,14 @@ echo "✓ All pre-commit checks passed"
 ## Security Standards
 
 ### Secrets Management
+
 - **Never commit secrets, API keys, or passwords**
 - **Use environment variables** for sensitive data
 - **Use .gitignore** to exclude sensitive files
 - **Audit for accidental secret commits**
 
 ### File Permissions
+
 - **Scripts should be executable** (755)
 - **Configuration files** should be readable (644)
 - **SSH keys** should have correct permissions (600 for private keys)
@@ -236,12 +257,14 @@ echo "✓ All pre-commit checks passed"
 ## Performance Standards
 
 ### Script Performance
+
 - **Avoid unnecessary loops** and command substitutions
 - **Cache expensive operations**
 - **Use built-in shell features** over external commands when possible
 - **Parallelize independent operations**
 
 ### Configuration Performance
+
 - **Optimize shell startup time**
 - **Lazy-load expensive plugins**
 - **Use efficient aliases and functions**
@@ -249,12 +272,14 @@ echo "✓ All pre-commit checks passed"
 ## Maintenance Standards
 
 ### Regular Maintenance
+
 - **Update dependencies** regularly
 - **Review and update documentation**
 - **Remove deprecated configurations**
 - **Test on fresh systems** periodically
 
 ### Version Management
+
 - **Tag stable releases**
 - **Document breaking changes**
 - **Maintain backward compatibility** when possible
@@ -279,7 +304,9 @@ Before submitting any code change:
 ## Tools Integration
 
 ### Editor Configuration
+
 Ensure your editor is configured to:
+
 - Show trailing whitespace
 - Insert final newline
 - Use consistent indentation
@@ -287,6 +314,7 @@ Ensure your editor is configured to:
 - Run linters on save
 
 ### IDE/Editor Settings
+
 ```json
 // VS Code settings.json example
 {

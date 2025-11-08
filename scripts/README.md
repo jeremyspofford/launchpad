@@ -13,6 +13,7 @@ This directory contains automation scripts that handle installation, validation,
 The primary entry point for setting up the dotfiles system.
 
 **Usage:**
+
 ```bash
 ./scripts/setup.sh [OPTIONS]
 
@@ -24,6 +25,7 @@ Options:
 ```
 
 **What it does:**
+
 - Auto-detects operating system (macOS, Linux, WSL)
 - Installs prerequisites (Homebrew on macOS, Ansible)
 - Runs Ansible playbook for package installation
@@ -32,6 +34,7 @@ Options:
 - Provides setup summary and next steps
 
 **Examples:**
+
 ```bash
 # Standard installation
 ./scripts/setup.sh
@@ -48,11 +51,13 @@ Options:
 Comprehensive validation script that verifies the dotfiles setup is working correctly.
 
 **Usage:**
+
 ```bash
 ./scripts/validate-setup.sh
 ```
 
 **Checks performed:**
+
 - Verifies required tools are installed
 - Validates symlinks are properly created
 - Tests shell configuration loading
@@ -66,6 +71,7 @@ Comprehensive validation script that verifies the dotfiles setup is working corr
 Synchronizes dotfiles across machines and handles updates.
 
 **Usage:**
+
 ```bash
 ./scripts/sync.sh [OPTIONS]
 
@@ -77,6 +83,7 @@ Options:
 ```
 
 **What it does:**
+
 - Pulls latest changes from Git repository
 - Re-runs stow operations to ensure symlinks are current
 - Updates package installations if needed
@@ -87,6 +94,7 @@ Options:
 Common utility functions used by other scripts.
 
 **Functions:**
+
 - Logging and output formatting
 - Operating system detection
 - Error handling helpers
@@ -94,6 +102,7 @@ Common utility functions used by other scripts.
 - Color output functions
 
 **Usage:**
+
 ```bash
 # Source in other scripts
 source "$(dirname "$0")/utils.sh"
@@ -109,11 +118,13 @@ handle_error "Something went wrong"
 Claude Code integration hook for automatic documentation updates.
 
 **Purpose:**
+
 - Automatically triggered when code changes are detected
 - Updates relevant documentation to stay in sync with implementation
 - Ensures README files and configuration docs remain accurate
 
 **Setup:**
+
 - Configured as a Claude Code hook in `.claude/settings.json`
 - Runs automatically during development workflow
 - Can be manually triggered for doc updates
@@ -121,12 +132,14 @@ Claude Code integration hook for automatic documentation updates.
 ## Dependencies
 
 ### External Dependencies
+
 - **Bash 4.0+** - All scripts require modern Bash
 - **curl** - For downloading external resources
 - **git** - For repository operations
 - **GNU Stow** - For symlink management (installed automatically)
 
 ### Internal Dependencies
+
 - `utils.sh` is sourced by most other scripts
 - Scripts assume they're run from the repository root
 - Ansible playbooks are called by `setup.sh`
@@ -134,6 +147,7 @@ Claude Code integration hook for automatic documentation updates.
 ## Platform Support
 
 All scripts support:
+
 - **macOS** (including Apple Silicon)
 - **Linux** (Debian/Ubuntu, RHEL/CentOS)  
 - **WSL2** (Windows Subsystem for Linux)
@@ -143,6 +157,7 @@ Platform detection is automatic and handled by `utils.sh`.
 ## Error Handling
 
 Scripts use comprehensive error handling:
+
 - **Exit codes**: Non-zero exit codes indicate failures
 - **Logging**: All operations are logged with timestamps
 - **Rollback**: Failed operations attempt to rollback changes
@@ -151,11 +166,13 @@ Scripts use comprehensive error handling:
 ## Best Practices
 
 ### Running Scripts
+
 - Always run from repository root: `./scripts/script-name.sh`
 - Use `--dry-run` first to preview changes
 - Check exit codes: `./scripts/setup.sh && echo "Success!"`
 
 ### Development
+
 - Follow existing code style and error handling patterns
 - Add appropriate logging and validation
 - Test on multiple platforms before committing
@@ -166,11 +183,13 @@ Scripts use comprehensive error handling:
 ### Common Issues
 
 **Permission denied:**
+
 ```bash
 chmod +x scripts/*.sh
 ```
 
 **Script not found:**
+
 ```bash
 # Ensure you're in repository root
 cd ~/dotfiles
@@ -178,12 +197,14 @@ cd ~/dotfiles
 ```
 
 **Stow conflicts:**
+
 ```bash
 # Use force mode to override
 ./scripts/setup.sh --force
 ```
 
 ### Getting Help
+
 - Use `--help` flag with any script for detailed usage
 - Check log output for specific error messages
 - Run `validate-setup.sh` to diagnose system state

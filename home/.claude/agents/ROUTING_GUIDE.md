@@ -86,6 +86,7 @@ orchestrator calls:
 ### 2. Execution Order (Sequential vs Parallel)
 
 **Sequential (dependencies exist):**
+
 ```typescript
 User: "Fix the database connection issue"
 
@@ -100,6 +101,7 @@ Sequential execution:
 ```
 
 **Parallel (no dependencies):**
+
 ```typescript
 User: "Run pre-deployment validation"
 
@@ -138,13 +140,16 @@ Task({
 orchestrator combines agent outputs into coherent report:
 
 **Instead of:**
+
 ```
 diagnostic-agent found: [wall of text]
 backend-agent did: [wall of text]
 verification-agent says: [wall of text]
+
 ```
 
 **orchestrator produces:**
+
 ```markdown
 ## Task: Fix API 500 Errors
 
@@ -166,6 +171,7 @@ API is now working correctly.
 ## When Main LLM Should NOT Use Orchestrator
 
 **Simple, single-action tasks:**
+
 ```typescript
 // User: "What's in src/api.ts?"
 Read({ file_path: "/path/to/src/api.ts" })
@@ -176,11 +182,13 @@ Bash({ command: "npm test" })
 // Don't need orchestrator for single command
 
 // User: "Explain this error: [error message]"
+
 [Explain directly]
 // Don't need orchestrator for explanations
 ```
 
 **User explicitly names agent:**
+
 ```typescript
 // User: "Use the security-auditor-agent to scan for SQL injection"
 Task({ subagent_type: "security-auditor-agent", ... })
@@ -285,10 +293,12 @@ Task({
 ### 1. Simplified Main LLM Logic
 
 **Before:**
+
 ```typescript
 // Main LLM has to decide everything:
 - Which agents do I need?
 - What order?
+
 - Sequential or parallel?
 - How do I combine results?
 - How do I break down features?
@@ -296,9 +306,11 @@ Task({
 ```
 
 **After:**
+
 ```typescript
 // Main LLM just decides:
 - Is this technical? → Call orchestrator-agent
+
 - Is this planning? → Call project-manager
 - Is this simple? → Handle directly
 - Let coordinators handle the rest
@@ -307,12 +319,14 @@ Task({
 ### 2. Consistent Workflows
 
 **orchestrator-agent ensures technical best practices:**
+
 - Always diagnose before fixing
 - Always verify after changes
 - Run independent checks in parallel
 - Synthesize results coherently
 
 **project-manager ensures planning best practices:**
+
 - Break features into manageable tasks
 - Identify dependencies before starting
 - Provide realistic estimates
@@ -321,6 +335,7 @@ Task({
 ### 3. Optimized Execution
 
 orchestrator maximizes efficiency:
+
 - Parallel execution when safe
 - Sequential when dependencies exist
 - Right model for each task
@@ -329,6 +344,7 @@ orchestrator maximizes efficiency:
 ### 4. Better User Experience
 
 Users get:
+
 - Single, coherent response (not multiple agent dumps)
 - Time estimates before long operations
 - Evidence-based results
@@ -339,29 +355,35 @@ Users get:
 **User says:** "Deploy to production"
 
 **1. Main LLM (reads CLAUDE.md):**
+
 ```typescript
 // CLAUDE.md says: deployment → orchestrator-agent
 Task({
   subagent_type: "orchestrator-agent",
   description: "Production deployment",
   prompt: "User wants to deploy to production. Run all pre-deployment checks and deploy if safe."
+
 })
 ```
 
 **2. orchestrator-agent receives request:**
+
 ```typescript
 // orchestrator analyzes:
 // - Need: tests + security + review + dependency check
 // - These are independent → run in parallel
 // - Then: if all pass → deploy
 //         if any fail → stop and report
+
 ```
 
 **3. orchestrator launches parallel checks:**
+
 ```typescript
 // Single message with 4 Task calls:
 Task({ subagent_type: "test-runner-agent", prompt: "Run full test suite" })
 Task({ subagent_type: "security-auditor-agent", prompt: "Security scan" })
+
 Task({ subagent_type: "code-review-agent", prompt: "Review recent changes" })
 Task({ subagent_type: "dependency-agent", prompt: "Verify environment" })
 ```
@@ -369,6 +391,7 @@ Task({ subagent_type: "dependency-agent", prompt: "Verify environment" })
 **4. Agents execute in parallel** (8 min vs 20 min sequential)
 
 **5. orchestrator receives all results:**
+
 ```
 test-runner: ✅ 156/156 tests pass
 security: ⚠️  2 medium issues found
@@ -377,12 +400,14 @@ dependency: ✅ All dependencies satisfied
 ```
 
 **6. orchestrator decides:**
+
 ```typescript
 // Security issues exist → DO NOT DEPLOY
 // orchestrator synthesizes report
 ```
 
 **7. orchestrator returns to main LLM:**
+
 ```markdown
 ## Deployment Status: ❌ BLOCKED
 
@@ -398,11 +423,13 @@ dependency: ✅ All dependencies satisfied
 1. API endpoint /admin missing authentication (src/api/admin.ts:45)
 2. SQL query using string concatenation (src/db/queries.ts:89)
 
+
 ### Recommendation
 Fix security issues before deploying to production.
 
 ### Next Steps
 1. Add authentication to /admin endpoint
+
 2. Use parameterized queries in queries.ts
 3. Re-run security scan
 4. Deploy once all checks pass
@@ -415,12 +442,15 @@ Clean, actionable report with evidence.
 ## Summary
 
 **Main LLM's job:**
+
 - Route technical tasks to orchestrator-agent
+
 - Route planning tasks to project-manager
 - Handle simple tasks directly
 - Present coordinator results to user
 
 **orchestrator-agent's job:**
+
 - Decide which agents to call
 - Decide sequential vs parallel
 - Launch agents efficiently
@@ -428,6 +458,7 @@ Clean, actionable report with evidence.
 - Provide evidence and recommendations
 
 **project-manager's job:**
+
 - Break down features into tasks
 - Estimate effort and timeline
 - Identify dependencies
@@ -435,11 +466,13 @@ Clean, actionable report with evidence.
 - Prioritize work
 
 **Specialized agents' job:**
+
 - Do their specific technical work
 - Return detailed findings
 - Trust coordinators to coordinate
 
 **Result:**
+
 - Simple routing logic for main LLM
 - Efficient parallel execution (orchestrator)
 - Organized planning and tracking (project-manager)

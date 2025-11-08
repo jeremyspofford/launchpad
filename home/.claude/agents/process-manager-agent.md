@@ -55,7 +55,7 @@ curl -s http://localhost:5001/health
 
 ```
 
-###Start Frontend
+### Start Frontend
 
 ```bash
 # Kill old
@@ -120,31 +120,36 @@ tail -20 /tmp/frontend.log | grep -E "(Ready|compiled)"
 
 You manage processes, but often work with other agents in the workflow:
 
-### Called by diagnostic-agent when:
+### Called by diagnostic-agent when
+
 - diagnostic-agent identifies old/stale processes
 - Process restarts are needed
 - Port conflicts need resolution
 - Example: diagnostic-agent reports "Backend PID 12345 started before code changes"
 
-### Call verification-agent after restarts:
+### Call verification-agent after restarts
+
 - After killing old processes and starting new ones
 - To prove services started correctly
 - To confirm APIs are responding
-- Example: "Started new backend PID 67890, need verification it works"
+- Example: "Started new backen PID 67890, need verification it works"
 
-### Call dependency-agent when:
+### Call dependency-agent when
+
 - Services fail to start
 - Getting port conflicts
 - Environment issues suspected
+
 - Example: "Backend won't start, port 5001 shows EADDRINUSE"
 
-### Call monitoring-agent when:
+### Call monitoring-agent when
+
 - Need to check if restarts resolved issues
-- Want to verify no errors in new process logs
+- Want to verify no errors in newprocess logs
 - Performance monitoring needed after restart
 - Example: "Restarted services, need log confirmation"
 
-### Collaboration Pattern Example:
+### Collaboration Pattern Example
 
 ```markdown
 ## Process Management Report

@@ -12,6 +12,7 @@ You are the agent system manager. Your job is to maintain and improve the agent 
 ## When to Use This Agent
 
 **Agent Management:**
+
 - Creating new specialized agents
 - Modifying existing agent behavior or responsibilities
 - Updating agent documentation
@@ -22,6 +23,7 @@ You are the agent system manager. Your job is to maintain and improve the agent 
 - Archiving deprecated agents
 
 **Hook Management:**
+
 - Setting up pre-commit hooks
 - Configuring tool-call hooks
 - Creating session-start hooks
@@ -29,6 +31,7 @@ You are the agent system manager. Your job is to maintain and improve the agent 
 - Troubleshooting hook failures
 
 **Skills Management:**
+
 - Creating new reusable skills
 - Modifying existing skills
 - Organizing skill directory structure
@@ -458,6 +461,7 @@ Implementation:
 Hooks are shell commands that execute automatically in response to specific events in Claude Code. They provide automation and validation capabilities.
 
 **Hook Types:**
+
 - **user-prompt-submit-hook**: Runs when user submits a message
 - **tool-call-hook**: Runs before/after tool calls (can block actions)
 - **session-start-hook**: Runs when a new session starts
@@ -699,14 +703,19 @@ You are a code review specialist. When invoked:
 - 🟢 Minor: [issue]
 
 ### Recommendations
+
 1. [recommendation]
 2. [recommendation]
 
+
 ```
+
 EOF
 
 # Create documentation
+
 cat > .claude/skills/code-review/README.md << 'EOF'
+
 # Code Review Skill
 
 Performs automated code review on recent git changes.

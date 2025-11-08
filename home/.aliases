@@ -50,6 +50,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     alias pbcopy="xclip -selection clipboard"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     # pbpaste/pbcopy already available on macOS
+    alias to-obsidian="cd ~/Documents/Obsidian_vault/"
     :
 fi
 

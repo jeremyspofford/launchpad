@@ -22,19 +22,23 @@ Ensure every UI component looks **clean, modern, and professional** by enforcing
 ## Core Design Principles
 
 ### 1. Clean and Minimal
+
 - **Lots of white space** - Let content breathe
 - **Not cluttered** - Remove unnecessary elements
 - **One thing per screen** - Focus user attention
 - **Subtract, don't add** - When in doubt, remove
 
 ### 2. Neutral Color Palette
+
 - **Base**: Grays and off-whites (not pure #FFF or #000)
 - **ONE accent color** used sparingly for CTAs and important actions
 - **NO generic purple/blue gradients**
 - **NO rainbow color schemes**
 
 ### 3. Consistent Spacing (8px Grid)
+
 Use only these values:
+
 - `8px` - Tight spacing (icon gaps, inline elements)
 - `16px` - Standard spacing (between related items)
 - `24px` - Medium spacing (between sections)
@@ -45,6 +49,7 @@ Use only these values:
 **Never use random values like 12px, 18px, 21px**
 
 ### 4. Typography Hierarchy
+
 - **Minimum body text**: 16px (1rem)
 - **Maximum 2 fonts**: One for headings, one for body (or same font, different weights)
 - **Clear hierarchy**: h1 → h2 → h3 → body → small
@@ -52,23 +57,28 @@ Use only these values:
 - **Font weights**: Use 400 (normal), 600 (semibold), 700 (bold) max
 
 ### 5. Shadows
+
 - **Subtle, not heavy** - Think elevation, not decoration
 - **3 shadow levels max**: small, medium, large
 - **Never overdone** - Most elements don't need shadows
 
 ### 6. Rounded Corners
+
 - **Not everything needs to be rounded**
 - **Consistent border radius**: 4px (subtle), 8px (standard), 12px (prominent)
 - **Never mix** random border-radius values
 
 ### 7. Interactive States
+
 Every interactive element MUST have:
+
 - **Hover**: Subtle change (slightly darker, shadow appears)
 - **Active**: Clear pressed state
 - **Disabled**: Obviously non-interactive (reduced opacity, no cursor)
 - **Focus**: Visible focus ring for accessibility
 
 ### 8. Mobile-First
+
 - **Design for mobile first**, enhance for desktop
 - **Touch targets**: Minimum 44px × 44px for buttons
 - **Readable on small screens** - No tiny text
@@ -145,6 +155,7 @@ module.exports = {
 ### Buttons
 
 **Good Example:**
+
 ```jsx
 // Primary CTA
 <button className="
@@ -188,6 +199,7 @@ module.exports = {
 ```
 
 **Bad Example:**
+
 ```jsx
 ❌ <button className="px-5 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-3xl shadow-2xl">
   Rainbow Gradient Button
@@ -197,6 +209,7 @@ module.exports = {
 ### Cards
 
 **Good Example:**
+
 ```jsx
 // Option 1: Border only
 <div className="
@@ -222,6 +235,7 @@ module.exports = {
 ```
 
 **Bad Example:**
+
 ```jsx
 ❌ <div className="p-3 bg-white border-4 border-purple-500 shadow-2xl rounded-3xl">
   Heavy border AND heavy shadow
@@ -231,6 +245,7 @@ module.exports = {
 ### Forms
 
 **Good Example:**
+
 ```jsx
 <form className="space-y-6">
   {/* Input field */}
@@ -287,6 +302,7 @@ module.exports = {
 ```
 
 **Bad Example:**
+
 ```jsx
 ❌ <input className="px-2 py-1 text-xs border-neutral-500 rounded-full bg-gradient-to-r from-pink-500 to-yellow-500" />
 ```
@@ -294,6 +310,7 @@ module.exports = {
 ### Modals/Dialogs
 
 **Good Example:**
+
 ```jsx
 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
   <div className="
@@ -323,6 +340,7 @@ module.exports = {
 ### Navigation
 
 **Good Example:**
+
 ```jsx
 <nav className="border-b border-neutral-200">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -352,6 +370,7 @@ module.exports = {
 ## Color Usage Rules
 
 ### Do ✅
+
 - **Background**: `bg-neutral-50` or `bg-white`
 - **Text**: `text-neutral-900` (headings), `text-neutral-700` (body), `text-neutral-500` (muted)
 - **Borders**: `border-neutral-200` or `border-neutral-300`
@@ -359,6 +378,7 @@ module.exports = {
 - **Hover states**: Slightly darker shade of base color
 
 ### Don't ❌
+
 - NO `bg-gradient-to-r` unless explicitly brand-specific and approved
 - NO random colors like `bg-pink-400`, `text-yellow-600` without purpose
 - NO more than ONE accent color per app
@@ -407,12 +427,14 @@ Use this for every component:
 ## Bad Design Anti-Patterns
 
 ### ❌ Rainbow Gradients
+
 ```jsx
 // NEVER
 <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500">
 ```
 
 ### ❌ Tiny Unreadable Text
+
 ```jsx
 // NEVER - too small
 <p className="text-xs">Important information here</p>
@@ -422,6 +444,7 @@ Use this for every component:
 ```
 
 ### ❌ Inconsistent Spacing
+
 ```jsx
 // NEVER - random values
 <div className="mb-3 mt-5 pt-7 pb-9">
@@ -435,6 +458,7 @@ Use this for every component:
 ```
 
 ### ❌ Every Element Different Color
+
 ```jsx
 // NEVER
 <div>
@@ -455,6 +479,7 @@ Use this for every component:
 ```
 
 ### ❌ Mixed Border Styles
+
 ```jsx
 // NEVER - inconsistent rounding
 <div className="rounded-sm">
@@ -487,6 +512,7 @@ Every UI component MUST have:
 ## Quick Reference: Common Patterns
 
 ### Page Container
+
 ```jsx
 <div className="min-h-screen bg-neutral-50">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -496,6 +522,7 @@ Every UI component MUST have:
 ```
 
 ### Section Spacing
+
 ```jsx
 <section className="mb-12">
   <h2 className="text-3xl font-semibold mb-6">Section Title</h2>
@@ -506,6 +533,7 @@ Every UI component MUST have:
 ```
 
 ### Grid Layout
+
 ```jsx
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
   {/* Cards or items */}
@@ -513,6 +541,7 @@ Every UI component MUST have:
 ```
 
 ### Loading States
+
 ```jsx
 <button
   disabled
@@ -526,6 +555,7 @@ Every UI component MUST have:
 ```
 
 ### Empty States
+
 ```jsx
 <div className="text-center py-12">
   <p className="text-neutral-500 mb-4">No items found</p>
@@ -565,6 +595,7 @@ Follow these rules:
 ## Success Metrics
 
 This skill succeeds when:
+
 - UI looks clean and professional
 - Consistent spacing throughout
 - Uses neutral palette with ONE accent color
@@ -573,6 +604,7 @@ This skill succeeds when:
 - Mobile-friendly and accessible
 
 This skill fails when:
+
 - Cluttered UI with random spacing
 - Rainbow color scheme
 - Tiny unreadable text

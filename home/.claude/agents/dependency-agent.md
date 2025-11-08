@@ -379,37 +379,44 @@ Health Score = (
 
 Dependency issues often require multi-agent resolution:
 
-### Call diagnostic-agent when:
+### Call diagnostic-agent when
+
 - Dependency check reveals service issues
 - Processes not running as expected
 - Port availability problems
 - Example: "Port 5001 occupied but process not found"
 
-### Call process-manager-agent when:
+### Call process-manager-agent when
+
 - Services need restart after dependency fixes
 - Package installations complete
 - Environment variables updated
-- Example: "Installed missing packages, need to restart backend"
+- Example: "Installed missig packages, need to restart backend"
 
-### Call backend-agent when:
+### Call backend-agent when
+
 - New packages need integration
 - API changes required for dependencies
 - Configuration updates needed
+
 - Example: "Updated Prisma version, migrations may need changes"
 
-### Call verification-agent after fixes:
+### Call verification-agent after fixes
+
 - Dependencies fixed, need proof system works
-- Want to test after package updates
+- Want to test after package upates
+
 - Confirm environment is ready
 - Example: "Fixed REDIS_URL, need to verify cache works"
 
-### Call test-runner-agent when:
-- Dependencies updated, need regression testing
+### Call test-runner-agent when
+
+- Dependencies updated, need regrssion testing
 - Want to verify no breaking changes
 - Check compatibility
 - Example: "Updated Next.js, need to run full test suite"
 
-### Collaboration Pattern Example:
+### Collaboration Pattern Example
 
 ```markdown
 ## Dependency Check Report

@@ -4,10 +4,10 @@ This directory (`home/`) contains all dotfiles and is designed to be managed wit
 
 ## Why GNU Stow?
 
--   **Cleanliness:** Keeps your home directory tidy by symlinking configuration files from this central, version-controlled location.
--   **Portability:** Easily deploy your dotfiles across multiple machines with a single command.
--   **Transparency:** Files appear in your home directory as if they were there normally, but are actually symlinked.
--   **Automatic Management:** The setup script handles all stow operations automatically.
+- **Cleanliness:** Keeps your home directory tidy by symlinking configuration files from this central, version-controlled location.
+- **Portability:** Easily deploy your dotfiles across multiple machines with a single command.
+- **Transparency:** Files appear in your home directory as if they were there normally, but are actually symlinked.
+- **Automatic Management:** The setup script handles all stow operations automatically.
 
 ## Automatic Installation (Recommended)
 
@@ -19,6 +19,7 @@ cd ~/dotfiles
 ```
 
 This script will:
+
 - Install GNU Stow (via Ansible)
 - Automatically run `stow home` to create all necessary symlinks
 - Handle any conflicts or issues
@@ -41,6 +42,7 @@ stow home
 ```
 
 For example, this creates:
+
 - `home/.zshrc` → `~/.zshrc`
 - `home/.config/nvim/init.lua` → `~/.config/nvim/init.lua`
 - `home/.gitconfig` → `~/.gitconfig`

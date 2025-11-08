@@ -13,6 +13,7 @@ bash tests/test_sync.sh
 ```
 
 The test suite verifies:
+
 - Script exists and is executable
 - Help functionality (`-h`, `--help`)
 - Dry run mode (`-n`, `--dry-run`)
@@ -31,6 +32,7 @@ Tests use a simple assertion framework defined in the test scripts:
 - `assert_exit_code`: Check if a command exits with expected code
 
 Example:
+
 ```bash
 run_test "Test name" '
     output=$(command_to_test)

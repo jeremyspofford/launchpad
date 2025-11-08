@@ -16,22 +16,27 @@ This role installs essential development tools and CLI utilities across macOS an
 ## What This Role Does
 
 ### Package Installation
+
 Installs common development tools across platforms:
+
 - **Modern CLI Tools**: `bat`, `delta`, `fzf`, `ripgrep`, `jq`
 - **Development Tools**: `git`, `neovim`, `tmux`, `zsh`, `gh` (GitHub CLI), `glab` (GitLab CLI)
 - **Code Quality**: `shellcheck`, `yamllint`  
 - **Utilities**: `curl`, `wget`, `starship` (shell prompt)
 
 ### Node.js Ecosystem
+
 - **nvm** (Node Version Manager) - Latest version (v0.39.1)
 - **tldr** - Simplified man pages via npm global install
 
 ### Dotfiles Management
+
 - **GNU Stow installation** - Cross-platform (Homebrew on macOS, package manager on Linux)
 - **Automatic stow operation** - Symlinks dotfiles from `home/` to `~`
 - **Workspace directory creation** - Creates `~/workspace` directory
 
 ### Additional Setup
+
 - **SSH key generation and setup** for Git hosting services
 - **Oh My Zsh installation and configuration**
 
@@ -62,6 +67,7 @@ os_packages: []  # Override in host_vars or playbook for OS-specific packages
 ```
 
 ### Customization
+
 - **`common_packages`**: List of packages to install on all platforms
 - **`os_packages`**: Additional OS-specific packages (empty by default)
 
@@ -74,15 +80,18 @@ os_packages: []  # Override in host_vars or playbook for OS-specific packages
 ## Dependencies
 
 **Ansible Collections:**
+
 - `community.general` - Required for npm and homebrew modules
 
 **External Dependencies:**
+
 - Internet access for downloading NVM, tldr, and Oh My Zsh
 - Package managers (brew/apt/yum) functional on target system
 
 ## Example Usage
 
 ### Basic Playbook
+
 ```yaml
 ---
 - hosts: localhost
@@ -92,6 +101,7 @@ os_packages: []  # Override in host_vars or playbook for OS-specific packages
 ```
 
 ### With Custom Packages
+
 ```yaml
 ---
 - hosts: localhost
@@ -105,6 +115,7 @@ os_packages: []  # Override in host_vars or playbook for OS-specific packages
 ```
 
 ### Platform-Specific Variables
+
 ```yaml
 # host_vars/macos.yml
 os_packages:
@@ -129,6 +140,7 @@ os_packages:
 ## Idempotency
 
 All tasks are designed to be idempotent:
+
 - Packages only installed if not present
 - NVM only installed if `~/.nvm/nvm.sh` doesn't exist
 - tldr only installed if command fails

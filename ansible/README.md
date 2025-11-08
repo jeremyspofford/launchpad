@@ -5,6 +5,7 @@ This directory contains Ansible playbooks and roles for managing system packages
 ## Quick Start
 
 1. **Install Ansible** (if not already installed):
+
    ```bash
    # macOS
    brew install ansible
@@ -17,11 +18,13 @@ This directory contains Ansible playbooks and roles for managing system packages
    ```
 
 2. **Run the setup script** to install required collections:
+
    ```bash
    ./setup.sh
    ```
 
 3. **Run playbooks**:
+
    ```bash
    # Install Google Cloud CLI
    ansible-playbook install_gcloud.yml
@@ -36,23 +39,28 @@ This directory contains Ansible playbooks and roles for managing system packages
 ## Automatic Collection Installation
 
 ### Method 1: Using the setup script (Recommended)
+
 ```bash
 ./setup.sh
 ```
 
 ### Method 2: Manual installation
+
 ```bash
 ansible-galaxy collection install -r requirements.yml
 ```
 
 ### Method 3: In your CI/CD pipeline
+
 ```yaml
 - name: Install Ansible collections
   command: ansible-galaxy collection install -r requirements.yml
 ```
 
 ### Method 4: Using ansible.cfg
+
 Create an `ansible.cfg` file in the ansible directory:
+
 ```ini
 [defaults]
 collections_paths = ~/.ansible/collections:/usr/share/ansible/collections
@@ -65,7 +73,9 @@ collections_paths = ~/.ansible/collections:/usr/share/ansible/collections
 ## Playbooks
 
 ### `playbook.yml`
+
 Main bootstrap playbook that installs essential packages:
+
 - Shell and terminal tools (zsh, tmux, neovim)
 - Modern CLI tools (fzf, ripgrep, bat, eza, etc.)
 - Development tools (node, npm, gh)
@@ -73,26 +83,33 @@ Main bootstrap playbook that installs essential packages:
 - Cloud CLI tools (aws, azure, gcloud)
 
 ### `install_gcloud.yml`
+
 Installs Google Cloud CLI on:
+
 - macOS (via Homebrew)
 - Debian/Ubuntu (via APT)
 - RedHat/CentOS (via YUM/DNF)
 
 ### `uninstall_gcloud.yml`
+
 Removes Google Cloud CLI from all supported systems.
 
 ## Roles
 
 ### `bootstrap`
+
 Comprehensive system package installation role supporting:
+
 - **macOS**: Uses Homebrew for package management
 - **Debian/Ubuntu**: Uses APT with custom installations for tools not in repos
 - **RedHat/CentOS**: Uses YUM/DNF (basic support)
 
 ### `gcloud_install`
+
 Cross-platform Google Cloud CLI installation.
 
 ### `gcloud_uninstall`
+
 Cross-platform Google Cloud CLI removal.
 
 ## Requirements
@@ -109,14 +126,17 @@ Cross-platform Google Cloud CLI removal.
 ## Troubleshooting
 
 ### Collection not found errors
+
 ```bash
 ansible-galaxy collection install community.general
 ```
 
 ### Permission errors on macOS
+
 The playbooks use `become: false` for Homebrew operations since Homebrew typically runs as the user.
 
 ### Syntax check failures
+
 ```bash
 ansible-playbook --syntax-check <playbook.yml>
 ```

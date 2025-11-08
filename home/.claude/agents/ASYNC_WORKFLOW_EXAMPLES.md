@@ -33,6 +33,7 @@ const results = AgentOutput({ agent_id: securityScan.agent_id })
 ```
 
 **Benefits:**
+
 - Don't wait 10-15 minutes for security scan
 - Scan runs while you're productive
 - Results ready when you need them
@@ -96,6 +97,7 @@ agents.forEach(agent => {
 ```
 
 **Benefits:**
+
 - 4 checks run concurrently instead of sequentially (15min → 5min)
 - Deploy with confidence knowing everything was validated
 - Can address issues while other checks continue
@@ -140,6 +142,7 @@ const report = AgentOutput({ agent_id: costAnalysis.agent_id })
 ```
 
 **Benefits:**
+
 - Don't block 30+ minutes waiting for cost analysis
 - Run analysis during development, review during planning
 - Use cheaper haiku model for cost-effective background work
@@ -186,9 +189,11 @@ AgentOutput({ agent_id: monitor.agent_id })
 
 // Kill monitor when debug session complete
 KillAgent({ agent_id: monitor.agent_id })
+
 ```
 
 **Benefits:**
+
 - Continuous monitoring without manual log tailing
 - Pattern detection across development session
 - Verify fixes by seeing errors stop
@@ -261,10 +266,12 @@ if (devResult.status === "completed" && devResult.exit_code === 0) {
 }
 
 // View deployment summary
+
 ListAgents({ status: "completed" })
 ```
 
 **Benefits:**
+
 - Deploy to multiple environments without babysitting
 - Work on other tasks between deployments
 - Automatic progression with verification
@@ -317,11 +324,13 @@ ListAgents({ status: "completed" })
 [authReview, apiReview, dbReview].forEach(review => {
   const feedback = AgentOutput({ agent_id: review.agent_id })
   console.log(feedback.output)
+
   // Address issues while context is fresh
 })
 ```
 
 **Benefits:**
+
 - Catch issues early in development cycle
 - Get feedback while context is fresh
 - Incremental reviews easier than monolithic end review
@@ -371,12 +380,14 @@ console.log("4 infrastructure analyses running...")
 console.log("## Infrastructure Assessment")
 analyses.forEach(analysis => {
   const result = AgentOutput({ agent_id: analysis.agent_id })
+
   console.log(`\n### ${analysis.description}`)
   console.log(result.output)
 })
 ```
 
 **Benefits:**
+
 - 4 perspectives analyzed in parallel (60min → 15min)
 - Comprehensive assessment without sequential delays
 - Each agent specializes in their domain
@@ -435,12 +446,14 @@ const testRun3 = Task({
   run_in_background: true
 })
 
+
 // 10. Verify success
 const results3 = AgentOutput({ agent_id: testRun3.agent_id })
 // All tests passing ✅
 ```
 
 **Benefits:**
+
 - Tests run while you write code
 - Faster feedback loop
 - No context switching waiting for tests

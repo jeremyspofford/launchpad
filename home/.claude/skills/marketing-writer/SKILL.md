@@ -25,6 +25,7 @@ Write marketing content that **actually sounds human** by understanding your app
 ### Voice Principles
 
 **1. Casual and Direct**
+
 - Write like you're texting a friend
 - Use contractions (you're, don't, it's)
 - Start sentences with "And" or "But" if it feels natural
@@ -32,6 +33,7 @@ Write marketing content that **actually sounds human** by understanding your app
 
 **2. No Corporate Buzzwords**
 ❌ **NEVER use:**
+
 - "Leverage"
 - "Synergy"
 - "Innovative solution"
@@ -47,17 +49,20 @@ Write marketing content that **actually sounds human** by understanding your app
 - "Enterprise-grade"
 
 ✅ **Instead use:**
+
 - Simple, clear words
 - Active verbs (build, ship, save, fix)
 - Concrete outcomes (not abstract concepts)
 
 **3. Focus on Real Benefits**
+
 - Not what it is, but what it does for them
 - Specific outcomes, not vague promises
 - Use numbers when possible
 - Show the "before and after"
 
 **4. Simple Language**
+
 - 8th-grade reading level
 - Short sentences
 - One idea per sentence
@@ -82,6 +87,7 @@ Write marketing content that **actually sounds human** by understanding your app
 **ALWAYS start by reading the codebase to understand context.**
 
 ### Step 1: Find Core Documentation
+
 ```bash
 # Look for README, docs, or similar
 Glob: **/README.md
@@ -90,6 +96,7 @@ Read: package.json (get app name, description)
 ```
 
 ### Step 2: Understand Features
+
 ```bash
 # Look for feature implementations
 Glob: **/src/**/*.{ts,tsx,js,jsx}
@@ -98,20 +105,25 @@ Grep: "// Feature:|TODO" (find feature comments)
 ```
 
 ### Step 3: Identify Value Prop
+
 Look for:
+
 - What problem does this solve?
 - Who is the target user?
 - What's the main benefit?
 - What makes it different?
 
 Extract from:
+
 - README description
 - Landing page copy (if exists)
 - Component names and structure
 - API routes and functionality
 
 ### Step 4: Synthesize Understanding
+
 Create a mental model:
+
 - **App name:** [from package.json]
 - **What it does:** [one sentence]
 - **Target user:** [specific person]
@@ -156,6 +168,7 @@ Perfect for solo founders who can't afford to waste time on dead-end projects.
 **Template for Claude:**
 
 When writing landing page sections:
+
 1. Read codebase to find the feature
 2. Identify the specific pain point
 3. Explain the solution simply (no jargon)
@@ -221,6 +234,7 @@ Stop building things nobody wants.
 **Template for Claude:**
 
 When writing tweet threads:
+
 1. Hook: Start with relatable pain or bold statement
 2. Personal angle: Why you built this (builds trust)
 3. Value prop: What it does simply
@@ -230,6 +244,7 @@ When writing tweet threads:
 7. CTA: Direct link + clear action
 
 **Tone:**
+
 - Casual (like you're explaining to a friend)
 - Use line breaks liberally
 - Bullet points with → or • for readability
@@ -302,6 +317,7 @@ P.S. Used it myself before building this tool. Turns out, people actually wanted
 **Template for Claude:**
 
 When writing launch emails:
+
 1. Subject: 6 words max, specific outcome
 2. Personal opener: Why them? Build rapport
 3. Specific problem: Use "you" language, paint the pain
@@ -314,6 +330,7 @@ When writing launch emails:
 10. P.S.: Add credibility or urgency
 
 **Tone:**
+
 - Like you're emailing a peer, not a customer
 - Short paragraphs (1-3 sentences max)
 - Conversational (use "you", ask questions)
@@ -420,7 +437,7 @@ Before delivering any content, verify:
 
 ## Common Mistakes to Avoid
 
-### ❌ Don't Write Like This:
+### ❌ Don't Write Like This
 
 **Too Corporate:**
 > "Our platform streamlines your workflow with best-in-class automation capabilities."
@@ -434,7 +451,7 @@ Before delivering any content, verify:
 **Too Technical:**
 > "Leveraging machine learning algorithms to optimize decision-making paradigms."
 
-### ✅ Write Like This:
+### ✅ Write Like This
 
 **Casual & Concrete:**
 > "Automate the boring stuff. Save 5 hours a week."
@@ -453,6 +470,7 @@ Before delivering any content, verify:
 ### For a Validation Tool
 
 **Landing Page Hero:**
+
 ```
 Stop wasting weeks building apps nobody wants
 
@@ -465,6 +483,7 @@ Free to try. No signup required.
 ```
 
 **Tweet:**
+
 ```
 I wasted 3 weeks on an app that got 0 users.
 
@@ -474,6 +493,7 @@ Here's how: [link]
 ```
 
 **Email Subject:**
+
 ```
 Stop building apps nobody wants
 ```
@@ -481,6 +501,7 @@ Stop building apps nobody wants
 ### For a Deployment Tool
 
 **Landing Page Section:**
+
 ```
 ## Deploy in 2 minutes
 
@@ -492,6 +513,7 @@ Connect your repo, pick a region, click deploy. Your app is live with SSL, custo
 ```
 
 **Tweet:**
+
 ```
 Spent 6 hours configuring AWS to deploy a simple app.
 
@@ -505,6 +527,7 @@ Try it: [link]
 ### For a Form Builder
 
 **Landing Page Section:**
+
 ```
 ## Build forms people actually fill out
 
@@ -516,6 +539,7 @@ Design custom forms that match your brand, add smart validation, and see real-ti
 ```
 
 **Email:**
+
 ```
 Subject: Forms that don't suck
 
@@ -543,9 +567,10 @@ P.S. No code required. Seriously.
 
 ## Advanced: Adapting to Context
 
-### If the app is technical (dev tool):
+### If the app is technical (dev tool)
 
 **Tone adjustments:**
+
 - You can use some technical terms (they're not jargon to devs)
 - Focus on time saved and pain avoided
 - Relate to common dev frustrations
@@ -554,9 +579,10 @@ P.S. No code required. Seriously.
 **Example:**
 > "Stop wrestling with Docker configs. Deploy your Next.js app in 2 minutes."
 
-### If the app is consumer-facing:
+### If the app is consumer-facing
 
 **Tone adjustments:**
+
 - Zero technical terms
 - Focus on emotional benefits
 - Use everyday analogies
@@ -565,9 +591,10 @@ P.S. No code required. Seriously.
 **Example:**
 > "Meal planning that doesn't feel like homework. Get your weekly grocery list in 5 minutes."
 
-### If the app is B2B:
+### If the app is B2B
 
 **Tone adjustments:**
+
 - Still casual, but slightly more professional
 - Focus on ROI and time savings
 - Use "your team" language
@@ -579,6 +606,7 @@ P.S. No code required. Seriously.
 ## Quick Reference: Common Patterns
 
 ### Problem → Solution → Benefit
+
 ```
 [Annoying problem]
 [How we fix it]
@@ -586,23 +614,27 @@ P.S. No code required. Seriously.
 ```
 
 ### Before/After
+
 ```
 Before: [Pain point]
 After: [With your tool]
 ```
 
 ### Time Saving
+
 ```
 Used to take [long time]. Now takes [short time].
 ```
 
 ### "You know that feeling..."
+
 ```
 You know that feeling when [relatable pain]?
 [Your tool] fixes that.
 ```
 
 ### Social Proof
+
 ```
 [Number] [specific users] use this to [specific outcome]
 ```
@@ -651,6 +683,7 @@ Suggested next steps:
 ## Success Metrics
 
 This skill succeeds when:
+
 - Content sounds human and approachable
 - Zero corporate buzzwords used
 - Benefits are specific and concrete
@@ -658,6 +691,7 @@ This skill succeeds when:
 - Marketing copy drives action (signups, clicks)
 
 This skill fails when:
+
 - Sounds corporate or generic
 - Uses hype or buzzwords
 - Benefits are vague ("better", "easier")

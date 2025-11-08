@@ -4,6 +4,16 @@
 
 This directory contains a hierarchical agent system where **you only talk to the ORCHESTRATOR**, which manages all sub-agents autonomously.
 
+**KEY CAPABILITY: Parallel Agent Execution**
+
+The orchestrator can run multiple agents in parallel for massive speedup:
+
+- **Different agents in parallel**: test-runner + code-review + security-auditor (simultaneously)
+- **Same agent duplicated**: 3x backend-agent for 30 endpoints (3x speedup)
+- **Combined approach**: Mix different agents + duplicated agents for maximum efficiency
+
+This enables 3-10x faster execution for large tasks through intelligent parallelization.
+
 ## Architecture
 
 ```txt
@@ -27,6 +37,7 @@ YOU (User)
   │   └── process-manager-agent (manages servers/processes)
   │
   ├── Specialized Domain Agents
+  │   ├── ux-designer-agent (UI/UX design & design systems)
   │   ├── frontend-agent (React/Next.js/UI)
   │   ├── backend-agent (Node/Express/API)
   │   ├── database-agent (Prisma/schema/migrations)
@@ -314,7 +325,31 @@ Agents should minimize token usage by:
 
 Each agent has one clear job. Don't create "do everything" agents.
 
-### 8. Frontend Agent (`frontend-agent.md`)
+### 8. UX Designer Agent (`ux-designer-agent.md`)
+
+**UI/UX design and design system specialist.**
+
+**What it does:**
+
+- Create comprehensive design specifications
+- Design color palettes (light/dark modes)
+- Define typography scales and hierarchies
+- Specify component design patterns
+- Create spacing and sizing systems
+- Define animation and transition patterns
+- Ensure WCAG AAA accessibility compliance
+- Create design documentation for developers
+- Conduct design audits and improvements
+
+**Use when:**
+
+- Before major UI redesigns
+- Creating or updating design systems
+- Before building new features that need UI design
+- When user feedback indicates design issues
+- Conducting design audits
+
+### 9. Frontend Agent (`frontend-agent.md`)
 
 **React/Next.js UI specialist.**
 
@@ -328,7 +363,7 @@ Each agent has one clear job. Don't create "do everything" agents.
 - Tailwind CSS styling
 - Theme system integration
 
-### 9. Backend Agent (`backend-agent.md`)
+### 10. Backend Agent (`backend-agent.md`)
 
 **Node.js/Express API specialist.**
 
@@ -341,7 +376,7 @@ Each agent has one clear job. Don't create "do everything" agents.
 - Error handling & validation
 - API response formatting
 
-### 10. Database Agent (`database-agent.md`)
+### 11. Database Agent (`database-agent.md`)
 
 **Prisma schema & migration specialist.**
 
@@ -354,7 +389,7 @@ Each agent has one clear job. Don't create "do everything" agents.
 - Set up relations
 - Database seeding
 
-### 11. Monitoring Agent (`monitoring-agent.md`)
+### 12. Monitoring Agent (`monitoring-agent.md`)
 
 **Logs, metrics, and system health specialist.**
 
@@ -367,7 +402,7 @@ Each agent has one clear job. Don't create "do everything" agents.
 - Check API response times
 - Database performance analysis
 
-### 12. Architecture Agent (`architecture-agent.md`)
+### 13. Architecture Agent (`architecture-agent.md`)
 
 **System design and patterns specialist.**
 
@@ -380,7 +415,7 @@ Each agent has one clear job. Don't create "do everything" agents.
 - Scalability planning
 - Code organization
 
-### 13. Documentation Agent (`documentation-agent.md`)
+### 14. Documentation Agent (`documentation-agent.md`)
 
 **Technical writing specialist.**
 
@@ -393,22 +428,40 @@ Each agent has one clear job. Don't create "do everything" agents.
 - Write user guides
 - Create troubleshooting guides
 
-### 14. Project Manager (`project-manager.md`)
+### 15. Project Manager (`project-manager.md`)
 
-**High-level coordinator for task management, feature planning, and timelines.**
+**High-level coordinator for task management, feature planning, timelines, and documentation management.**
 
 **What it does:**
 
 - Track tasks, todos, features
 - Manage project work and timelines
+- **Maintain project documentation** (CONTINUE_HERE.md, roadmaps, session summaries)
+- **Ensure session continuity** through up-to-date docs
 - Reduce context load on orchestrator
 - Delegate technical work to orchestrator
 - Provide project status reports
 - Prioritize work
 
+**Documents it maintains:**
+
+- `CONTINUE_HERE.md` - Quick start guide for new sessions
+- `docs/PROJECT_ROADMAP.md` - High-level roadmap and phases
+- `docs/IMMEDIATE_PRIORITIES_COMPLETE.md` - What's done vs pending
+- `docs/SESSION_SUMMARY_[DATE].md` - Session summaries
+
+**When to call project-manager for documentation:**
+
+- Major feature completed (update docs)
+- Session ending (prepare CONTINUE_HERE.md)
+- Roadmap changes needed
+- Current priorities shifted
+- Significant work done (create session summary)
+- New session starting (review and update docs)
+
 **Position:** Sits ABOVE orchestrator in hierarchy
 
-### 15. Agent Manager (`agent-manager.md`)
+### 16. Agent Manager (`agent-manager.md`)
 
 **Meta-agent that manages the agent system itself.**
 
@@ -421,7 +474,7 @@ Each agent has one clear job. Don't create "do everything" agents.
 - Update CLAUDE.md
 - Optimize agent system
 
-### 16. Cost Analysis Agent (`cost-analysis-agent.md`)
+### 17. Cost Analysis Agent (`cost-analysis-agent.md`)
 
 **Cost analysis and optimization specialist.**
 
@@ -441,7 +494,7 @@ Each agent has one clear job. Don't create "do everything" agents.
 - Budget concerns arise
 - Quarterly cost audits needed
 
-### 17. Infrastructure Security Agent (`infrastructure-security-agent.md`)
+### 18. Infrastructure Security Agent (`infrastructure-security-agent.md`)
 
 **Infrastructure security specialist.**
 
@@ -461,7 +514,7 @@ Each agent has one clear job. Don't create "do everything" agents.
 - During security audits
 - After security incidents
 
-### 18. Security Auditor Agent (`security-auditor-agent.md`)
+### 19. Security Auditor Agent (`security-auditor-agent.md`)
 
 **Comprehensive security auditor (code + infrastructure).**
 
@@ -482,7 +535,7 @@ Each agent has one clear job. Don't create "do everything" agents.
 - During security reviews
 - When vulnerability reported
 
-### 19. Git Workflow Expert Agent (`git-workflow-expert-agent.md`)
+### 20. Git Workflow Expert Agent (`git-workflow-expert-agent.md`)
 
 **Git workflow and CI/CD specialist.**
 
@@ -502,6 +555,31 @@ Each agent has one clear job. Don't create "do everything" agents.
 - When build times are slow
 - Adding new services or dependencies
 - Deployment pipeline needs improvement
+
+### 21. Obsidian Vault Agent (`obsidian-vault-agent.md`)
+
+**Obsidian personal knowledge management specialist.**
+
+**What it does:**
+
+- Quick capture: "Add this to my notes" with auto-categorization
+- Knowledge retrieval: "What do my notes say about X?"
+- Content synthesis: Merge related notes into comprehensive guides
+- Metadata enforcement: Add/fix YAML frontmatter across vault
+- Organization assistant: Identify orphaned notes, duplicates, misplaced content
+- Batch operations: Handle multiple note operations efficiently
+- Always uses wiki-link format `[[Note Title]]`
+- Enforces YAML frontmatter (id, tags, aliases)
+- Integrates with markdown-linter-agent for quality
+
+**Use when:**
+
+- Adding knowledge from conversation to Obsidian vault
+- Searching for information stored in notes
+- Organizing or cleaning up vault structure
+- Checking metadata coverage
+- Merging duplicate or related notes
+- Working with personal knowledge management
 
 ## Agent Collaboration Patterns
 
@@ -529,6 +607,8 @@ verification-agent (prove fix works)
 #### 2. Feature Development Workflow
 
 ```txt
+ux-designer-agent (design specifications)
+  ↓
 database-agent (schema changes)
   ↓
 backend-agent (API endpoints)
@@ -541,10 +621,11 @@ verification-agent (end-to-end testing)
 
 **Example**: Adding search feature
 
+- ux-designer-agent creates search component design specs
 - database-agent adds search indexes
 - backend-agent creates `/api/search` endpoint
-- frontend-agent builds SearchBar component
-- verification-agent tests search works
+- frontend-agent builds SearchBar component per design
+- verification-agent tests search works and meets accessibility standards
 
 #### 3. Performance Optimization Workflow
 
@@ -604,6 +685,26 @@ verification-agent (final smoke test)
 - code-review-agent reviews recent changes
 - verification-agent does final API tests
 
+#### 6. UI/UX Design & Implementation Workflow
+
+```txt
+ux-designer-agent (design system & component specs)
+  ↓
+architecture-agent (validate technical feasibility)
+  ↓
+frontend-agent (implement components)
+  ↓
+verification-agent (test accessibility & responsiveness)
+
+```
+
+**Example**: Creating design system for application
+
+- ux-designer-agent creates color palette, typography, component designs
+- architecture-agent validates design system structure fits codebase
+- frontend-agent implements design tokens and component library
+- verification-agent tests WCAG AAA compliance, responsive behavior
+
 ### Key Collaboration Principles
 
 1. **Agents delegate expertise** - When an agent encounters something outside its domain, it calls the appropriate specialist
@@ -611,6 +712,127 @@ verification-agent (final smoke test)
 3. **Workflows can be parallel or sequential** - Independent work happens in parallel, dependent work happens sequentially
 4. **No infinite loops** - Agents don't call themselves, and collaboration has clear termination
 5. **Always verify** - verification-agent runs last to prove work succeeded
+6. **Agent duplication for large tasks** - Same agent can be duplicated for parallel work on independent chunks
+
+## Parallel Execution Capabilities
+
+The orchestrator supports two powerful parallel execution patterns:
+
+### Pattern 1: Different Agents in Parallel
+
+Run multiple different agents simultaneously when tasks are independent:
+
+```typescript
+// Pre-deployment checks (all run in parallel)
+Task({ subagent_type: "test-runner-agent", prompt: "Run full test suite" })
+Task({ subagent_type: "code-review-agent", prompt: "Review code quality" })
+Task({ subagent_type: "security-auditor-agent", prompt: "Security scan" })
+Task({ subagent_type: "dependency-agent", prompt: "Verify dependencies" })
+```
+
+**Benefits:**
+- 4 tasks complete in time of longest task (~8 min) instead of sum (~20 min)
+- 2.5x speedup
+
+### Pattern 2: Agent Duplication for Large Tasks
+
+Run multiple instances of the SAME agent on independent chunks:
+
+```typescript
+// Implement 30 API endpoints (split across 3 backend-agents)
+Task({
+  subagent_type: "backend-agent",
+  prompt: "Implement endpoints 1-10: /users, /auth, /profile, ..."
+})
+Task({
+  subagent_type: "backend-agent",
+  prompt: "Implement endpoints 11-20: /reports, /exports, ..."
+})
+Task({
+  subagent_type: "backend-agent",
+  prompt: "Implement endpoints 21-30: /admin, /logs, ..."
+})
+```
+
+**Benefits:**
+- 30 endpoints in ~10 min instead of ~30 min
+- 3x speedup
+
+### Combined Approach
+
+Mix different agents + duplicated agents for maximum efficiency:
+
+```typescript
+// Comprehensive codebase review
+Task({ subagent_type: "test-runner-agent", prompt: "Run tests" })
+Task({ subagent_type: "dependency-agent", prompt: "Check deps" })
+
+// Duplicate security-auditor across directories
+Task({ subagent_type: "security-auditor-agent", prompt: "Scan backend/" })
+Task({ subagent_type: "security-auditor-agent", prompt: "Scan frontend/" })
+Task({ subagent_type: "security-auditor-agent", prompt: "Scan infra/" })
+
+// Duplicate code-review across modules
+Task({ subagent_type: "code-review-agent", prompt: "Review controllers/" })
+Task({ subagent_type: "code-review-agent", prompt: "Review services/" })
+```
+
+**Benefits:**
+- 7 agents run in parallel
+- 5-10x speedup vs sequential
+
+### When to Use Agent Duplication
+
+**Good candidates:**
+- backend-agent: Multiple API endpoints
+- frontend-agent: Multiple pages/components
+- security-auditor-agent: Directory scans
+- code-review-agent: File group reviews
+- database-agent: Independent indexes
+- documentation-agent: Module documentation
+- test-runner-agent: Test suite splits (unit, integration, e2e)
+
+**Bad candidates:**
+- diagnostic-agent: Needs full system view
+- verification-agent: Must verify system as whole
+- process-manager-agent: Global process state
+- architecture-agent: Needs coherent design
+- orchestrator-agent: You're the orchestrator!
+
+### Performance Impact
+
+**Example: Implement 30 API Endpoints**
+
+Sequential (1 backend-agent):
+```txt
+Endpoint 1 → Endpoint 2 → ... → Endpoint 30
+Total: 30 minutes
+```
+
+Parallel (3 backend-agents):
+```txt
+Agent 1: Endpoints 1-10   (10 min) ┐
+Agent 2: Endpoints 11-20  (10 min) ├─ All simultaneous
+Agent 3: Endpoints 21-30  (10 min) ┘
+Total: 10 minutes (3x speedup)
+```
+
+**Example: Comprehensive Security Scan**
+
+Sequential (1 security-auditor):
+```txt
+backend/ → frontend/ → infra/ → database/
+Total: 32 minutes
+```
+
+Parallel (4 security-auditors):
+```txt
+Agent 1: backend/    (8 min) ┐
+Agent 2: frontend/   (8 min) │
+Agent 3: infra/      (8 min) ├─ All simultaneous
+Agent 4: database/   (8 min) ┘
+Total: 8 minutes (4x speedup)
+```
 
 ### Collaboration Examples
 

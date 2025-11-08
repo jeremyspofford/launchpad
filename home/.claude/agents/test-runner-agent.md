@@ -95,6 +95,7 @@ AssertionError: Representative not found
 ---
 
 #### 2. Integration Test: Representatives Page Load
+
 **File:** `frontend/tests/integration/representatives.test.jsx:78`
 **Error:**
 
@@ -115,28 +116,34 @@ at RepresentativesPage.render (pages/representatives/index.jsx:160)
 ### Test Coverage
 
 **Backend Coverage:**
+
 - Statements: 78.5%
 - Branches: 65.2%
 - Functions: 82.1%
 - Lines: 77.9%
 
 **Files with Low Coverage:**
+
 - `services/conflictDetector.js`: 45% (needs more tests)
 - `services/promiseTracker.js`: 52% (needs more tests)
 
 ### Linting Issues
 
 **ESLint:**
+
 - 3 errors
 - 12 warnings
 
 **Common Issues:**
+
 - Unused variables (8 warnings)
+
 - Missing prop-types (4 warnings)
 
 ### Performance Issues
 
 **Slow Tests (> 5s):**
+
 1. `API Integration Test Suite` - 12.3s
 2. `Database Migration Tests` - 8.7s
 
@@ -145,16 +152,19 @@ at RepresentativesPage.render (pages/representatives/index.jsx:160)
 ### Next Steps
 
 **Must Fix Before Deploy:**
+
 1. Fix 3 failing API tests (representatives endpoints)
 2. Fix 5 integration test failures (null checks needed)
 3. Resolve 3 ESLint errors
 
 **Should Fix:**
+
 - Increase test coverage for conflict detector
 - Add prop-types to components
 - Optimize slow test suites
 
 **Can Defer:**
+
 - Unused variable warnings (cleanup later)
 
 ```
@@ -270,6 +280,7 @@ npm test -- --watchAll
 # Run frontend and backend tests in parallel
 (cd backend && npm test) &
 (cd frontend && npm test) &
+
 wait
 
 ```
@@ -278,37 +289,44 @@ wait
 
 Test results reveal what needs fixing:
 
-### Call diagnostic-agent when:
+### Call diagnostic-agent when
+
 - Tests failing due to service issues
-- Database connection errors in tests
+- Database connection error in tests
+
 - Port conflicts preventing test execution
 - Example: "Tests failing with 'EADDRINUSE', need diagnosis"
 
-### Call code-review-agent when:
-- Tests reveal code quality issues
+### Call code-review-agent when
+
+- Tests reveal code quality ssues
+
 - Coverage is low in critical areas
 - Security test failures
 - Example: "Authentication tests failing, need code review"
 
-### Call backend-agent when:
+### Call backend-agent when
+
 - API tests failing due to endpoint issues
 - Response structure mismatches
 - Business logic errors
 - Example: "GET /representatives/:id returns 404, needs fix"
 
-### Call frontend-agent when:
+### Call frontend-agent when
+
 - Component tests failing
 - UI integration tests broken
 - React rendering issues
 - Example: "RepresentativeCard test failing on null data"
 
-### Call verification-agent after fixes:
+### Call verification-agent after fixes
+
 - Tests now pass, want manual verification
 - Need end-to-end confirmation
 - Want proof of working system
 - Example: "All tests green, need verification in actual browser"
 
-### Collaboration Pattern Example:
+### Collaboration Pattern Example
 
 ```markdown
 ## Test Runner Report

@@ -8,7 +8,8 @@ I'll help you manage your custom slash commands based on your request: **$ARGUME
 
 ## Slash Command Manager
 
-### Available Actions:
+### Available Actions
+
 1. **create** - Create a new slash command
 2. **list** - List all available custom slash commands
 3. **edit <name>** - Edit an existing slash command  
@@ -24,6 +25,7 @@ Based on your arguments, I'll:
 3. **Perform the requested operation**
 
 If you didn't provide arguments or need help, here's how to use this command:
+
 - `/cmd create` - I'll guide you through creating a new command
 - `/cmd create mycommand` - Create a command named "mycommand"
 - `/cmd list` - Show all available slash commands
