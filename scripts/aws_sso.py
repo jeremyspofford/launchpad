@@ -9,7 +9,7 @@ import sys
 import subprocess
 import time
 from configparser import ConfigParser
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import boto3
@@ -42,7 +42,7 @@ def get_sso_cached_login(profile):
             continue
         if data.get("region") != profile["sso_region"]:
             continue
-        if datetime.now() > parse_timestamp(data["expiresAt"]):
+        if datetime.now(timezone.utc) > parse_timestamp(data["expiresAt"]):
             continue
         return data
     raise Exception("Current cached SSO login is expired or invalid")
@@ -111,7 +111,7 @@ def load_json(path):
 
 
 def parse_timestamp(value):
-    return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
 
 
 def read_config(path):

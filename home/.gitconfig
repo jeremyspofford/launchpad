@@ -2,7 +2,8 @@
     path = ~/.gitconfig-private
 
 [include]
-    path = ~/.config/git/work.gitconfig
+    # path = ~/.config/git/work.gitconfig
+    path = ~/.gitconfig-private
 
 [includeIf "gitdir:~/personal/"]
     path = ~/.config/git/personal.gitconfig
@@ -12,6 +13,7 @@
 
 [user]
     name = "Jeremy Spofford"
+	email = 12678732-jeremyspofford@users.noreply.gitlab.com
 
 [core]
     editor = nvim

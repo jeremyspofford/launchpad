@@ -140,5 +140,10 @@
     "type": "command",
     "command": "~/.claude/statusline-command.sh"
   },
+  "enabledPlugins": {
+    "aws-agentic-ai@aws-skills": true,
+    "repomix-explorer@repomix": true,
+    "repomix-mcp@repomix": true
+  },
   "alwaysThinkingEnabled": true
 }

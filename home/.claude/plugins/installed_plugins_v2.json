@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "plugins": {
+    "aws-agentic-ai@aws-skills": [
+      {
+        "scope": "project",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/aws-skills/aws-agentic-ai/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-06T05:27:31.372Z",
+        "lastUpdated": "2026-01-06T05:27:31.372Z",
+        "gitCommitSha": "ece56a8e1c9155521869d6ae9e85c108c6dff413",
+        "isLocal": true,
+        "projectPath": "/Users/jeremyspofford"
+      }
+    ],
+    "repomix-explorer@repomix": [
+      {
+        "scope": "project",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/repomix/repomix-explorer/1.1.0",
+        "version": "1.1.0",
+        "installedAt": "2026-01-06T05:27:31.372Z",
+        "lastUpdated": "2026-01-06T05:27:31.372Z",
+        "gitCommitSha": "f7c68b52a4e9e2a476477b81b22be259b4ebe713",
+        "isLocal": true,
+        "projectPath": "/Users/jeremyspofford"
+      }
+    ],
+    "repomix-mcp@repomix": [
+      {
+        "scope": "project",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/repomix/repomix-mcp/1.0.1",
+        "version": "1.0.1",
+        "installedAt": "2026-01-06T05:27:31.372Z",
+        "lastUpdated": "2026-01-06T05:27:31.372Z",
+        "gitCommitSha": "f7c68b52a4e9e2a476477b81b22be259b4ebe713",
+        "isLocal": true,
+        "projectPath": "/Users/jeremyspofford"
+      }
+    ]
+  }
+}

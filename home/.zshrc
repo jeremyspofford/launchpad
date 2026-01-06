@@ -1,3 +1,5 @@
+# Kiro CLI pre block. Keep at the top of this file.
+[[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.pre.zsh"
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
@@ -149,11 +151,12 @@ rbenv() {
 }
 
 # Lazy load mise - only initialize when first used
-mise() {
-    unset -f mise
-    eval "$(command mise activate zsh)"
-    mise "$@"
-}
+# mise() {
+#     unset -f mise
+#     eval "$(command mise activate zsh)"
+#     mise "$@"
+# }
+eval "$(command mise activate zsh)"
 
 # Load aliases immediately - they're lightweight and expected to be available
 [ -f ~/.aliases ] && source ~/.aliases
@@ -168,3 +171,12 @@ export TEAMS_WEBHOOK_URL="https://REDACTED_DOMAIN:443/powerautomate/automations/
 
 # opencode
 export PATH=/Users/jeremyspofford/.opencode/bin:$PATH
+
+# Kiro CLI post block. Keep at the bottom of this file.
+[[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh"
+
+# Added by Antigravity
+export PATH="/Users/jeremyspofford/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/jeremyspofford/.antigravity/antigravity/bin:$PATH"
