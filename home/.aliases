@@ -1,12 +1,11 @@
-# Convenience aliases
+# ============================================================================ #
+# Shell Aliases
+# ============================================================================ #
+
+# Convenience aliases for dotfiles scripts
 alias sync="sync-secrets"  # Short alias for sync-secrets
 alias load="load-secrets"  # Short alias for load-secrets
 
-# alias terraform='docker run --rm -v $(pwd):/workspace -w /workspace hashicorp/terraform:latest'
-# alias terragrunt='docker run --rm -v $(pwd):/workspace -w /workspace gruntwork/terragrunt'
-alias bru='docker run -it --rm -v ~/workspace/ft-quoting/apps/server/api/collections:/workspace -w /workspace alpine/bruno:latest'
-
-# Common Aliases
 # File listing aliases
 alias ll='ls -AlF'
 alias la='ls -A'
@@ -14,46 +13,57 @@ alias l='ls -CF'
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e ''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'')"'
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')\"'
 
-# ANSIBLE ALIASES
+# ============================================================================ #
+# Development Tool Aliases
+# ============================================================================ #
+
+# Ansible
 alias ap="ansible-playbook"
 
-# AWS ALIASES
+# AWS
 alias awslocal="aws --endpoint-url=http://localhost:4566 --profile localstack"
 
-# DOCKER ALIASES
+# Docker
 alias dc="docker-compose"
 
-# TERRAFORM ALIASES
+# Terraform
 alias tf="terraform"
 alias tfp="terraform plan"
 alias tfa="terraform apply"
 
-# TERRAGRUN ALIASES
+# Terragrunt
 alias tg="terragrunt"
 
-# Language aliases  
+# Python
 alias python="python3"
 alias pip="pip3"
 
-# NeoVim configurations
+# ============================================================================ #
+# Neovim Configuration Switchers
+# ============================================================================ #
+
 alias craftzdog="NVIM_APPNAME=craftzdog/dotfiles-public/.config/nvim nvim"
 alias starter="NVIM_APPNAME=starter nvim"
 alias xero="NVIM_APPNAME=xero/dotfiles/neovim/.config/nvim nvim"
 alias kickstart='NVIM_APPNAME="nvim-kickstart" nvim'
 alias nvchad="NVIM_APPNAME=nvchad nvim"
 
-# Platform-specific clipboard aliases
+# ============================================================================ #
+# Platform-Specific Aliases
+# ============================================================================ #
+
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     alias pbpaste="xclip -selection clipboard -o"
     alias pbcopy="xclip -selection clipboard"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     # pbpaste/pbcopy already available on macOS
     alias to-obsidian="cd ~/Documents/Obsidian_vault/"
-    :
 fi
 
-alias sso="/usr/bin/python3 $HOME/workspace/dotfiles/scripts/aws_sso.py"
+# ============================================================================ #
+# Local Aliases (machine-specific, not tracked)
+# ============================================================================ #
 
 [[ -f ~/.aliases.local ]] && source ~/.aliases.local

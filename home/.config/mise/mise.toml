@@ -1,27 +1,57 @@
 [tools]
+# Cloud & Infrastructure
 aws-cli = "2.32.3"
 aws-sam-cli = "1.150.1"
-bat = "latest"
-claude = "latest"
-driftctl = "latest"
-eza = "latest"
-fd = "latest"
-glow = "latest"
-hcl2json = "latest"
-infracost = "latest"
-jq = "latest"
-lazydocker = "latest"
-lazygit = "latest"
-node = "24.10.0"
-"npm:@mirohq/cloud-data-import" = "latest"
-"npm:@shopify/cli" = "latest"
-opentofu = "1.10.7"
-python = "3.12.11"
-ripgrep = "latest"
 terraform = "1.14.0"
 terragrunt = "0.93.12"
-tlrc = "latest"
+opentofu = "1.10.7"
+infracost = "latest"
+driftctl = "latest"
+
+# Languages & Runtimes
+node = "24.10.0"
+python = "3.12.11"
+go = "latest"
+rust = "latest"
+
+# AI & Coding Assistants
+claude = "latest"
+gemini = "latest"
+"pipx:aider-chat" = "latest"
+
+# Git & Version Control
+lazygit = "latest"
+delta = "latest"
+gh = "latest"
+glab = "latest"
+
+# File & Text Tools
+bat = "latest"
+eza = "latest"
+fd = "latest"
+ripgrep = "latest"
+jq = "latest"
+yq = "latest"
+fzf = "latest"
+glow = "latest"
+
+# Linters & Formatters
+shellcheck = "latest"
+shfmt = "latest"
 yamlfmt = "latest"
 yamllint = "latest"
+
+# Docker & Containers
+lazydocker = "latest"
+
+# Misc CLI Tools
+tlrc = "latest"
+hcl2json = "latest"
+direnv = "latest"
+
+# Package Managers
 yarn = "latest"
-yq = "latest"
+
+# Project-Specific (npm packages)
+"npm:@mirohq/cloud-data-import" = "latest"
+"npm:@shopify/cli" = "latest"

@@ -1,19 +1,14 @@
+# ============================================================================ #
+# Git Configuration
+# ============================================================================ #
+
+# Include identity configuration (not tracked in repo)
 [include]
-    path = ~/.gitconfig-private
+    path = ~/.config/git/identity.gitconfig
 
-[include]
-    # path = ~/.config/git/work.gitconfig
-    path = ~/.gitconfig-private
-
-[includeIf "gitdir:~/personal/"]
-    path = ~/.config/git/personal.gitconfig
-
-[includeIf "gitdir:~/workspace/dotfiles/"]
-    path = ~/.config/git/personal.gitconfig
-
-[user]
-    name = "Jeremy Spofford"
-	email = 12678732-jeremyspofford@users.noreply.gitlab.com
+# ============================================================================ #
+# Core Settings
+# ============================================================================ #
 
 [core]
     editor = nvim
@@ -24,22 +19,23 @@
 [init]
     defaultBranch = main
 
+# ============================================================================ #
+# Push/Pull/Fetch Settings
+# ============================================================================ #
+
 [push]
     default = current
     autoSetupRemote = true
-
-# Force SSH for Git operations (always use SSH, never HTTPS)
-[url "git@github.com:"]
-    insteadOf = https://github.com/
-
-[url "git@gitlab.com:"]
-    insteadOf = https://gitlab.com/
 
 [pull]
     rebase = true
 
 [fetch]
     prune = true
+
+# ============================================================================ #
+# Diff and Merge
+# ============================================================================ #
 
 [merge]
     conflictstyle = diff3
@@ -56,6 +52,9 @@
     side-by-side = true
     line-numbers = true
 
+# ============================================================================ #
+# Aliases
+# ============================================================================ #
 
 [alias]
     # Basic shortcuts
@@ -65,38 +64,39 @@
     br = branch
     df = diff
     lg = log --oneline --graph --decorate
-    
+
     # Advanced shortcuts
     unstage = reset HEAD --
     last = log -1 HEAD
     amend = commit --amend --no-edit
     undo = reset --soft HEAD~1
-    
+
     # Branch management
     branches = branch -a
     remotes = remote -v
     cleanup = !git branch --merged | grep -v '\\*\\|main\\|master\\|develop' | xargs -n 1 git branch -d
-    
+
     # Stash shortcuts
     stashes = stash list
     save = stash save
     pop = stash pop
-    
+
     # Log variations
     hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
     today = log --since=midnight --oneline
     recent = log --oneline -10
-    
-    # Work tracking
-    standup = log --since=yesterday --author='' --oneline
-    
+
     # Sync shortcuts
     sync = !git fetch --all && git pull
     pushf = push --force-with-lease
 
+# ============================================================================ #
+# Colors
+# ============================================================================ #
+
 [color]
     ui = true
-    
+
 [color "branch"]
     current = yellow reverse
     local = yellow

@@ -1,0 +1,32 @@
+# ============================================================================ #
+# Ghostty Terminal Configuration
+# ============================================================================ #
+# https://ghostty.org/docs/config
+
+# Font settings
+font-family = JetBrainsMono Nerd Font
+font-size = 14
+
+# Window appearance
+window-theme = auto
+window-padding-x = 10
+window-padding-y = 10
+
+# Theme - Catppuccin Mocha (auto-switches with system)
+theme = catppuccin-mocha
+
+# Shell integration
+shell-integration = zsh
+
+# Cursor
+cursor-style = block
+cursor-style-blink = true
+
+# Selection
+copy-on-select = clipboard
+
+# Scrollback
+scrollback-limit = 50000
+
+# macOS specific
+macos-option-as-alt = true

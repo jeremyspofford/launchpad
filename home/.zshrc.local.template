@@ -1,0 +1,25 @@
+# ============================================================================ #
+# Local ZSH Configuration Template
+# ============================================================================ #
+# This file is for machine-specific customizations that shouldn't be synced.
+# Copy this file to ~/.zshrc.local to use it.
+#
+# Usage:
+#   cp ~/.zshrc.local.template ~/.zshrc.local
+#   vim ~/.zshrc.local
+# ============================================================================ #
+
+# Example: Add work-specific paths
+# export PATH="$HOME/work/tools:$PATH"
+
+# Example: Source work-specific aliases
+# source ~/.work-aliases
+
+# Example: Set work-specific environment variables
+# export WORK_PROJECT_DIR="$HOME/workspace/client-project"
+
+# Example: Override default editor for work
+# export EDITOR="code --wait"
+
+# Example: Add machine-specific aliases
+# alias myproject="cd ~/workspace/my-special-project"

@@ -14,5 +14,13 @@
     },
     "installLocation": "/Users/jeremyspofford/.claude/plugins/marketplaces/repomix",
     "lastUpdated": "2026-01-06T04:39:08.403Z"
+  },
+  "claude-plugins-official": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/claude-plugins-official"
+    },
+    "installLocation": "/Users/jeremyspofford/.claude/plugins/marketplaces/claude-plugins-official",
+    "lastUpdated": "2026-01-07T21:26:41.955Z"
   }
 }

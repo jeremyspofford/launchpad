@@ -1,22 +1,13 @@
-#!/usr/bin/env bash
-#
-# log-routing-decision.sh - Logs routing decisions for audit trail
-#
+#!/bin/bash
+# Log routing decisions for Claude Code hooks
+# Usage: log-routing-decision.sh <decision> <event_type> <tool_or_action> [file_path]
 
-set -euo pipefail
-
-TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-ROUTING_METHOD="${1:-UNKNOWN}"
-TASK_TYPE="${2:-general}"
-TOOL_USED="${3:-unknown}"
-FILE_PATH="${4:-}"
-
+DECISION="$1"
+EVENT_TYPE="$2"
+TOOL_OR_ACTION="$3"
+FILE_PATH="${4:-N/A}"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 LOG_FILE="$HOME/.claude/routing-audit.log"
-LOG_DIR=$(dirname "$LOG_FILE")
 
-# Ensure directory exists
-mkdir -p "$LOG_DIR"
-
-# Append to log
-# Note: flock not available on macOS, using simple append for single-user system
-echo "$TIMESTAMP | $ROUTING_METHOD | $TASK_TYPE | $TOOL_USED | $FILE_PATH" >> "$LOG_FILE"
+# Create log entry
+echo "$TIMESTAMP | $DECISION | $EVENT_TYPE | $TOOL_OR_ACTION | $FILE_PATH" >> "$LOG_FILE"

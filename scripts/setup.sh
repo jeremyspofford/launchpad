@@ -1,275 +1,263 @@
 #!/usr/bin/env bash
-
 # ============================================================================ #
-# Universal Dotfiles Setup Script
+# Dotfiles Setup Script
 # ============================================================================ #
-# This script handles both initial bootstrap and regular setup:
-# - Detects if running on a fresh system or existing setup
-# - Installs Homebrew if needed (macOS)
-# - Installs Ansible if needed
-# - Runs the Ansible playbook to configure everything
-# 
+# Main entry point for setting up dotfiles on any platform.
+#
 # Usage:
-#   ./setup.sh [OPTIONS]
+#   ./scripts/setup.sh [OPTIONS]
 #
 # Options:
-#   -f, --force    Force execution of all tasks (passed to ansible-playbook)
 #   -h, --help     Show this help message
-# 
-# Can be run via curl for new machines:
-#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/yourusername/dotfiles/main/scripts/setup.sh)"
+#   -s, --stow     Only run stow (skip installations)
 # ============================================================================ #
 
 set -euo pipefail
 
-
-# Parse command line arguments
-FORCE_FLAG=""
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        -f|--force)
-            FORCE_FLAG="--force"
-            shift
-            ;;
-        -h|--help)
-            show_help
-            exit 0
-            ;;
-        *)
-            error "Unknown option: $1"
-            show_help
-            exit 1
-            ;;
-    esac
-done
+# --- Script location ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 
 # --- Colors for output ---
 readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m' 
+readonly GREEN='\033[0;32m'
 readonly YELLOW='\033[1;33m'
 readonly BLUE='\033[0;34m'
 readonly MAGENTA='\033[0;35m'
 readonly BOLD='\033[1m'
-readonly NC='\033[0m' # No Color
+readonly NC='\033[0m'
 
 # --- Logging Functions ---
 log() { echo -e "${BLUE}[INFO]${NC} $1"; }
 success() { echo -e "${GREEN}[✓]${NC} $1"; }
-error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+error() { echo -e "${RED}[ERROR]${NC} $1" >&2; exit 1; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 header() { echo -e "\n${BOLD}${MAGENTA}==>${NC} ${BOLD}$1${NC}\n"; }
 
 # --- Helper Functions ---
 command_exists() { command -v "$1" >/dev/null 2>&1; }
 
+# --- Show help ---
 show_help() {
     cat << EOF
-Universal Dotfiles Setup Script
-
-DESCRIPTION:
-    Automated setup script for cross-platform dotfiles management using 
-    Ansible and GNU Stow. Handles initial bootstrap and regular updates.
+Dotfiles Setup Script
 
 USAGE:
     $0 [OPTIONS]
 
 OPTIONS:
-    -f, --force     Force execution of all Ansible tasks, even if they 
-                    appear to be up-to-date. Useful for troubleshooting
-                    or ensuring complete reconfiguration.
-    
-    -h, --help      Show this help message and exit.
+    -h, --help     Show this help message
+    -s, --stow     Only run stow (skip installations)
+
+DESCRIPTION:
+    Sets up dotfiles on macOS, Linux, or WSL by:
+    1. Installing required tools (mise, stow, etc.)
+    2. Symlinking dotfiles via GNU Stow
+    3. Configuring Git identity (optional)
+    4. Creating secrets file from template
 
 EXAMPLES:
-    $0                    # Normal setup/update
-    $0 --force           # Force all tasks to run
-    $0 -h                # Show this help
+    $0              # Full setup
+    $0 --stow       # Only symlink dotfiles
 
-ENVIRONMENT VARIABLES:
-    DOTFILES_REPO        Override repository to clone (default: jeremyspofford/dotfiles)
-                         Example: DOTFILES_REPO=myuser/dotfiles $0
-
-REQUIREMENTS:
-    - macOS: Xcode Command Line Tools
-    - Linux/WSL: curl, sudo access
-    - Network connection for package downloads
-
-For more information, see README.md in the repository.
 EOF
 }
 
-main() {
-    header "Dotfiles Setup"
-    
-    detect_os
-    ensure_repository
-    bootstrap_system
-    run_ansible_playbook
-    success "🎉 Setup complete! Your dotfiles environment is ready."
-    echo ""
-    echo "Next steps:"
-    if [[ "$OS_TYPE" == "macos" ]]; then
-        echo "  • Restart your shell: exec zsh"
-    else
-        echo "  • Restart your shell: exec bash"
-    fi
-    echo "  • Test SSH: ssh -T git@github.com"
-    if [[ "$OS_TYPE" == "macos" ]]; then
-        echo "  • Check modern Bash: bash --version"
-    fi
-}
+# --- Parse arguments ---
+STOW_ONLY=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -s|--stow)
+            STOW_ONLY=true
+            shift
+            ;;
+        *)
+            error "Unknown option: $1"
+            ;;
+    esac
+done
 
+# --- Detect OS ---
 detect_os() {
-    log "Detecting operating system..."
     case "$(uname -s)" in
-        Darwin) 
+        Darwin)
             OS_TYPE="macos"
-            log "Detected macOS."
             ;;
         Linux)
-            # Check if running in WSL
             if grep -qi microsoft /proc/version 2>/dev/null; then
                 OS_TYPE="wsl"
-                log "Detected WSL (Windows Subsystem for Linux)."
-                # WSL typically uses bash by default
-                export PREFERRED_SHELL="bash"
             else
                 OS_TYPE="linux"
-                log "Detected Linux."
             fi
             ;;
-        *) 
-            error "Unsupported OS: $(uname -s). This script supports macOS, Linux, and WSL." 
+        *)
+            error "Unsupported OS: $(uname -s)"
+            ;;
+    esac
+    export OS_TYPE
+    log "Detected OS: $OS_TYPE"
+}
+
+# --- Run platform-specific installation ---
+run_installation() {
+    header "Installing Dependencies"
+
+    # Source and run common installation
+    source "$SCRIPT_DIR/install/common.sh"
+    install_common
+
+    # Run platform-specific installation
+    case "$OS_TYPE" in
+        macos)
+            source "$SCRIPT_DIR/install/macos.sh"
+            install_macos
+            ;;
+        linux)
+            source "$SCRIPT_DIR/install/linux.sh"
+            install_linux
+            ;;
+        wsl)
+            source "$SCRIPT_DIR/install/wsl.sh"
+            install_wsl
             ;;
     esac
 }
 
-ensure_repository() {
-    header "Ensuring dotfiles repository"
-    
-    # Check if we're already in a dotfiles repo
-    if [[ -f "ansible/playbook.yml" ]] && [[ -d "home" ]]; then
-        log "Already in dotfiles repository at $(pwd)"
-        return
-    fi
-    
-    # Check if dotfiles exists in expected location
-    if [[ -d "$HOME/workspace/dotfiles" ]]; then
-        log "Found dotfiles at ~/workspace/dotfiles"
-        cd "$HOME/workspace/dotfiles"
-        git pull || warn "Could not update repository"
-        return
-    fi
-    
-    # Need to clone the repository
-    log "Dotfiles repository not found. Setting up..."
-    
-    # Install GitHub CLI if needed
-    if ! command_exists gh; then
-        if [[ "$OS_TYPE" == "macos" ]]; then
-            ensure_homebrew
-            brew install gh || error "Failed to install GitHub CLI"
-        elif [[ "$OS_TYPE" == "wsl" ]] || [[ "$OS_TYPE" == "linux" ]]; then
-            log "Installing GitHub CLI..."
-            # Install GitHub CLI on Debian/Ubuntu-based systems
-            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-            sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-            sudo apt update
-            sudo apt install gh -y || error "Failed to install GitHub CLI"
-        fi
-    fi
-    
-    # Authenticate if needed
-    if ! gh auth status >/dev/null 2>&1; then
-        log "Please authenticate with GitHub..."
-        gh auth login || error "GitHub authentication failed"
-    fi
-    
-    # Clone repository
-    # Use environment variable or try to detect repository from git remote
-    DOTFILES_REPO="${DOTFILES_REPO:-jeremyspofford/dotfiles}"
-    mkdir -p "$HOME/workspace"
-    cd "$HOME/workspace"
-    gh repo clone "$DOTFILES_REPO" || error "Failed to clone dotfiles repository: $DOTFILES_REPO"
-    cd dotfiles
-    success "Dotfiles repository ready."
-}
+# --- Run GNU Stow ---
+run_stow() {
+    header "Symlinking Dotfiles"
 
-ensure_homebrew() {
-    if command_exists brew; then
-        return
-    fi
-    
-    log "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || error "Failed to install Homebrew"
-    
-    # Add Homebrew to PATH for current session
-    if [[ -f /opt/homebrew/bin/brew ]]; then
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-        # Add to shell profile
-        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "$HOME/.zprofile"
-    elif [[ -f /usr/local/bin/brew ]]; then
-        eval "$(/usr/local/bin/brew shellenv)"
-    fi
-    
-    success "Homebrew installed."
-}
+    cd "$DOTFILES_DIR"
 
-bootstrap_system() {
-    header "Bootstrapping System"
-    
-    if command_exists ansible; then
-        success "Ansible already installed."
+    # Check for conflicts
+    log "Checking for conflicts..."
+    if ! stow -n home 2>&1 | grep -q "WARNING"; then
+        log "No conflicts detected"
     else
-        log "Installing Ansible..."
-        
-        if [[ "$OS_TYPE" == "macos" ]]; then
-            ensure_homebrew
-            brew install ansible || error "Failed to install Ansible via Homebrew"
-        elif [[ "$OS_TYPE" == "wsl" ]] || [[ "$OS_TYPE" == "linux" ]]; then
-            sudo apt-get update -qq || warn "Failed to update apt list"
-            sudo apt-get install -y ansible python3-pip || error "Failed to install Ansible via apt"
-        fi
-        
-        success "Ansible installed."
+        warn "Potential conflicts detected. You may need to backup existing files."
+        stow -n home 2>&1 | grep "WARNING" || true
     fi
-    
-    # Install Ansible collections
-    if [[ -f "ansible/requirements.yml" ]]; then
-        log "Installing Ansible collections..."
-        ansible-galaxy collection install -r ansible/requirements.yml || warn "Some collections may have failed to install"
-        success "Ansible collections processed."
-    fi
+
+    # Run stow
+    log "Running stow..."
+    stow --restow home
+
+    success "Dotfiles symlinked"
 }
 
-run_ansible_playbook() {
-    header "Running Ansible Playbook"
-    
-    if [[ ! -f "ansible/playbook.yml" ]]; then
-        error "Ansible playbook not found at ansible/playbook.yml"
+# --- Setup Git identity ---
+setup_git_identity() {
+    header "Git Identity Setup"
+
+    local identity_file="$HOME/.config/git/identity.gitconfig"
+    local template_file="$DOTFILES_DIR/home/.config/git/identity.gitconfig.template"
+
+    if [[ -f "$identity_file" ]]; then
+        success "Git identity already configured"
+        return
     fi
-    
-    log "Executing main Ansible playbook..."
-    
-    # Build ansible-playbook command with optional force flag
-    ANSIBLE_CMD="ansible-playbook -i ansible/inventory.ini ansible/playbook.yml"
-    if [[ -n "$FORCE_FLAG" ]]; then
-        ANSIBLE_CMD="$ANSIBLE_CMD $FORCE_FLAG"
-        log "Force flag enabled - all tasks will be executed regardless of state."
+
+    if [[ ! -f "$template_file" ]]; then
+        warn "Identity template not found, skipping Git identity setup"
+        return
     fi
-    
-    # Check if we need sudo privileges by looking for tasks with become: yes
-    if grep -r "become.*yes\|become.*true" ansible/ >/dev/null 2>&1; then
-        log "Some tasks require sudo privileges. You will be prompted for your password."
-        $ANSIBLE_CMD --ask-become-pass || error "Ansible playbook execution failed"
+
+    echo ""
+    echo "Would you like to set up your Git identity now? (y/n)"
+    read -r response
+
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        echo "Enter your full name:"
+        read -r git_name
+        echo "Enter your email:"
+        read -r git_email
+
+        mkdir -p "$(dirname "$identity_file")"
+        cat > "$identity_file" << EOF
+[user]
+    name = "$git_name"
+    email = "$git_email"
+EOF
+        success "Git identity configured"
     else
-        log "No sudo privileges required."
-        $ANSIBLE_CMD || error "Ansible playbook execution failed"
+        log "Skipping Git identity setup. You can set it up later by copying:"
+        log "  $template_file -> $identity_file"
     fi
-    
-    success "Ansible playbook completed successfully."
 }
 
-# --- Execution ---
+# --- Setup secrets ---
+setup_secrets() {
+    header "Secrets Setup"
+
+    local secrets_file="$HOME/.secrets"
+    local template_file="$DOTFILES_DIR/home/.secrets.template"
+
+    if [[ -f "$secrets_file" ]]; then
+        success "Secrets file already exists"
+        return
+    fi
+
+    if [[ ! -f "$template_file" ]]; then
+        warn "Secrets template not found, skipping secrets setup"
+        return
+    fi
+
+    log "Creating secrets file from template..."
+    cp "$template_file" "$secrets_file"
+    chmod 600 "$secrets_file"
+
+    success "Created $secrets_file (edit with your secrets or use 1Password)"
+}
+
+# --- Run mise install ---
+run_mise_install() {
+    header "Installing Development Tools"
+
+    if ! command_exists mise; then
+        warn "mise not installed, skipping tool installation"
+        return
+    fi
+
+    local mise_config="$HOME/.config/mise/mise.toml"
+
+    if [[ -f "$mise_config" ]]; then
+        log "Installing tools from mise.toml..."
+        mise install --yes || warn "Some mise tools may have failed to install"
+        success "Development tools installed"
+    else
+        warn "mise.toml not found at $mise_config"
+    fi
+}
+
+# --- Main ---
+main() {
+    header "Dotfiles Setup"
+
+    detect_os
+
+    if [[ "$STOW_ONLY" == "true" ]]; then
+        run_stow
+    else
+        run_installation
+        run_stow
+        setup_git_identity
+        setup_secrets
+        run_mise_install
+    fi
+
+    success "🎉 Setup complete!"
+    echo ""
+    echo "Next steps:"
+    echo "  • Restart your shell: exec zsh"
+    echo "  • Install tmux plugins: prefix + I (in tmux)"
+    if [[ ! -f "$HOME/.config/git/identity.gitconfig" ]]; then
+        echo "  • Set up Git identity in ~/.config/git/identity.gitconfig"
+    fi
+    echo "  • Edit ~/.secrets with your API keys"
+}
+
 main

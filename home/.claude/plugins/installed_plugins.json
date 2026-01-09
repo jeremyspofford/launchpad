@@ -1,4 +1,258 @@
 {
-  "version": 1,
-  "plugins": {}
+  "version": 2,
+  "plugins": {
+    "aws-agentic-ai@aws-skills": [
+      {
+        "scope": "project",
+        "projectPath": "/Users/jeremyspofford",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/aws-skills/aws-agentic-ai/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-06T05:27:31.372Z",
+        "lastUpdated": "2026-01-06T05:27:31.372Z",
+        "gitCommitSha": "ece56a8e1c9155521869d6ae9e85c108c6dff413"
+      }
+    ],
+    "repomix-explorer@repomix": [
+      {
+        "scope": "project",
+        "projectPath": "/Users/jeremyspofford",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/repomix/repomix-explorer/1.1.0",
+        "version": "1.1.0",
+        "installedAt": "2026-01-06T05:27:31.372Z",
+        "lastUpdated": "2026-01-06T05:27:31.372Z",
+        "gitCommitSha": "f7c68b52a4e9e2a476477b81b22be259b4ebe713"
+      }
+    ],
+    "repomix-mcp@repomix": [
+      {
+        "scope": "project",
+        "projectPath": "/Users/jeremyspofford",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/repomix/repomix-mcp/1.0.1",
+        "version": "1.0.1",
+        "installedAt": "2026-01-06T05:27:31.372Z",
+        "lastUpdated": "2026-01-06T05:27:31.372Z",
+        "gitCommitSha": "f7c68b52a4e9e2a476477b81b22be259b4ebe713"
+      }
+    ],
+    "frontend-design@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/frontend-design/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:38.491Z",
+        "lastUpdated": "2026-01-07T20:46:02.343Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "context7@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/context7/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:38.560Z",
+        "lastUpdated": "2026-01-07T20:46:02.354Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "github@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/github/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:38.604Z",
+        "lastUpdated": "2026-01-07T20:46:02.364Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "code-review@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/code-review/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:38.656Z",
+        "lastUpdated": "2026-01-07T20:46:02.374Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "commit-commands@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/commit-commands/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:38.714Z",
+        "lastUpdated": "2026-01-07T20:46:02.384Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "security-guidance@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/security-guidance/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:38.762Z",
+        "lastUpdated": "2026-01-07T20:46:02.394Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "typescript-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/typescript-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-07T20:45:38.800Z",
+        "lastUpdated": "2026-01-07T20:45:38.800Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "playwright@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/playwright/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:38.842Z",
+        "lastUpdated": "2026-01-07T20:46:02.404Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "pr-review-toolkit@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:38.915Z",
+        "lastUpdated": "2026-01-07T20:46:02.413Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "explanatory-output-style@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/explanatory-output-style/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:38.961Z",
+        "lastUpdated": "2026-01-07T20:46:02.423Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "Notion@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/Notion/0.1.0",
+        "version": "0.1.0",
+        "installedAt": "2026-01-07T20:45:39.924Z",
+        "lastUpdated": "2026-01-07T20:45:39.924Z",
+        "gitCommitSha": "a7d0b05ca3f910c71dba56d4062ba781ae092e78"
+      }
+    ],
+    "hookify@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/hookify/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:40.039Z",
+        "lastUpdated": "2026-01-07T20:46:02.432Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "greptile@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/greptile/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:40.087Z",
+        "lastUpdated": "2026-01-07T20:46:02.441Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "learning-output-style@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/learning-output-style/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:40.142Z",
+        "lastUpdated": "2026-01-07T20:46:02.450Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "gitlab@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/gitlab/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:40.191Z",
+        "lastUpdated": "2026-01-07T20:46:02.469Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "lua-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/lua-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-07T20:45:40.226Z",
+        "lastUpdated": "2026-01-07T20:45:40.226Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "aws-cdk@aws-skills": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/aws-skills/aws-cdk/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-07T20:45:40.501Z",
+        "lastUpdated": "2026-01-07T20:45:40.501Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "aws-cost-ops@aws-skills": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/aws-skills/aws-cost-ops/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-07T20:45:40.595Z",
+        "lastUpdated": "2026-01-07T20:45:40.595Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "pinecone@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/pinecone/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-07T20:45:41.537Z",
+        "lastUpdated": "2026-01-07T20:45:41.537Z",
+        "gitCommitSha": "0aa7f170b11400327815f96511b671923cb55608"
+      }
+    ],
+    "ralph-loop@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/claude-plugins-official/ralph-loop/b97f6eadd929",
+        "version": "b97f6eadd929",
+        "installedAt": "2026-01-07T20:45:41.627Z",
+        "lastUpdated": "2026-01-07T20:46:02.595Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "repomix-commands@repomix": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/repomix/repomix-commands/1.0.2",
+        "version": "1.0.2",
+        "installedAt": "2026-01-07T20:45:41.690Z",
+        "lastUpdated": "2026-01-07T20:45:41.690Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ],
+    "serverless-eda@aws-skills": [
+      {
+        "scope": "user",
+        "installPath": "/Users/jeremyspofford/.claude/plugins/cache/aws-skills/serverless-eda/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-07T20:45:41.791Z",
+        "lastUpdated": "2026-01-07T20:45:41.791Z",
+        "gitCommitSha": "a5d00039d2d5da43f99a131b3483942d16dc67a4"
+      }
+    ]
+  }
 }

@@ -1,4 +1,0 @@
----
-linux_apt_packages:
-  - nodejs
-  - npm

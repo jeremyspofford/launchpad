@@ -1,5 +1,3 @@
-# Kiro CLI pre block. Keep at the top of this file.
-[[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.pre.zsh" ]] && builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.pre.zsh"
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
@@ -58,10 +56,6 @@ elif [[ ! "$PATH" =~ "homebrew" ]] && [[ -f /usr/local/bin/brew ]]; then
 fi
 
 # ============================================================================ #
-# OS-specific configurations removed for faster startup
-# ============================================================================ #
-
-# ============================================================================ #
 # ZSH Options
 # ============================================================================ #
 
@@ -101,21 +95,10 @@ setopt PROMPT_SUBST
 setopt VI
 
 # ============================================================================ #
-# Completions - moved to .commonrc.lazy for faster startup
-# ============================================================================ #
-
-# ============================================================================ #
-# Key Bindings - moved to .commonrc.lazy for faster startup
+# Key Bindings
 # ============================================================================ #
 bindkey -e  # Use emacs key bindings (needed immediately)
 bindkey -v  # vi key bindings
-
-# ============================================================================ #
-# Additional Plugin Configuration
-# ============================================================================ #
-
-# Plugins are now managed by Oh My Zsh via the plugins=() array above
-# No manual loading needed for zsh-autosuggestions, zsh-syntax-highlighting, etc.
 
 # ============================================================================ #
 # Interactive Shell Integrations
@@ -123,18 +106,6 @@ bindkey -v  # vi key bindings
 
 # Load local configuration if it exists
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
-
-# PATH is now managed in .commonrc
-
-# ============================================================================ #
-# Welcome Message
-# ============================================================================ #
-
-# Removed welcome message for faster startup
-# Uncomment below if you want it back:
-# if [[ -o interactive ]]; then
-#     echo "Welcome to $(whoami)@$(hostname -s)!"
-# fi
 
 # ============================================================================ #
 # Deferred/Lazy Loading
@@ -150,33 +121,8 @@ rbenv() {
     rbenv "$@"
 }
 
-# Lazy load mise - only initialize when first used
-# mise() {
-#     unset -f mise
-#     eval "$(command mise activate zsh)"
-#     mise "$@"
-# }
+# Activate mise
 eval "$(command mise activate zsh)"
 
 # Load aliases immediately - they're lightweight and expected to be available
 [ -f ~/.aliases ] && source ~/.aliases
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
-fpath=(/Users/jeremyspofford/.docker/completions $fpath)
-autoload -Uz compinit
-compinit
-# End of Docker CLI completions
-
-export TEAMS_WEBHOOK_URL="https://REDACTED_DOMAIN:443/powerautomate/automations/direct/workflows/08da888b32f64478ab95edb494c09c8f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=***REDACTED***"
-
-
-# opencode
-export PATH=/Users/jeremyspofford/.opencode/bin:$PATH
-
-# Kiro CLI post block. Keep at the bottom of this file.
-[[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh" ]] && builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh"
-
-# Added by Antigravity
-export PATH="/Users/jeremyspofford/.antigravity/antigravity/bin:$PATH"
-
-# Added by Antigravity
-export PATH="/Users/jeremyspofford/.antigravity/antigravity/bin:$PATH"

@@ -1,4 +1,38 @@
-# OS generated files
+# ============================================================================ #
+# Dotfiles .gitignore
+# ============================================================================ #
+
+# ============================================================================ #
+# Secrets - NEVER commit
+# ============================================================================ #
+
+.secrets
+*.secrets
+.env.local
+.env*.local
+
+# ============================================================================ #
+# Personal Identity Configs (not tracked)
+# ============================================================================ #
+
+home/.config/git/identity.gitconfig
+home/.config/git/personal.gitconfig
+home/.config/git/work.gitconfig
+home/.config/git/*.gitconfig
+!home/.config/git/*.template
+
+# SSH private keys
+home/.ssh/id_*
+!home/.ssh/config
+
+# Local overrides
+*.local
+!*.local.template
+
+# ============================================================================ #
+# OS Generated Files
+# ============================================================================ #
+
 .DS_Store
 .DS_Store?
 ._*
@@ -22,7 +56,10 @@ $RECYCLE.BIN/
 .Trash-*
 .nfs*
 
-# Temporary files
+# ============================================================================ #
+# Temporary Files
+# ============================================================================ #
+
 *.tmp
 *.temp
 *.swp
@@ -31,65 +68,63 @@ $RECYCLE.BIN/
 .#*
 \#*#
 
-# Logs and databases
+# ============================================================================ #
+# Logs and Databases
+# ============================================================================ #
+
 *.log
 *.sqlite
 *.sqlite3
 *.db
 
-# Runtime data
+# ============================================================================ #
+# Runtime Data
+# ============================================================================ #
+
 pids
 *.pid
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
+# ============================================================================ #
+# Coverage and Test Artifacts
+# ============================================================================ #
+
 coverage/
 *.lcov
+test-results/
+*.test
+coverage.out
 
-# Dependency directories
+# ============================================================================ #
+# Dependencies
+# ============================================================================ #
+
 node_modules/
 jspm_packages/
+.venv/
+__pycache__/
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# ============================================================================ #
+# IDE and Editor Files
+# ============================================================================ #
 
-# IDE and editor files
-.vscode/
 .idea/
 *.sublime-*
 *.code-workspace
 
-# Backup files
+# ============================================================================ #
+# Backup Files
+# ============================================================================ #
+
 backup_*/
 *.backup
 *.bak
 *.orig
 
-# Ansible
-*.retry
-.vault_pass.txt
+# ============================================================================ #
+# Allow Claude agents directory
+# ============================================================================ #
 
-# Personal files that shouldn't be tracked
-secrets/
-private/
-local/
-
-# AWS credentials and config
-.aws/config
-.aws/credentials
-
-# Test artifacts
-test-results/
-*.test
-coverage.out
-
-# Override global gitignore to track Claude agents
-# Global gitignore blocks .claude/ but we want to track the agents in dotfiles
 !home/.claude/
 !home/.claude/agents/
-!home/.claude/agents/**.claude/settings.local.json
