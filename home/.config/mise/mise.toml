@@ -40,6 +40,7 @@ shellcheck = "latest"
 shfmt = "latest"
 yamlfmt = "latest"
 yamllint = "latest"
+lefthook = "latest"
 
 # Docker & Containers
 lazydocker = "latest"

@@ -8,11 +8,9 @@
 
 set -euo pipefail
 
-# Source common utilities if not already loaded
+# Source shared logger
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if ! type log &>/dev/null; then
-    source "$SCRIPT_DIR/common.sh"
-fi
+source "$SCRIPT_DIR/../lib/logger.sh"
 
 # --- Detect Linux distribution ---
 detect_distro() {
@@ -25,12 +23,12 @@ detect_distro() {
         DISTRO_LIKE="unknown"
     fi
     export DISTRO_ID DISTRO_LIKE
-    log "Detected distribution: $DISTRO_ID (like: $DISTRO_LIKE)"
+    log_info "Detected distribution: $DISTRO_ID (like: $DISTRO_LIKE)"
 }
 
 # --- Install base packages ---
 install_base_packages() {
-    log "Installing base packages..."
+    log_info "Installing base packages..."
 
     local packages=(
         git
@@ -52,10 +50,10 @@ install_base_packages() {
         # Arch
         sudo pacman -Syu --noconfirm "${packages[@]}" base-devel
     else
-        error "Could not detect package manager (apt, dnf, or pacman)"
+        error_exit "Could not detect package manager (apt, dnf, or pacman)"
     fi
 
-    success "Base packages installed"
+    log_success "Base packages installed"
 }
 
 # --- Install TPM (Tmux Plugin Manager) ---
@@ -63,13 +61,13 @@ install_tpm() {
     local tpm_dir="$HOME/.tmux/plugins/tpm"
 
     if [[ -d "$tpm_dir" ]]; then
-        success "TPM already installed"
+        log_success "TPM already installed"
         return
     fi
 
-    log "Installing Tmux Plugin Manager..."
+    log_info "Installing Tmux Plugin Manager..."
     git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
-    success "TPM installed (run prefix + I in tmux to install plugins)"
+    log_success "TPM installed (run prefix + I in tmux to install plugins)"
 }
 
 # --- Install Nerd Font ---
@@ -78,11 +76,11 @@ install_nerd_font() {
     local font_name="JetBrainsMono"
 
     if fc-list | grep -qi "JetBrainsMono"; then
-        success "JetBrainsMono Nerd Font already installed"
+        log_success "JetBrainsMono Nerd Font already installed"
         return
     fi
 
-    log "Installing JetBrainsMono Nerd Font..."
+    log_info "Installing JetBrainsMono Nerd Font..."
     mkdir -p "$font_dir"
 
     local font_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${font_name}.zip"
@@ -97,7 +95,7 @@ install_nerd_font() {
         fc-cache -fv
     fi
 
-    success "JetBrainsMono Nerd Font installed"
+    log_success "JetBrainsMono Nerd Font installed"
 }
 
 # --- Main Linux installation ---

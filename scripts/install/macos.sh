@@ -8,20 +8,18 @@
 
 set -euo pipefail
 
-# Source common utilities if not already loaded
+# Source shared logger
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if ! type log &>/dev/null; then
-    source "$SCRIPT_DIR/common.sh"
-fi
+source "$SCRIPT_DIR/../lib/logger.sh"
 
 # --- Install Homebrew ---
 install_homebrew() {
     if command_exists brew; then
-        success "Homebrew already installed"
+        log_success "Homebrew already installed"
         return
     fi
 
-    log "Installing Homebrew..."
+    log_info "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
     # Add Homebrew to PATH for current session
@@ -31,12 +29,12 @@ install_homebrew() {
         eval "$(/usr/local/bin/brew shellenv)"
     fi
 
-    success "Homebrew installed"
+    log_success "Homebrew installed"
 }
 
 # --- Install macOS casks ---
 install_casks() {
-    log "Installing macOS applications..."
+    log_info "Installing macOS applications..."
 
     local casks=(
         "ghostty"
@@ -45,14 +43,14 @@ install_casks() {
 
     for cask in "${casks[@]}"; do
         if brew list --cask "$cask" &>/dev/null; then
-            success "$cask already installed"
+            log_success "$cask already installed"
         else
-            log "Installing $cask..."
-            brew install --cask "$cask" || warn "Failed to install $cask"
+            log_info "Installing $cask..."
+            brew install --cask "$cask" || log_warning "Failed to install $cask"
         fi
     done
 
-    success "macOS applications installed"
+    log_success "macOS applications installed"
 }
 
 # --- Install TPM (Tmux Plugin Manager) ---
@@ -60,13 +58,25 @@ install_tpm() {
     local tpm_dir="$HOME/.tmux/plugins/tpm"
 
     if [[ -d "$tpm_dir" ]]; then
-        success "TPM already installed"
+        log_success "TPM already installed"
         return
     fi
 
-    log "Installing Tmux Plugin Manager..."
+    log_info "Installing Tmux Plugin Manager..."
     git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
-    success "TPM installed (run prefix + I in tmux to install plugins)"
+    log_success "TPM installed (run prefix + I in tmux to install plugins)"
+}
+
+# --- Install Cursor IDE ---
+install_cursor() {
+    if command_exists cursor; then
+        log_success "Cursor already installed"
+        return
+    fi
+
+    log_info "Installing Cursor IDE..."
+    curl -fsSL https://cursor.com/install | bash
+    log_success "Cursor installed"
 }
 
 # --- Main macOS installation ---
@@ -74,6 +84,7 @@ install_macos() {
     install_homebrew
     install_casks
     install_tpm
+    install_cursor
 }
 
 # Run if executed directly

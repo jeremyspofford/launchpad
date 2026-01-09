@@ -8,22 +8,9 @@
 
 set -euo pipefail
 
-# --- Colors for output ---
-readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly BLUE='\033[0;34m'
-readonly BOLD='\033[1m'
-readonly NC='\033[0m'
-
-# --- Logging Functions ---
-log() { echo -e "${BLUE}[INFO]${NC} $1"; }
-success() { echo -e "${GREEN}[✓]${NC} $1"; }
-error() { echo -e "${RED}[ERROR]${NC} $1" >&2; exit 1; }
-warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-
-# --- Helper Functions ---
-command_exists() { command -v "$1" >/dev/null 2>&1; }
+# --- Source shared logger ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/logger.sh"
 
 # --- Detect Operating System ---
 detect_os() {
@@ -39,41 +26,41 @@ detect_os() {
             fi
             ;;
         *)
-            error "Unsupported OS: $(uname -s)"
+            error_exit "Unsupported OS: $(uname -s)"
             ;;
     esac
     export OS_TYPE
-    log "Detected OS: $OS_TYPE"
+    log_info "Detected OS: $OS_TYPE"
 }
 
 # --- Install mise ---
 install_mise() {
     if command_exists mise; then
-        success "mise already installed"
+        log_success "mise already installed"
         return
     fi
 
-    log "Installing mise..."
+    log_info "Installing mise..."
     curl https://mise.run | sh
 
     # Add mise to PATH for current session
     export PATH="$HOME/.local/bin:$PATH"
 
     if command_exists mise; then
-        success "mise installed successfully"
+        log_success "mise installed successfully"
     else
-        error "Failed to install mise"
+        error_exit "Failed to install mise"
     fi
 }
 
 # --- Install stow ---
 install_stow() {
     if command_exists stow; then
-        success "stow already installed"
+        log_success "stow already installed"
         return
     fi
 
-    log "Installing stow..."
+    log_info "Installing stow..."
     case "$OS_TYPE" in
         macos)
             brew install stow
@@ -87,21 +74,21 @@ install_stow() {
             elif command_exists pacman; then
                 sudo pacman -S --noconfirm stow
             else
-                error "Could not detect package manager to install stow"
+                error_exit "Could not detect package manager to install stow"
             fi
             ;;
     esac
-    success "stow installed"
+    log_success "stow installed"
 }
 
 # --- Install Oh My Zsh ---
 install_oh_my_zsh() {
     if [[ -d "$HOME/.oh-my-zsh" ]]; then
-        success "Oh My Zsh already installed"
+        log_success "Oh My Zsh already installed"
         return
     fi
 
-    log "Installing Oh My Zsh..."
+    log_info "Installing Oh My Zsh..."
     RUNZSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
     # Install zsh plugins
@@ -115,7 +102,7 @@ install_oh_my_zsh() {
         git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
     fi
 
-    success "Oh My Zsh installed with plugins"
+    log_success "Oh My Zsh installed with plugins"
 }
 
 # --- Run mise install ---
@@ -123,13 +110,13 @@ run_mise_install() {
     local mise_config="$HOME/.config/mise/mise.toml"
 
     if [[ ! -f "$mise_config" ]]; then
-        warn "mise.toml not found at $mise_config - skipping tool installation"
+        log_warning "mise.toml not found at $mise_config - skipping tool installation"
         return
     fi
 
-    log "Installing tools from mise.toml..."
+    log_info "Installing tools from mise.toml..."
     mise install --yes
-    success "mise tools installed"
+    log_success "mise tools installed"
 }
 
 # --- Main common installation ---

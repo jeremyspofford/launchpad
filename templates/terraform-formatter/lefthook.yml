@@ -1,0 +1,22 @@
+# Lefthook Configuration
+# https://github.com/evilmartians/lefthook
+
+pre-commit:
+  parallel: true
+  commands:
+    terraform-fmt:
+      glob: "terraform/**/*.tf"
+      run: |
+        # Build and run Terraform formatter container
+        docker build -q -f .docker/terraform-fmt.Dockerfile -t tf-fmt . >/dev/null
+        docker run --rm -v "$(pwd):/workspace" tf-fmt
+        # Stage any formatted files
+        git add {staged_files}
+
+# Optional: Add more hooks as needed
+# pre-push:
+#   commands:
+#     terraform-validate:
+#       glob: "terraform/**/*.tf"
+#       run: |
+#         docker run --rm -v "$(pwd):/workspace" -w /workspace/terraform hashicorp/terraform:1.14 validate

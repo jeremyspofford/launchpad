@@ -1,4 +1,14 @@
-# Runtime directories and files (transient, machine-specific)
+# ============================================================================ #
+# Claude Code - Gitignore
+# ============================================================================ #
+# This file controls what gets tracked in the dotfiles repository.
+# User content (agents, skills, commands, scripts) should be tracked.
+# Runtime/session data should NOT be tracked.
+# ============================================================================ #
+
+# ============================================================================ #
+# Runtime Directories (transient, machine-specific)
+# ============================================================================ #
 debug/
 file-history/
 downloads/
@@ -8,17 +18,58 @@ todos/
 session-env/
 statsig/
 ide/
-plugins/repos/
+telemetry/
+cache/
+plans/
 
-# Runtime files
+# ============================================================================ #
+# Runtime Files (ephemeral, session-specific)
+# ============================================================================ #
 .update.lock
 .DS_Store
+*.lock
+
+# Conversation history - SENSITIVE (contains prompts and project paths)
 history.jsonl
+
+# Local settings - machine-specific permissions
 settings.local.json
 
-# Transient analysis/documentation files
+# Routing and audit logs
+routing-audit.log
+routing-audit.log.lock
+
+# Usage statistics
+stats-cache.json
+
+# Security warnings (session-specific)
+security_warnings_state_*.json
+
+# ============================================================================ #
+# Transient Analysis/Documentation Files
+# ============================================================================ #
 ANALYSIS_INDEX.md
 ASYNC_IMPROVEMENTS.md
 DIRECTORY_ANALYSIS.md
 ORCHESTRATOR_SETUP_COMPLETE.md
 STRUCTURE_SUMMARY.txt
+
+# ============================================================================ #
+# Plugin Cache (can be regenerated, contains machine-specific paths)
+# ============================================================================ #
+plugins/repos/
+plugins/cache/
+plugins/install-counts-cache.json
+plugins/installed_plugins.json
+plugins/marketplaces/
+
+# ============================================================================ #
+# Files TO TRACK (these are your customizations)
+# ============================================================================ #
+# !agents/
+# !skills/
+# !commands/
+# !scripts/
+# !settings.json
+# !.gitignore
+# !project-CLAUDE.md.template
