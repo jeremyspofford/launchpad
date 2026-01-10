@@ -112,3 +112,9 @@
     added = green
     changed = yellow
     untracked = cyan
+[user]
+	name = Jeremy Spofford
+
+# AlertVenture/GitLab projects - use GitLab private email
+[includeIf "gitdir:~/workspace/"]
+    path = ~/.config/git/alertventure.gitconfig
