@@ -21,17 +21,17 @@ declare -a SKIPPED_APPS=()
 
 track_installed() {
     INSTALLED_APPS+=("$1")
-    log_success "✅ $1"
+    log_success "✅ Installed"
 }
 
 track_failed() {
     FAILED_APPS+=("$1: $2")
-    log_error "❌ $1 - $2"
+    log_error "❌ Failed: $2"
 }
 
 track_skipped() {
     SKIPPED_APPS+=("$1")
-    log_info "⏭️  $1 (already installed)"
+    log_info "⏭️  Already installed"
 }
 
 ################################################################################
@@ -41,24 +41,21 @@ track_skipped() {
 show_dashboard() {
     echo
     echo
-    log_heredoc "${CYAN}" <<EOF
-╔══════════════════════════════════════════════════════════════╗
-║                    INSTALLATION DASHBOARD                     ║
-╚══════════════════════════════════════════════════════════════╝
-EOF
-    
+    # Use echo for box drawing characters
+    echo "╔══════════════════════════════════════════════════════════════╗"
+    echo "║                    INSTALLATION DASHBOARD                     ║"
+    echo "╚══════════════════════════════════════════════════════════════╝"
     echo
+    
     local total=$((${#INSTALLED_APPS[@]} + ${#FAILED_APPS[@]} + ${#SKIPPED_APPS[@]}))
     
     log_kv "Total Applications" "$total"
-    log_kv "Successfully Installed" "${GREEN}${#INSTALLED_APPS[@]}${NC}"
-    log_kv "Already Installed" "${YELLOW}${#SKIPPED_APPS[@]}${NC}"
-    log_kv "Failed" "${RED}${#FAILED_APPS[@]}${NC}"
+    log_kv "Successfully Installed" "${#INSTALLED_APPS[@]}"
+    log_kv "Already Installed" "${#SKIPPED_APPS[@]}"
+    log_kv "Failed" "${#FAILED_APPS[@]}"
     
     echo
-    log_heredoc "${CYAN}" <<EOF
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EOF
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo
     
     # Successfully Installed
@@ -67,7 +64,7 @@ EOF
 ✅ SUCCESSFULLY INSTALLED (${#INSTALLED_APPS[@]}):
 EOF
         for app in "${INSTALLED_APPS[@]}"; do
-            log_info "   • $app"
+            echo "   • $app"
         done
         echo
     fi
@@ -78,7 +75,7 @@ EOF
 ⏭️  ALREADY INSTALLED (${#SKIPPED_APPS[@]}):
 EOF
         for app in "${SKIPPED_APPS[@]}"; do
-            log_info "   • $app"
+            echo "   • $app"
         done
         echo
     fi
@@ -89,16 +86,19 @@ EOF
 ❌ FAILED TO INSTALL (${#FAILED_APPS[@]}):
 EOF
         for app in "${FAILED_APPS[@]}"; do
-            log_info "   • $app"
+            echo "   • $app"
         done
         echo
         log_warning "⚠️  Check /tmp/gui_install.log for detailed error messages"
         echo
+        log_info "Common fixes:"
+        echo "  • Check internet connection"
+        echo "  • Ensure required dependencies are installed"
+        echo "  • View full log: cat /tmp/gui_install.log"
+        echo
     fi
     
-    log_heredoc "${CYAN}" <<EOF
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EOF
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo
     
     # Final Status
@@ -106,7 +106,7 @@ EOF
         log_success "🎉 All selected applications completed successfully!"
     else
         log_warning "⚠️  ${#FAILED_APPS[@]} application(s) failed to install"
-        log_info "Review /tmp/gui_install.log for details"
+        log_info "Review errors above and check /tmp/gui_install.log"
     fi
     
     echo
@@ -313,6 +313,63 @@ install_orca_slicer() {
 }
 
 ################################################################################
+# Uninstall Functions (for cleanup when unchecked)
+################################################################################
+
+uninstall_ghostty() {
+    if command_exists ghostty; then
+        log_info "Removing Ghostty..."
+        if sudo snap remove ghostty >> /tmp/gui_install.log 2>&1; then
+            log_success "✅ Ghostty removed"
+        else
+            log_warning "Failed to remove Ghostty"
+        fi
+    fi
+}
+
+uninstall_cursor() {
+    if [ -f ~/.local/bin/cursor.AppImage ]; then
+        log_info "Removing Cursor..."
+        rm -f ~/.local/bin/cursor.AppImage
+        rm -f ~/.local/share/applications/cursor.desktop
+        log_success "✅ Cursor removed"
+    fi
+}
+
+uninstall_claude_desktop() {
+    if snap list 2>/dev/null | grep -q "claudeai-desktop"; then
+        log_info "Removing Claude Desktop..."
+        if sudo snap remove claudeai-desktop >> /tmp/gui_install.log 2>&1; then
+            log_success "✅ Claude Desktop removed"
+        else
+            log_warning "Failed to remove Claude Desktop"
+        fi
+    fi
+}
+
+uninstall_chrome() {
+    if command_exists google-chrome; then
+        log_info "Removing Google Chrome..."
+        if sudo apt-get remove -y google-chrome-stable >> /tmp/gui_install.log 2>&1; then
+            log_success "✅ Google Chrome removed"
+        else
+            log_warning "Failed to remove Chrome"
+        fi
+    fi
+}
+
+uninstall_docker_desktop() {
+    if dpkg -l | grep -q docker-desktop; then
+        log_info "Removing Docker Desktop..."
+        if sudo apt-get remove -y docker-desktop >> /tmp/gui_install.log 2>&1; then
+            log_success "✅ Docker Desktop removed"
+        else
+            log_warning "Failed to remove Docker Desktop"
+        fi
+    fi
+}
+
+################################################################################
 # Interactive Selection
 ################################################################################
 
@@ -321,8 +378,14 @@ select_applications() {
         sudo apt-get install -y whiptail >> /tmp/gui_install.log 2>&1
     fi
     
-    whiptail --title "GUI Applications" --checklist \
-"Select applications (Space=select, Enter=confirm):" 25 78 18 \
+    # Load previously installed apps to show what's currently installed
+    local previous_selections=""
+    if [ -f ~/.config/dotfiles/gui-apps-installed ]; then
+        previous_selections=$(cat ~/.config/dotfiles/gui-apps-installed)
+    fi
+    
+    local current_selections=$(whiptail --title "GUI Applications" --checklist \
+"Select applications (Space=select, Enter=confirm):\n\nNote: Unchecking installed apps will UNINSTALL them" 25 78 18 \
 "ghostty" "Ghostty terminal" ON \
 "cursor" "Cursor AI IDE" ON \
 "claude_desktop" "Claude Desktop (unofficial)" ON \
@@ -336,7 +399,32 @@ select_applications() {
 "notion" "Notion" OFF \
 "1password" "1Password" OFF \
 "orca_slicer" "Orca Slicer" OFF \
-3>&1 1>&2 2>&3
+3>&1 1>&2 2>&3)
+    
+    if [ $? -ne 0 ]; then
+        log_error "Selection cancelled"
+        exit 1
+    fi
+    
+    # Find apps to uninstall (were selected before, not selected now)
+    if [ -n "$previous_selections" ]; then
+        for prev_app in $previous_selections; do
+            prev_app=$(echo "$prev_app" | tr -d '"')
+            
+            # Check if this app is NOT in current selections
+            if ! echo "$current_selections" | grep -q "$prev_app"; then
+                log_section "Uninstalling $(echo $prev_app | tr '_' ' ' | sed 's/\b\(.\)/\u\1/g')"
+                uninstall_"$prev_app" 2>/dev/null || log_warning "No uninstall function for $prev_app"
+                echo
+            fi
+        done
+    fi
+    
+    # Save current selections for next time
+    mkdir -p ~/.config/dotfiles
+    echo "$current_selections" > ~/.config/dotfiles/gui-apps-installed
+    
+    echo "$current_selections"
 }
 
 ################################################################################
@@ -357,6 +445,7 @@ main() {
         exit 1
     fi
     
+    # Install all selected apps (showing progress but not dashboard yet)
     for app in $selections; do
         app=$(echo "$app" | tr -d '"')
         log_section "Installing $(echo $app | tr '_' ' ' | sed 's/\b\(.\)/\u\1/g')"
@@ -364,6 +453,7 @@ main() {
         echo
     done
     
+    # NOW show the cumulative dashboard at the end
     show_dashboard
 }
 

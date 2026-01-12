@@ -31,6 +31,11 @@ BACKUP_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="$BACKUP_BASE_DIR/$BACKUP_TIMESTAMP"
 MANIFEST_FILE="$BACKUP_DIR/manifest.txt"
 
+# Installation tracking
+declare -a COMPLETED_STEPS=()
+declare -a FAILED_STEPS=()
+declare -a SKIPPED_STEPS=()
+
 # Flags
 MINIMAL_INSTALL=false
 UPDATE_ONLY=false
@@ -62,6 +67,88 @@ PACKAGE_MANIFEST="$RESTORE_DIR/packages-$BACKUP_TIMESTAMP.txt"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/logger.sh"
+
+################################################################################
+# Installation Tracking
+################################################################################
+
+track_completed() {
+    COMPLETED_STEPS+=("$1")
+}
+
+track_failed() {
+    FAILED_STEPS+=("$1: $2")
+}
+
+track_skipped() {
+    SKIPPED_STEPS+=("$1")
+}
+
+show_setup_dashboard() {
+    echo
+    echo
+    echo "╔══════════════════════════════════════════════════════════════╗"
+    echo "║                      SETUP DASHBOARD                          ║"
+    echo "╚══════════════════════════════════════════════════════════════╝"
+    echo
+    
+    local total=$((${#COMPLETED_STEPS[@]} + ${#FAILED_STEPS[@]} + ${#SKIPPED_STEPS[@]}))
+    
+    log_kv "Total Steps" "$total"
+    log_kv "Completed" "${#COMPLETED_STEPS[@]}"
+    log_kv "Skipped" "${#SKIPPED_STEPS[@]}"
+    log_kv "Failed" "${#FAILED_STEPS[@]}"
+    
+    echo
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo
+    
+    # Completed Steps
+    if [ ${#COMPLETED_STEPS[@]} -gt 0 ]; then
+        log_heredoc "${GREEN}" <<EOF
+✅ COMPLETED (${#COMPLETED_STEPS[@]}):
+EOF
+        for step in "${COMPLETED_STEPS[@]}"; do
+            echo "   • $step"
+        done
+        echo
+    fi
+    
+    # Skipped Steps
+    if [ ${#SKIPPED_STEPS[@]} -gt 0 ]; then
+        log_heredoc "${YELLOW}" <<EOF
+⏭️  SKIPPED (${#SKIPPED_STEPS[@]}):
+EOF
+        for step in "${SKIPPED_STEPS[@]}"; do
+            echo "   • $step"
+        done
+        echo
+    fi
+    
+    # Failed Steps
+    if [ ${#FAILED_STEPS[@]} -gt 0 ]; then
+        log_heredoc "${RED}" <<EOF
+❌ FAILED (${#FAILED_STEPS[@]}):
+EOF
+        for step in "${FAILED_STEPS[@]}"; do
+            echo "   • $step"
+        done
+        echo
+    fi
+    
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo
+    
+    # Final Status
+    if [ ${#FAILED_STEPS[@]} -eq 0 ]; then
+        log_success "🎉 All steps completed successfully!"
+    else
+        log_warning "⚠️  ${#FAILED_STEPS[@]} step(s) failed"
+        log_info "Review errors above for details"
+    fi
+    
+    echo
+}
 
 ################################################################################
 # Helper Functions
@@ -141,11 +228,17 @@ GUI APPLICATIONS:
         ./scripts/install_gui_apps.sh
 
 SYSTEM RESTORE:
-    On first run, you'll be prompted to optionally install Timeshift for full
-    system snapshots. The script always creates:
-    - Package manifests (lightweight, always enabled)
-    - Dotfile backups (in ~/.dotfiles-backup/)
-    - Optional Timeshift snapshots (requires Timeshift installation)
+    The script always creates lightweight package manifests automatically.
+    
+    For full system snapshots with Timeshift, use the flag:
+        ./scripts/setup.sh --create-restore-point
+    
+    This will prompt to install Timeshift (if needed) and create a full snapshot.
+    
+    Restore points created:
+    - Package manifests (always, lightweight, automatic)
+    - Dotfile backups (always, in ~/.dotfiles-backup/)
+    - Timeshift snapshots (only with --create-restore-point flag)
 
 TOOL SELECTION:
     On first run, you'll be prompted to select which tools to install.
@@ -1218,34 +1311,80 @@ main() {
     echo
     
     if [ "$UPDATE_ONLY" = false ]; then
-        # Prompt for system restore point (first run or if explicitly requested)
-        if [ ! -f "$PREFERENCES_FILE" ] || [ "$CREATE_RESTORE_POINT" = true ]; then
+        # Prompt for system restore point ONLY if explicitly requested
+        if [ "$CREATE_RESTORE_POINT" = true ]; then
             prompt_restore_point
+            if create_package_manifest && create_timeshift_snapshot; then
+                track_completed "System restore point created"
+            else
+                track_failed "System restore point" "creation failed"
+            fi
+        else
+            # Always create lightweight package manifest (no prompt needed)
+            if create_package_manifest; then
+                track_completed "Package manifest created"
+            else
+                track_failed "Package manifest" "creation failed"
+            fi
         fi
         
-        # Create restore points
-        create_package_manifest
-        create_timeshift_snapshot
-        
         # Install system packages and tools
-        install_prerequisites
-        backup_dotfiles
-        install_packages
-        install_mise
-        setup_zsh
+        if install_prerequisites; then
+            track_completed "Prerequisites installed"
+        else
+            track_failed "Prerequisites" "installation failed"
+        fi
+        
+        if backup_dotfiles; then
+            track_completed "Dotfiles backed up"
+        else
+            track_failed "Dotfiles backup" "backup failed"
+        fi
+        
+        if install_packages; then
+            track_completed "System packages installed"
+        else
+            track_failed "System packages" "installation failed"
+        fi
+        
+        if install_mise; then
+            track_completed "mise installed"
+        else
+            track_failed "mise" "installation failed"
+        fi
+        
+        if setup_zsh; then
+            track_completed "Zsh configured"
+        else
+            track_failed "Zsh" "configuration failed"
+        fi
         
         # Install GUI applications (interactive)
-        install_gui_applications
+        install_gui_applications || true
+        # Note: GUI apps tracker handles its own tracking
     fi
     
-    stow_dotfiles
-    create_template_files
+    if stow_dotfiles; then
+        track_completed "Dotfiles symlinked"
+    else
+        track_failed "Dotfiles" "symlinking failed"
+    fi
     
-    # Show restore point info before final summary
+    if create_template_files; then
+        track_completed "Template files created"
+    else
+        track_failed "Template files" "creation failed"
+    fi
+    
+    # Show restore point info before dashboard
     if [ "$UPDATE_ONLY" = false ]; then
         show_restore_info
     fi
     
+    # Show setup dashboard
+    show_setup_dashboard
+    
+    # Show post-install instructions
     show_post_install
 }
 
