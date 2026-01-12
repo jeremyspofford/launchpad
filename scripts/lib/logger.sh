@@ -116,4 +116,3 @@ require_commands() {
         error_exit "Missing required commands: ${missing[*]}"
     fi
 }
-
