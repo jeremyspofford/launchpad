@@ -535,14 +535,45 @@ revert_dotfiles() {
         error_exit "Manifest not found in backup: $restore_from/manifest.txt"
     fi
     
-    # Unstow dotfiles first
-    log_info "Removing dotfile symlinks..."
-    cd "$DOTFILES_DIR"
+    # Unstow ALL dotfiles first (remove ALL symlinks)
+    log_info "Removing ALL dotfile symlinks..."
     if command_exists stow; then
-        stow -D -d "$DOTFILES_DIR" -t "$HOME" home 2>/dev/null || true
-        log_success "✅ Dotfile symlinks removed"
+        # Try to find the dotfiles directory
+        local stow_dir=""
+        if [ -d "$DOTFILES_DIR" ] && [ -d "$DOTFILES_DIR/home" ]; then
+            stow_dir="$DOTFILES_DIR"
+        elif [ -d ~/workspace/dotfiles/home ]; then
+            stow_dir=~/workspace/dotfiles
+        elif [ -d /tmp/dotfiles/home ]; then
+            stow_dir=/tmp/dotfiles
+        fi
+        
+        if [ -n "$stow_dir" ]; then
+            cd "$stow_dir"
+            stow -D -d "$stow_dir" -t "$HOME" home 2>/dev/null || true
+            log_success "✅ Dotfile symlinks removed from $stow_dir"
+        else
+            log_warning "Could not find dotfiles directory to unstow"
+            log_info "Manually removing symlinks from manifest..."
+            
+            # Fallback: manually remove symlinks
+            while IFS= read -r file; do
+                if [ -L "$file" ]; then
+                    rm "$file"
+                    log_info "Removed symlink: ${file#$HOME/}"
+                fi
+            done < "$restore_from/manifest.txt"
+        fi
     else
-        log_warning "GNU Stow not found, skipping unstow"
+        log_warning "GNU Stow not found, manually removing symlinks"
+        
+        # Manually remove symlinks from manifest
+        while IFS= read -r file; do
+            if [ -L "$file" ]; then
+                rm "$file"
+                log_info "Removed symlink: ${file#$HOME/}"
+            fi
+        done < "$restore_from/manifest.txt"
     fi
     
     # Restore files from backup

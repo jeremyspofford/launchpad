@@ -9,7 +9,13 @@ case $- in
   return ;;
 esac
 
-# Bash-specific history configuration
+# XDG Base Directory specification (set these FIRST before using them)
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+
+# Bash-specific history configuration (now safe to use XDG_DATA_HOME)
 export HISTFILE="$XDG_DATA_HOME/bash/history"
 if [ ! -d "$XDG_DATA_HOME/bash" ]; then
     mkdir -p "$XDG_DATA_HOME/bash"
