@@ -123,6 +123,23 @@ EXAMPLES:
     cd /tmp/dotfiles && ./scripts/setup.sh
     cd ~ && ~/workspace/dotfiles/scripts/setup.sh
 
+INSTALLATION COMPONENTS:
+    The setup script installs in this order:
+    1. System packages (zsh, tmux, neovim, etc.)
+    2. mise runtime manager
+    3. CLI tools via mise (ripgrep, fd, fzf, bat, eza)
+    4. GUI applications (optional, interactive selection)
+       - Terminal emulators (Ghostty, Alacritty, etc.)
+       - IDEs (Cursor, VS Code, etc.)
+       - Browsers (Chrome, Brave, etc.)
+       - AI tools (Claude Desktop, Ollama, etc.)
+    5. Dotfiles symlinking via GNU Stow
+
+GUI APPLICATIONS:
+    During setup, you'll be prompted to install GUI applications.
+    You can also run the GUI installer separately:
+        ./scripts/install_gui_apps.sh
+
 SYSTEM RESTORE:
     On first run, you'll be prompted to optionally install Timeshift for full
     system snapshots. The script always creates:
@@ -996,6 +1013,50 @@ install_cli_tools_with_mise() {
     echo
 }
 
+install_gui_applications() {
+    if [ "$MINIMAL_INSTALL" = true ]; then
+        log_info "Minimal install - skipping GUI applications"
+        return
+    fi
+    
+    log_section "GUI Applications"
+    
+    # Check if GUI installer exists
+    if [ ! -f "$SCRIPT_DIR/install_gui_apps.sh" ]; then
+        log_warning "GUI applications installer not found at $SCRIPT_DIR/install_gui_apps.sh"
+        log_info "Skipping GUI applications installation"
+        return
+    fi
+    
+    # Check if running in non-interactive mode
+    if [ "$SKIP_INTERACTIVE" = true ]; then
+        log_info "Non-interactive mode - skipping GUI applications"
+        log_info "Run './scripts/install_gui_apps.sh' manually to install GUI apps"
+        return
+    fi
+    
+    # Prompt user if they want to install GUI applications
+    log_info "Would you like to install GUI applications (terminal emulators, IDEs, browsers, etc.)?"
+    
+    if whiptail --title "GUI Applications" --yesno "Install GUI applications?\n\nThis includes:\n- Terminal emulators (Ghostty, etc.)\n- IDEs (Cursor, VS Code, etc.)\n- Browsers (Chrome, Brave, etc.)\n- AI tools (Claude Desktop, Ollama, etc.)\n- And more..." 15 70 3>&1 1>&2 2>&3; then
+        log_info "Starting GUI applications installer..."
+        echo
+        
+        # Run the GUI installer
+        if bash "$SCRIPT_DIR/install_gui_apps.sh"; then
+            log_success "✅ GUI applications installer completed"
+        else
+            log_warning "GUI applications installer finished with some issues"
+            log_info "Check the dashboard above for details"
+        fi
+    else
+        log_info "Skipping GUI applications installation"
+        log_info "You can run './scripts/install_gui_apps.sh' later to install GUI apps"
+    fi
+    
+    echo
+}
+
 setup_zsh() {
     if [ "$MINIMAL_INSTALL" = true ] || [ "${INSTALL_SHELL_TOOLS:-true}" != "true" ]; then
         return
@@ -1166,12 +1227,15 @@ main() {
         create_package_manifest
         create_timeshift_snapshot
         
-        # Install everything
+        # Install system packages and tools
         install_prerequisites
         backup_dotfiles
         install_packages
         install_mise
         setup_zsh
+        
+        # Install GUI applications (interactive)
+        install_gui_applications
     fi
     
     stow_dotfiles
