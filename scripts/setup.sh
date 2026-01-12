@@ -680,14 +680,13 @@ install_packages() {
                 optional_packages+=(neovim)
             fi
             
-            if [ "${INSTALL_CLI_TOOLS:-true}" = "true" ]; then
-                optional_packages+=(ripgrep fd-find fzf bat exa)
-            fi
+            # Note: CLI tools (ripgrep, fd, fzf, bat, eza) will be installed via mise
             
             # Combine and install
             sudo apt-get install -y "${core_packages[@]}" "${optional_packages[@]}"
             
             log_success "✅ System packages installed"
+            log_info "CLI tools will be installed via mise"
             
             # Install Obsidian if selected
             if [ "${INSTALL_OBSIDIAN:-false}" = "true" ]; then
@@ -715,13 +714,12 @@ install_packages() {
                 brew_packages+=(neovim)
             fi
             
-            if [ "${INSTALL_CLI_TOOLS:-true}" = "true" ]; then
-                brew_packages+=(ripgrep fd fzf bat exa)
-            fi
+            # Note: CLI tools (ripgrep, fd, fzf, bat, eza) will be installed via mise
             
             brew install "${brew_packages[@]}"
             
             log_success "✅ Homebrew packages installed"
+            log_info "CLI tools will be installed via mise"
             
             # Install Obsidian if selected
             if [ "${INSTALL_OBSIDIAN:-false}" = "true" ]; then
@@ -882,22 +880,63 @@ install_mise() {
     
     if command_exists mise; then
         log_success "✅ mise already installed ($(mise --version))"
-        echo
-        return
+    else
+        log_info "Installing mise..."
+        curl https://mise.run | sh
+        
+        # Add mise to current shell
+        export PATH="$HOME/.local/bin:$PATH"
+        
+        if command_exists mise; then
+            log_success "✅ mise installed successfully"
+        else
+            log_warning "mise installed but not in PATH yet"
+            log_info "Restart your shell or run: export PATH=\"\$HOME/.local/bin:\$PATH\""
+        fi
     fi
     
-    log_info "Installing mise..."
-    curl https://mise.run | sh
+    # Install CLI tools via mise if selected
+    if [ "${INSTALL_CLI_TOOLS:-true}" = "true" ]; then
+        install_cli_tools_with_mise
+    fi
     
-    # Add mise to current shell
+    echo
+}
+
+install_cli_tools_with_mise() {
+    log_section "Installing CLI Tools via mise"
+    
+    # Ensure mise is in PATH
     export PATH="$HOME/.local/bin:$PATH"
     
-    if command_exists mise; then
-        log_success "✅ mise installed successfully"
-    else
-        log_warning "mise installed but not in PATH yet"
-        log_info "Restart your shell or run: export PATH=\"\$HOME/.local/bin:\$PATH\""
+    if ! command_exists mise; then
+        log_error "mise not found in PATH"
+        return 1
     fi
+    
+    log_info "Installing CLI tools with mise..."
+    
+    # Install each tool
+    local tools=(
+        "ripgrep"      # Fast grep alternative (rg)
+        "fd"           # Fast find alternative
+        "fzf"          # Fuzzy finder
+        "bat"          # Cat with syntax highlighting
+        "eza"          # Modern ls replacement
+    )
+    
+    for tool in "${tools[@]}"; do
+        log_info "Installing $tool..."
+        mise use -g "$tool@latest" || log_warning "Failed to install $tool"
+    done
+    
+    # Verify installations
+    log_info "Verifying installations..."
+    mise list
+    
+    log_success "✅ CLI tools installed via mise"
+    log_info "Tools installed: ripgrep, fd, fzf, bat, eza"
+    log_info "Run 'mise list' to see installed versions"
     
     echo
 }
