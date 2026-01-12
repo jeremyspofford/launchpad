@@ -1042,6 +1042,17 @@ create_template_files() {
         fi
     fi
     
+    # Don't overwrite mise.toml if user already has one configured
+    if [ ! -f "$HOME/.config/mise/mise.toml" ] && [ ! -f "$HOME/mise.toml" ]; then
+        if [ -f "$HOME/.config/mise/mise.toml.template" ] || [ -L "$HOME/.config/mise/mise.toml.template" ]; then
+            cp "$HOME/.config/mise/mise.toml.template" "$HOME/.config/mise/mise.toml"
+            log_success "✅ Created mise config from template"
+            log_info "Edit ~/.config/mise/mise.toml to add tools"
+        fi
+    else
+        log_info "mise config already exists, skipping template"
+    fi
+    
     echo
 }
 
