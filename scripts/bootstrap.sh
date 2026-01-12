@@ -17,7 +17,8 @@ set -e
 
 # Configuration
 DOTFILES_REPO="https://github.com/jeremyspofford/dotfiles.git"
-DOTFILES_DIR="$HOME/workspace/dotfiles"
+# Default clone location (user can override with DOTFILES_DIR env var)
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/workspace/dotfiles}"
 GITHUB_USER="jeremyspofford"
 REPO_NAME="dotfiles"
 

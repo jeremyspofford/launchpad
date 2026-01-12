@@ -17,7 +17,15 @@
 set -e
 
 # Configuration
-DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Detect dotfiles directory from script location (works from any location)
+if [ -d "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.git" ]; then
+    # Running from within the repo
+    DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+else
+    # Default fallback location
+    DOTFILES_DIR="$HOME/workspace/dotfiles"
+fi
+
 BACKUP_BASE_DIR="$HOME/.dotfiles-backup"
 BACKUP_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="$BACKUP_BASE_DIR/$BACKUP_TIMESTAMP"
@@ -99,13 +107,21 @@ OPTIONS:
     --create-restore-point  Create system restore point before changes
     --skip-restore-prompt   Don't prompt for restore point creation
 
+ENVIRONMENT VARIABLES:
+    DOTFILES_DIR            Override dotfiles location (default: ~/workspace/dotfiles)
+
 EXAMPLES:
     ./scripts/setup.sh                      # Full setup with interactive prompts
     ./scripts/setup.sh --minimal            # Just symlink dotfiles
     ./scripts/setup.sh --update             # Update dotfiles after git pull
     ./scripts/setup.sh --revert             # Revert to most recent backup
-    ./scripts/setup.sh --create-restore-point # Create restore point before setup
-    ./scripts/setup.sh --non-interactive --skip-restore-prompt # Fully automated
+    
+    # Use custom location
+    DOTFILES_DIR=/tmp/dotfiles ./scripts/setup.sh
+    
+    # Run from anywhere
+    cd /tmp/dotfiles && ./scripts/setup.sh
+    cd ~ && ~/workspace/dotfiles/scripts/setup.sh
 
 SYSTEM RESTORE:
     On first run, you'll be prompted to optionally install Timeshift for full
@@ -915,6 +931,8 @@ install_cli_tools_with_mise() {
     fi
     
     log_info "Installing CLI tools with mise..."
+    log_warning "mise may ask you to trust config files - select 'yes' or 'all'"
+    echo
     
     # Install each tool
     local tools=(
@@ -927,7 +945,12 @@ install_cli_tools_with_mise() {
     
     for tool in "${tools[@]}"; do
         log_info "Installing $tool..."
-        mise use -g "$tool@latest" || log_warning "Failed to install $tool"
+        # Use --yes to auto-approve trust prompts in non-interactive mode
+        if [ "$SKIP_INTERACTIVE" = true ]; then
+            mise use -g "$tool@latest" --yes || log_warning "Failed to install $tool"
+        else
+            mise use -g "$tool@latest" || log_warning "Failed to install $tool"
+        fi
     done
     
     # Verify installations
@@ -977,6 +1000,18 @@ stow_dotfiles() {
     log_section "Installing Dotfiles"
     
     cd "$DOTFILES_DIR"
+    
+    # Remove backed-up files that would conflict with stow
+    # (They're already backed up, safe to remove)
+    if [ -f "$MANIFEST_FILE" ]; then
+        log_info "Removing backed-up files to prepare for stowing..."
+        while IFS= read -r file; do
+            if [ -e "$file" ] && [ ! -L "$file" ]; then
+                rm -rf "$file"
+                log_info "Removed: ${file#$HOME/}"
+            fi
+        done < "$MANIFEST_FILE"
+    fi
     
     log_info "Stowing dotfiles to $HOME..."
     stow -v -d "$DOTFILES_DIR" -t "$HOME" home

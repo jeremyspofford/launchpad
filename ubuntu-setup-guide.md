@@ -81,6 +81,27 @@ cd ~/my-project
 mise use node@18.20.0  # Creates .mise.toml in project
 ```
 
+**mise Trust Prompts:**
+
+When installing tools, mise may ask you to trust configuration files:
+
+```
+mise has been configured to use the following tools:
+  ripgrep@latest
+
+Do you trust this config? (yes/no/all) [yes]:
+```
+
+**What to select:**
+- **`yes`** - Trust this one config (recommended for first run)
+- **`all`** - Trust all configs automatically (convenient for automation)
+- **`no`** - Don't trust, won't install
+
+**Why this prompt?**
+- mise config files can run arbitrary code
+- Trust prompt is a security feature
+- Only appears once per config file
+
 **See your `mise.toml` for configuration options**
 
 ---
