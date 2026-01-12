@@ -11,72 +11,35 @@
 
 # CLI Tools (installed globally by setup script)
 [tools]
-# Modern Unix tools
+# Modern Unix tools - installed by setup script
 ripgrep = "latest"  # Fast grep (command: rg)
 fd = "latest"       # Fast find (command: fd)
 fzf = "latest"      # Fuzzy finder
 bat = "latest"      # Cat with syntax highlighting
 eza = "latest"      # Modern ls replacement
 
-# Optional: Uncomment tools you want to install
+# Optional: Uncomment programming languages you want to install
 # node = "20"         # Node.js
 # python = "3.12"     # Python
 # go = "latest"       # Go
 # rust = "latest"     # Rust
+
+# Optional: Uncomment development tools you want
 # terraform = "1.6"   # Terraform
 # kubectl = "latest"  # Kubernetes CLI
 # helm = "latest"     # Helm
 # aws-cli = "latest"  # AWS CLI
-# gcloud = "latest"   # Google Cloud CLI
-# docker = "latest"   # Docker CLI
-
-# Development tools
 # jq = "latest"       # JSON processor
 # yq = "latest"       # YAML processor
 # delta = "latest"    # Better git diff
 # direnv = "latest"   # Directory-based env vars
-# just = "latest"     # Command runner
-# lazygit = "latest"  # Git TUI
-
-# Language version managers (mise replaces these)
-# mise replaces: nvm, rbenv, pyenv, gvm, rustup, tfenv, etc.
-
-# Per-project versions
-# For project-specific versions, create .mise.toml or .tool-versions
-# in your project directory:
-#
-# Example .mise.toml:
-# [tools]
-# node = "18.20.0"
-# python = "3.11.7"
-# terraform = "1.5.7"
 
 # Settings
 [settings]
-# Automatically install missing tools when entering a directory
-# auto_install = true
-
 # Use all CPU cores for parallel downloads
 jobs = 4
-
-# Verbose output (useful for debugging)
-# verbose = true
 
 # Legacy version files (.node-version, .python-version, etc.)
 # mise can read these files automatically
 legacy_version_file = true
 
-# Tasks (optional: define custom commands)
-# [tasks.install-all]
-# run = "mise install && npm install && pip install -r requirements.txt"
-# description = "Install all dependencies"
-
-# [tasks.update]
-# run = "mise upgrade && npm update && pip install --upgrade -r requirements.txt"
-# description = "Update all dependencies"
-
-# Aliases (optional: create command shortcuts)
-# [alias]
-# n = "node"
-# p = "python"
-# tf = "terraform"

@@ -264,6 +264,7 @@ backup_dotfiles() {
         "$HOME/.zshrc"
         "$HOME/.bashrc"
         "$HOME/.bash_profile"
+        "$HOME/.profile"
         "$HOME/.tmux.conf"
         "$HOME/.gitconfig"
         "$HOME/.config/nvim"
