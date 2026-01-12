@@ -26,15 +26,15 @@ REPO_NAME="dotfiles"
 ################################################################################
 
 # If running from curl, download logger.sh temporarily
-if [ ! -f "$(dirname "$0")/logger.sh" ]; then
+if [ ! -f "$(dirname "$0")/lib/logger.sh" ]; then
     TEMP_LOGGER=$(mktemp)
-    curl -fsSL https://raw.githubusercontent.com/jeremyspofford/dotfiles/main/scripts/logger.sh > "$TEMP_LOGGER"
+    curl -fsSL https://raw.githubusercontent.com/jeremyspofford/dotfiles/main/scripts/lib/logger.sh > "$TEMP_LOGGER"
     source "$TEMP_LOGGER"
     trap "rm -f $TEMP_LOGGER" EXIT
 else
     # Running from cloned repo
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    source "$SCRIPT_DIR/logger.sh"
+    source "$SCRIPT_DIR/lib/logger.sh"
 fi
 
 ################################################################################

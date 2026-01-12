@@ -53,7 +53,7 @@ PACKAGE_MANIFEST="$RESTORE_DIR/packages-$BACKUP_TIMESTAMP.txt"
 ################################################################################
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/logger.sh"
+source "$SCRIPT_DIR/lib/logger.sh"
 
 ################################################################################
 # Helper Functions
