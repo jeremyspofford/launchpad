@@ -791,21 +791,16 @@ install_prerequisites() {
     echo
 }
 
-install_packages() {
+install_system_updates() {
     if [ "$MINIMAL_INSTALL" = true ]; then
-        log_info "Skipping package installation (--minimal flag)"
+        log_info "Skipping system updates (--minimal flag)"
         echo
         return
     fi
     
-    log_section "Installing System Packages"
+    log_section "System Updates"
     
     local platform=$(detect_platform)
-    
-    # Interactive tool selection if whiptail is available
-    if command_exists whiptail && [ -z "$SKIP_INTERACTIVE" ]; then
-        select_tools_interactive
-    fi
     
     case $platform in
         linux|wsl)
@@ -815,75 +810,18 @@ install_packages() {
             log_info "Upgrading existing packages..."
             sudo apt-get upgrade -y
             
-            log_info "Installing essential packages..."
+            log_info "Installing core build tools..."
+            sudo apt-get install -y build-essential curl wget git
             
-            # Always install these core tools
-            local core_packages=(
-                build-essential
-                curl
-                wget
-                git
-            )
-            
-            # Optional tools based on selection
-            local optional_packages=()
-            
-            if [ "${INSTALL_SHELL_TOOLS:-true}" = "true" ]; then
-                optional_packages+=(zsh)
-            fi
-            
-            if [ "${INSTALL_TERMINAL_TOOLS:-true}" = "true" ]; then
-                optional_packages+=(tmux)
-            fi
-            
-            if [ "${INSTALL_EDITOR:-true}" = "true" ]; then
-                optional_packages+=(neovim)
-            fi
-            
-            # Note: CLI tools (ripgrep, fd, fzf, bat, eza) will be installed via mise
-            
-            # Combine and install
-            sudo apt-get install -y "${core_packages[@]}" "${optional_packages[@]}"
-            
-            log_success "✅ System packages installed"
-            log_info "CLI tools will be installed via mise"
-            
-            # Install Obsidian if selected
-            if [ "${INSTALL_OBSIDIAN:-false}" = "true" ]; then
-                install_obsidian_linux
-            fi
+            log_success "✅ System updated"
             ;;
         macos)
-            if ! command_exists brew; then
-                error_exit "Homebrew required for package installation"
-            fi
-            
-            log_info "Installing packages via Homebrew..."
-            
-            local brew_packages=(stow git curl wget)
-            
-            if [ "${INSTALL_SHELL_TOOLS:-true}" = "true" ]; then
-                brew_packages+=(zsh)
-            fi
-            
-            if [ "${INSTALL_TERMINAL_TOOLS:-true}" = "true" ]; then
-                brew_packages+=(tmux)
-            fi
-            
-            if [ "${INSTALL_EDITOR:-true}" = "true" ]; then
-                brew_packages+=(neovim)
-            fi
-            
-            # Note: CLI tools (ripgrep, fd, fzf, bat, eza) will be installed via mise
-            
-            brew install "${brew_packages[@]}"
-            
-            log_success "✅ Homebrew packages installed"
-            log_info "CLI tools will be installed via mise"
-            
-            # Install Obsidian if selected
-            if [ "${INSTALL_OBSIDIAN:-false}" = "true" ]; then
-                install_obsidian_macos
+            if command_exists brew; then
+                log_info "Updating Homebrew..."
+                brew update
+                log_info "Upgrading Homebrew packages..."
+                brew upgrade
+                log_success "✅ System updated"
             fi
             ;;
     esac
@@ -1394,44 +1332,48 @@ main() {
             fi
         fi
         
-        # Install system packages and tools
+        # Install prerequisites (stow, core utils)
         if install_prerequisites; then
             track_completed "Prerequisites installed"
         else
             track_failed "Prerequisites" "installation failed"
         fi
         
+        # Update system packages
+        if install_system_updates; then
+            track_completed "System updated"
+        else
+            track_failed "System updates" "failed"
+        fi
+        
+        # Backup existing dotfiles
         if backup_dotfiles; then
             track_completed "Dotfiles backed up"
         else
             track_failed "Dotfiles backup" "backup failed"
         fi
         
-        if install_packages; then
-            track_completed "System packages installed"
+        # Run unified application manager (handles ALL app installations)
+        log_section "Application Manager"
+        log_info "Opening unified application manager..."
+        echo
+        
+        if [ -f "$SCRIPT_DIR/unified_app_manager.sh" ]; then
+            bash "$SCRIPT_DIR/unified_app_manager.sh" || true
+            track_completed "Applications installed"
         else
-            track_failed "System packages" "installation failed"
+            log_warning "Unified app manager not found at $SCRIPT_DIR/unified_app_manager.sh"
+            track_failed "Applications" "manager not found"
         fi
         
-        if install_mise; then
-            track_completed "mise installed"
-        else
-            track_failed "mise" "installation failed"
+        # Setup Zsh if it was installed
+        if command_exists zsh; then
+            if setup_zsh; then
+                track_completed "Zsh configured"
+            else
+                track_failed "Zsh" "configuration failed"
+            fi
         fi
-        
-        if setup_zsh; then
-            track_completed "Zsh configured"
-        else
-            track_failed "Zsh" "configuration failed"
-        fi
-        
-        # Install optional CLI tools
-        install_ollama || true
-        install_claude_code || true
-        
-        # Install GUI applications (interactive)
-        install_gui_applications || true
-        # Note: GUI apps installer handles its own tracking
     fi
     
     if stow_dotfiles; then
