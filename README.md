@@ -19,7 +19,7 @@ cd ~/workspace/dotfiles
 | **Editor** | Neovim (LazyVim) with AI plugins |
 | **Git** | Multi-identity SSH, delta diff viewer |
 | **Tools** | mise for runtimes, stow for symlinks |
-| **Theme** | Catppuccin (auto dark/light mode) |
+| **Theme** | TokyoNight (auto dark/light mode) |
 
 ## 📁 Structure
 
@@ -118,7 +118,7 @@ git pull
 | Platform | Status |
 |----------|--------|
 | macOS | ✅ Full support (Homebrew, Ghostty) |
-| Linux | ✅ apt, dnf, pacman |
+| Linux | ✅ Debian/Ubuntu (apt) - others experimental |
 | WSL | ✅ With clipboard integration |
 
 ## 📄 License
