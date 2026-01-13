@@ -119,24 +119,6 @@ EOF
         log_warning "⚠️  ${#FAILED_APPS[@]} application(s) failed"
     fi
     
-    # Show helpful tips
-    echo
-    log_heredoc "${CYAN}" <<EOF
-💡 Helpful Tips:
-
-Manage mise tools:
-  • View installed: mise list
-  • Add a tool: mise use -g <tool>@latest
-  • Remove a tool: Remove from ~/.config/mise/mise.toml, then: mise uninstall <tool>
-  • Update all: mise upgrade
-
-Re-run this manager:
-  ./scripts/unified_app_manager.sh
-
-View detailed logs:
-  cat /tmp/app_install.log
-EOF
-    
     echo
 }
 
@@ -145,37 +127,17 @@ EOF
 ################################################################################
 
 select_applications() {
+    if ! command_exists whiptail; then
+        sudo apt-get install -y whiptail >> /tmp/app_install.log 2>&1
+    fi
+    
     # Load previous selections
     local previous=""
     if [ -f ~/.config/dotfiles/app-selections ]; then
         previous=$(cat ~/.config/dotfiles/app-selections)
     fi
     
-    # Show information banner
-    whiptail --title "ℹ️  Application Manager" --msgbox \
-"Welcome to the Unified Application Manager!
-
-📦 MISE TOOLS:
-   If you select 'mise', the script will automatically run
-   'mise install' to install ALL tools from your mise.toml:
-   
-   • AWS/Terraform tools
-   • Languages (Node, Python, Go, Rust)
-   • CLI tools (ripgrep, fd, fzf, bat, eza, jq, yq)
-   • Git tools (lazygit, delta, gh)
-   • AI tools (claude, gemini, aider, opencode)
-   • And more...
-
-   To remove a tool later:
-   1. Remove it from ~/.config/mise/mise.toml
-   2. Run: mise uninstall <tool-name>
-
-⚠️  UNINSTALL WARNING:
-   Unchecking an installed app will UNINSTALL it!
-
-Press OK to continue to app selection..." 25 75
-    
-    # Show re-run warning if applicable
+    # Show warning if re-running
     if [ -n "$previous" ]; then
         whiptail --title "⚠️  IMPORTANT WARNING" --msgbox \
 "You have previously installed applications.
@@ -189,20 +151,21 @@ Press OK to continue..." 12 60
     
     # Unified selection menu
     local selections=$(whiptail --title "Application Manager" --checklist \
-"Select applications (Space=select, Enter=confirm)
+"Select applications to install (Space=select, Enter=confirm)
 
-⚠️  WARNING: Unchecking installed apps will UNINSTALL them!
-
-System Tools:" 28 78 16 \
+System Tools:" 30 78 20 \
 "zsh" "Zsh shell" ON \
 "tmux" "Terminal multiplexer" ON \
 "neovim" "Text editor" ON \
-"mise" "mise (installs ALL tools from mise.toml)" ON \
+"" "" OFF \
+"mise" "mise - Runtime manager (installs CLI tools from mise.toml)" ON \
+"" "" OFF \
 "ghostty" "Ghostty terminal" ON \
 "cursor" "Cursor AI IDE" ON \
 "claude_desktop" "Claude Desktop" ON \
 "chrome" "Google Chrome" ON \
 "docker_desktop" "Docker Desktop" ON \
+"" "" OFF \
 "vscode" "VS Code" OFF \
 "brave" "Brave browser" OFF \
 "notion" "Notion" OFF \
@@ -297,52 +260,19 @@ install_mise() {
         
         # Install tools from mise.toml if it exists
         if [ -f ~/.config/mise/mise.toml ]; then
-            echo
-            log_heredoc "${CYAN}" <<EOF
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📦 Installing Tools from mise.toml
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-This will install ALL tools configured in:
-  ~/.config/mise/mise.toml
-
-Including:
-  • AWS/Terraform tools (aws-cli, terraform, etc.)
-  • Languages (node, python, go, rust)
-  • CLI tools (ripgrep, fd, fzf, bat, eza, jq, yq)
-  • Git tools (lazygit, delta, gh)
-  • AI tools (claude, gemini, aider, opencode)
-  • And more...
-
-⏱️  This may take 5-10 minutes depending on your system.
-
-💡 TIP: To manage tools later:
-   • View installed: mise list
-   • Add a tool: mise use -g <tool>@latest
-   • Remove a tool: 
-     1. Delete from ~/.config/mise/mise.toml
-     2. Run: mise uninstall <tool>
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EOF
-            echo
-            log_info "Installing tools (this may take a while)..."
+            log_info "Installing tools from mise.toml..."
+            log_warning "This may take a few minutes..."
             
             if mise install >> /tmp/app_install.log 2>&1; then
-                echo
                 log_success "✅ Tools installed from mise.toml"
-                echo
                 log_info "Installed tools:"
                 mise list
-                echo
             else
                 log_warning "Some tools failed to install from mise.toml"
                 log_info "Check /tmp/app_install.log for details"
-                log_info "You can retry with: mise install"
             fi
         else
             log_info "No mise.toml found - tools will be available after stowing dotfiles"
-            log_info "After stowing, run: mise install"
         fi
         
         track_installed "mise + CLI tools from mise.toml"
@@ -595,19 +525,6 @@ main() {
     log_section "Application Manager"
     log_info "Installation log: /tmp/app_install.log"
     echo
-    
-    # Ensure whiptail is available
-    if ! command_exists whiptail; then
-        log_info "Installing whiptail for interactive menu..."
-        sudo apt-get update >> /tmp/app_install.log 2>&1
-        sudo apt-get install -y whiptail >> /tmp/app_install.log 2>&1
-        
-        if ! command_exists whiptail; then
-            log_error "Failed to install whiptail - cannot show interactive menu"
-            log_info "Please install whiptail manually: sudo apt-get install whiptail"
-            exit 1
-        fi
-    fi
     
     # Show unified selection menu
     selections=$(select_applications)
