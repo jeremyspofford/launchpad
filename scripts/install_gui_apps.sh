@@ -157,19 +157,6 @@ install_claude_desktop() {
     fi
 }
 
-install_claude_code() {
-    if command_exists claude-code; then
-        track_skipped "Claude Code"
-        return 0
-    fi
-    
-    if npm install -g @anthropic-ai/claude-code >> /tmp/gui_install.log 2>&1; then
-        track_installed "Claude Code"
-    else
-        track_failed "Claude Code" "npm install failed"
-    fi
-}
-
 install_chrome() {
     if command_exists google-chrome; then
         track_skipped "Google Chrome"
@@ -233,19 +220,6 @@ install_opencode() {
         track_installed "OpenCode"
     else
         track_failed "OpenCode" "mise install failed"
-    fi
-}
-
-install_ollama() {
-    if command_exists ollama; then
-        track_skipped "Ollama"
-        return 0
-    fi
-    
-    if curl -fsSL https://ollama.com/install.sh | sh >> /tmp/gui_install.log 2>&1; then
-        track_installed "Ollama"
-    else
-        track_failed "Ollama" "installation failed"
     fi
 }
 
@@ -389,12 +363,10 @@ select_applications() {
 "ghostty" "Ghostty terminal" ON \
 "cursor" "Cursor AI IDE" ON \
 "claude_desktop" "Claude Desktop (unofficial)" ON \
-"claude_code" "Claude Code CLI" ON \
 "chrome" "Google Chrome" ON \
 "docker_desktop" "Docker Desktop" ON \
 "vscode" "VS Code" OFF \
 "opencode" "OpenCode AI IDE" OFF \
-"ollama" "Ollama local LLM" OFF \
 "brave" "Brave browser" OFF \
 "notion" "Notion" OFF \
 "1password" "1Password" OFF \
