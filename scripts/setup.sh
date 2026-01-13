@@ -763,6 +763,23 @@ install_prerequisites() {
         esac
     fi
     
+    # Install unzip (needed for fonts and AppImages)
+    if ! command_exists unzip; then
+        log_info "Installing unzip..."
+        case $platform in
+            linux|wsl)
+                sudo apt-get update
+                sudo apt-get install -y unzip
+                ;;
+            macos)
+                if command_exists brew; then
+                    brew install unzip
+                fi
+                ;;
+        esac
+        log_success "✅ unzip installed"
+    fi
+    
     # Install GNU Stow
     if ! command_exists stow; then
         log_info "Installing GNU Stow..."
@@ -1170,6 +1187,27 @@ setup_zsh() {
         log_success "✅ Oh My Zsh already installed"
     fi
     
+    # Install zsh plugins
+    local ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+    
+    # Install zsh-autosuggestions
+    if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
+        log_info "Installing zsh-autosuggestions..."
+        git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+        log_success "✅ zsh-autosuggestions installed"
+    else
+        log_success "✅ zsh-autosuggestions already installed"
+    fi
+    
+    # Install zsh-syntax-highlighting
+    if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
+        log_info "Installing zsh-syntax-highlighting..."
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+        log_success "✅ zsh-syntax-highlighting installed"
+    else
+        log_success "✅ zsh-syntax-highlighting already installed"
+    fi
+    
     # Set Zsh as default shell
     if [ "$SHELL" != "$(which zsh)" ]; then
         log_info "Setting Zsh as default shell..."
@@ -1273,6 +1311,10 @@ EOF
 4. If using SSH for Git, ensure your keys are set up:
    ssh -T git@github.com
 
+5. For Neovim with icons (if installed):
+   Set terminal font to 'JetBrainsMono Nerd Font Mono'
+   Then in nvim: :Lazy sync and :TSUpdate
+
 EOF
     
     log_kv "📝 Backup location" "$BACKUP_DIR"
@@ -1359,7 +1401,11 @@ main() {
         echo
         
         if [ -f "$SCRIPT_DIR/unified_app_manager.sh" ]; then
-            bash "$SCRIPT_DIR/unified_app_manager.sh" || true
+            # Ensure it's executable
+            chmod +x "$SCRIPT_DIR/unified_app_manager.sh"
+            
+            # Call it directly to preserve terminal
+            "$SCRIPT_DIR/unified_app_manager.sh" || true
             track_completed "Applications installed"
         else
             log_warning "Unified app manager not found at $SCRIPT_DIR/unified_app_manager.sh"

@@ -151,7 +151,43 @@ select_applications() {
         previous=$(cat ~/.config/dotfiles/app-selections)
     fi
     
-    # Show re-run warning if applicable (but skip welcome banner to avoid hang)
+    # Detect what's currently installed to pre-check items
+    local zsh_status="OFF"
+    local tmux_status="OFF"
+    local neovim_status="OFF"
+    local mise_status="OFF"
+    local ghostty_status="OFF"
+    local cursor_status="OFF"
+    local antigravity_status="OFF"
+    local claude_desktop_status="OFF"
+    local chrome_status="OFF"
+    local docker_desktop_status="OFF"
+    local vscode_status="OFF"
+    local brave_status="OFF"
+    local notion_status="OFF"
+    local obsidian_status="OFF"
+    local onepassword_status="OFF"
+    local orca_slicer_status="OFF"
+    
+    # Check what's installed
+    command_exists zsh && zsh_status="ON"
+    command_exists tmux && tmux_status="ON"
+    command_exists nvim && neovim_status="ON"
+    command_exists mise && mise_status="ON"
+    command_exists ghostty && ghostty_status="ON"
+    [ -f ~/.local/bin/cursor.AppImage ] && cursor_status="ON"
+    (dpkg -l 2>/dev/null | grep -q antigravity) && antigravity_status="ON"
+    (snap list 2>/dev/null | grep -q "claudeai-desktop") && claude_desktop_status="ON"
+    command_exists google-chrome && chrome_status="ON"
+    (dpkg -l 2>/dev/null | grep -q docker-desktop) && docker_desktop_status="ON"
+    command_exists code && vscode_status="ON"
+    command_exists brave-browser && brave_status="ON"
+    (snap list 2>/dev/null | grep -q "notion-snap-reborn") && notion_status="ON"
+    (command_exists obsidian || snap list 2>/dev/null | grep -q "obsidian") && obsidian_status="ON"
+    command_exists 1password && onepassword_status="ON"
+    [ -f ~/.local/bin/orca-slicer.AppImage ] && orca_slicer_status="ON"
+    
+    # Show re-run warning if applicable
     if [ -n "$previous" ]; then
         whiptail --title "⚠️  UNINSTALL WARNING" --msgbox \
 "You have previously installed applications.
@@ -160,33 +196,37 @@ select_applications() {
 
 Unchecked applications will be REMOVED from your system.
 
-Press OK to continue..." 11 60 3>&1 1>&2 2>&3 || {
+Apps that are currently installed will be pre-checked.
+
+Press OK to continue..." 13 60 3>&1 1>&2 2>&3 || {
             log_error "Selection cancelled"
             exit 1
         }
     fi
     
-    # Unified selection menu
+    # Unified selection menu with dynamic ON/OFF based on what's installed
     local selections=$(whiptail --title "Application Manager" --checklist \
 "Select applications (Space=select, Enter=confirm)
 
 ⚠️  WARNING: Unchecking installed apps will UNINSTALL them!
 
-System Tools:" 28 78 16 \
-"zsh" "Zsh shell" ON \
-"tmux" "Terminal multiplexer" ON \
-"neovim" "Text editor" ON \
-"mise" "mise (installs ALL tools from mise.toml)" ON \
-"ghostty" "Ghostty terminal" ON \
-"cursor" "Cursor AI IDE" ON \
-"claude_desktop" "Claude Desktop" ON \
-"chrome" "Google Chrome" ON \
-"docker_desktop" "Docker Desktop" ON \
-"vscode" "VS Code" OFF \
-"brave" "Brave browser" OFF \
-"notion" "Notion" OFF \
-"1password" "1Password" OFF \
-"orca_slicer" "Orca Slicer" OFF \
+System Tools:" 28 78 18 \
+"zsh" "Zsh shell" "$zsh_status" \
+"tmux" "Terminal multiplexer" "$tmux_status" \
+"neovim" "Text editor" "$neovim_status" \
+"mise" "mise (installs ALL tools from mise.toml)" "$mise_status" \
+"ghostty" "Ghostty terminal" "$ghostty_status" \
+"cursor" "Cursor AI IDE" "$cursor_status" \
+"antigravity" "Antigravity IDE (Google)" "$antigravity_status" \
+"claude_desktop" "Claude Desktop" "$claude_desktop_status" \
+"chrome" "Google Chrome" "$chrome_status" \
+"docker_desktop" "Docker Desktop" "$docker_desktop_status" \
+"vscode" "VS Code" "$vscode_status" \
+"brave" "Brave browser" "$brave_status" \
+"notion" "Notion" "$notion_status" \
+"obsidian" "Obsidian (note-taking)" "$obsidian_status" \
+"1password" "1Password" "$onepassword_status" \
+"orca_slicer" "Orca Slicer" "$orca_slicer_status" \
 3>&1 1>&2 2>&3)
     
     # Check if user cancelled
@@ -208,9 +248,10 @@ System Tools:" 28 78 16 \
             if [ -z "$prev_app" ]; then continue; fi
             
             if ! echo "$selections" | grep -q "$prev_app"; then
-                log_section "Uninstalling $(echo $prev_app | tr '_' ' ' | sed 's/\b\(.\)/\u\1/g')"
-                uninstall_"$prev_app" 2>/dev/null || log_warning "No uninstall function"
-                echo
+                # Redirect to stderr so it doesn't get captured in return value
+                log_section "Uninstalling $(echo $prev_app | tr '_' ' ' | sed 's/\b\(.\)/\u\1/g')" >&2
+                uninstall_"$prev_app" 2>/dev/null || log_warning "No uninstall function" >&2
+                echo >&2
             fi
         done
     fi
@@ -253,16 +294,127 @@ install_tmux() {
 }
 
 install_neovim() {
+    # Check if neovim is already installed with sufficient version
     if command_exists nvim; then
-        track_skipped "Neovim"
+        local current_version=$(nvim --version 2>/dev/null | head -1 | grep -oP 'v?\K[0-9]+\.[0-9]+' | head -1)
+        
+        if [ -n "$current_version" ]; then
+            local major=$(echo "$current_version" | cut -d. -f1)
+            local minor=$(echo "$current_version" | cut -d. -f2)
+            
+            log_info "Found Neovim v$current_version"
+            
+            # Check if version >= 0.11
+            if [ "$major" -gt 0 ] || ([ "$major" -eq 0 ] && [ "$minor" -ge 11 ]); then
+                log_success "Neovim v$current_version is sufficient (>= 0.11.2)"
+                track_skipped "Neovim"
+                return 0
+            else
+                log_warning "Neovim v$current_version is too old (need >= 0.11.2), upgrading..."
+                # Remove old version first
+                sudo apt-get remove -y neovim >> /tmp/app_install.log 2>&1 || true
+            fi
+        fi
+    fi
+    
+    # Method 1: Try unstable PPA (has latest versions including 0.11+)
+    log_info "Installing Neovim from unstable PPA (has v0.11+)..."
+    sudo add-apt-repository -y ppa:neovim-ppa/unstable >> /tmp/app_install.log 2>&1
+    sudo apt-get update >> /tmp/app_install.log 2>&1
+    
+    if sudo apt-get install -y neovim >> /tmp/app_install.log 2>&1; then
+        local ppa_version=$(nvim --version 2>/dev/null | head -1 | grep -oP 'v?\K[0-9]+\.[0-9]+' | head -1)
+        log_success "Installed Neovim v$ppa_version via PPA"
+        
+        # Install dependencies for LazyVim
+        log_info "Installing LazyVim dependencies..."
+        
+        # Install tree-sitter CLI (needed for parsers)
+        if ! command_exists tree-sitter && command_exists npm; then
+            npm install -g tree-sitter-cli >> /tmp/app_install.log 2>&1
+        fi
+        
+        # Install ripgrep if not already installed (needed for telescope)
+        if ! command_exists rg; then
+            sudo apt-get install -y ripgrep >> /tmp/app_install.log 2>&1
+        fi
+        
+        # Install a Nerd Font for icons
+        log_info "Installing Nerd Font for icons..."
+        
+        # Create fonts directory with proper permissions
+        if [ ! -d ~/.local/share ]; then
+            mkdir -p ~/.local/share
+        fi
+        mkdir -p ~/.local/share/fonts
+        
+        # Verify directory was created
+        if [ ! -d ~/.local/share/fonts ]; then
+            log_error "Failed to create fonts directory"
+            log_warning "Skipping font installation"
+        else
+            # Ensure curl and unzip are available
+            if ! command_exists curl; then
+                log_warning "curl not found, skipping font installation"
+            elif ! command_exists unzip; then
+                log_info "unzip not found, installing..."
+                sudo apt-get install -y unzip >> /tmp/app_install.log 2>&1
+            fi
+            
+            if command_exists curl && command_exists unzip; then
+                # Download JetBrainsMono Nerd Font
+                local font_url="https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip"
+                log_info "Downloading JetBrainsMono Nerd Font (~50MB)..."
+                
+                if curl -L "$font_url" -o /tmp/JetBrainsMono.zip 2>&1 | tee -a /tmp/app_install.log; then
+                    log_info "Extracting font files to ~/.local/share/fonts/JetBrainsMono..."
+                    mkdir -p ~/.local/share/fonts/JetBrainsMono
+                    
+                    if unzip -o -q /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/JetBrainsMono 2>&1 | tee -a /tmp/app_install.log; then
+                        rm /tmp/JetBrainsMono.zip
+                        
+                        # Verify fonts were extracted
+                        local font_count=$(ls ~/.local/share/fonts/JetBrainsMono/*.ttf 2>/dev/null | wc -l)
+                        if [ "$font_count" -gt 0 ]; then
+                            log_info "Rebuilding font cache..."
+                            fc-cache -fv ~/.local/share/fonts >> /tmp/app_install.log 2>&1
+                            log_success "✅ JetBrainsMono Nerd Font installed ($font_count fonts)"
+                            log_warning "⚠️  Set your terminal font to 'JetBrainsMono Nerd Font Mono' for icons"
+                        else
+                            log_error "No font files found after extraction"
+                        fi
+                    else
+                        log_error "Failed to extract font files"
+                        rm -f /tmp/JetBrainsMono.zip
+                    fi
+                else
+                    log_error "Failed to download font"
+                    rm -f /tmp/JetBrainsMono.zip
+                fi
+            else
+                log_warning "Cannot install font - missing curl or unzip"
+            fi
+        fi
+        
+        log_info "LazyVim dependencies installed"
+        log_info "On first nvim launch, LazyVim will install Tree-sitter parsers"
+        
+        track_installed "Neovim v$ppa_version (PPA)"
         return 0
     fi
     
-    if sudo apt-get install -y neovim >> /tmp/app_install.log 2>&1; then
-        track_installed "Neovim"
-    else
-        track_failed "Neovim" "apt install failed"
+    # Method 2: Try snap as fallback
+    if command_exists snap; then
+        log_info "PPA failed, trying Neovim via snap..."
+        if sudo snap install nvim --classic >> /tmp/app_install.log 2>&1; then
+            local snap_version=$(nvim --version 2>/dev/null | head -1 | grep -oP 'v?\K[0-9]+\.[0-9]+' | head -1)
+            log_success "Installed Neovim v$snap_version via snap"
+            track_installed "Neovim v$snap_version (snap)"
+            return 0
+        fi
     fi
+    
+    track_failed "Neovim" "all installation methods failed"
 }
 
 ################################################################################
@@ -369,6 +521,32 @@ install_cursor() {
     fi
 }
 
+install_antigravity() {
+    if [ -f ~/.local/bin/antigravity ]; then
+        track_skipped "Antigravity"
+        return 0
+    fi
+    
+    mkdir -p ~/.local/bin
+    local temp_deb="/tmp/antigravity.deb"
+    
+    log_info "Downloading Antigravity IDE..."
+    if curl -L "https://antigravity.google/download/linux" -o "$temp_deb" >> /tmp/app_install.log 2>&1; then
+        log_info "Installing Antigravity..."
+        if sudo dpkg -i "$temp_deb" >> /tmp/app_install.log 2>&1; then
+            sudo apt-get install -f -y >> /tmp/app_install.log 2>&1
+            rm -f "$temp_deb"
+            track_installed "Antigravity IDE"
+        else
+            rm -f "$temp_deb"
+            track_failed "Antigravity" "installation failed"
+        fi
+    else
+        rm -f "$temp_deb"
+        track_failed "Antigravity" "download failed"
+    fi
+}
+
 install_claude_desktop() {
     if snap list 2>/dev/null | grep -q "claudeai-desktop"; then
         track_skipped "Claude Desktop"
@@ -464,6 +642,56 @@ install_notion() {
     fi
 }
 
+install_obsidian() {
+    # Check if already installed
+    if command_exists obsidian || snap list 2>/dev/null | grep -q "obsidian"; then
+        track_skipped "Obsidian"
+        return 0
+    fi
+    
+    # Try snap first (easiest method)
+    if command_exists snap; then
+        log_info "Installing Obsidian via snap..."
+        if sudo snap install obsidian --classic >> /tmp/app_install.log 2>&1; then
+            track_installed "Obsidian (snap)"
+            return 0
+        fi
+    fi
+    
+    # Fallback to AppImage
+    log_info "Installing Obsidian AppImage..."
+    mkdir -p ~/.local/bin
+    
+    # Get latest version from GitHub
+    local latest_url=$(curl -s https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest 2>/dev/null | grep "browser_download_url.*AppImage" | cut -d '"' -f 4)
+    
+    if [ -n "$latest_url" ] && curl -L "$latest_url" -o ~/.local/bin/obsidian.AppImage >> /tmp/app_install.log 2>&1; then
+        chmod +x ~/.local/bin/obsidian.AppImage
+        
+        # Create wrapper script
+        cat > ~/.local/bin/obsidian << 'EOF'
+#!/bin/bash
+exec ~/.local/bin/obsidian.AppImage "$@"
+EOF
+        chmod +x ~/.local/bin/obsidian
+        
+        # Create desktop entry
+        mkdir -p ~/.local/share/applications
+        cat > ~/.local/share/applications/obsidian.desktop << 'EOF'
+[Desktop Entry]
+Name=Obsidian
+Exec=/home/$USER/.local/bin/obsidian
+Icon=obsidian
+Type=Application
+Categories=Office;
+EOF
+        
+        track_installed "Obsidian (AppImage)"
+    else
+        track_failed "Obsidian" "installation failed"
+    fi
+}
+
 install_1password() {
     if command_exists 1password; then
         track_skipped "1Password"
@@ -517,8 +745,33 @@ uninstall_tmux() {
 }
 
 uninstall_neovim() {
-    if command_exists nvim; then
+    local uninstalled=false
+    
+    # Check for AppImage version
+    if [ -f ~/.local/bin/nvim.appimage ]; then
+        rm -f ~/.local/bin/nvim.appimage
+        rm -f ~/.local/bin/nvim
+        log_info "Removed Neovim AppImage"
+        uninstalled=true
+    fi
+    
+    # Check if installed via snap
+    if snap list 2>/dev/null | grep -q "nvim"; then
+        sudo snap remove nvim >> /tmp/app_install.log 2>&1
+        log_info "Removed Neovim snap"
+        uninstalled=true
+    fi
+    
+    # Check if installed via apt
+    if command_exists nvim && ! [ -f ~/.local/bin/nvim.appimage ]; then
         sudo apt-get remove -y neovim >> /tmp/app_install.log 2>&1
+        # Remove PPA if it was added
+        sudo add-apt-repository -y --remove ppa:neovim-ppa/unstable >> /tmp/app_install.log 2>&1 || true
+        log_info "Removed Neovim apt package"
+        uninstalled=true
+    fi
+    
+    if [ "$uninstalled" = true ]; then
         track_uninstalled "Neovim"
     fi
 }
@@ -550,6 +803,13 @@ uninstall_cursor() {
     fi
 }
 
+uninstall_antigravity() {
+    if dpkg -l | grep -q antigravity; then
+        sudo apt-get remove -y antigravity >> /tmp/app_install.log 2>&1
+        track_uninstalled "Antigravity"
+    fi
+}
+
 uninstall_claude_desktop() {
     if snap list 2>/dev/null | grep -q "claudeai-desktop"; then
         sudo snap remove claudeai-desktop >> /tmp/app_install.log 2>&1
@@ -568,6 +828,30 @@ uninstall_docker_desktop() {
     if dpkg -l | grep -q docker-desktop; then
         sudo apt-get remove -y docker-desktop >> /tmp/app_install.log 2>&1
         track_uninstalled "Docker Desktop"
+    fi
+}
+
+uninstall_obsidian() {
+    local uninstalled=false
+    
+    # Check for snap version
+    if snap list 2>/dev/null | grep -q "obsidian"; then
+        sudo snap remove obsidian >> /tmp/app_install.log 2>&1
+        log_info "Removed Obsidian snap"
+        uninstalled=true
+    fi
+    
+    # Check for AppImage version
+    if [ -f ~/.local/bin/obsidian.AppImage ]; then
+        rm -f ~/.local/bin/obsidian.AppImage
+        rm -f ~/.local/bin/obsidian
+        rm -f ~/.local/share/applications/obsidian.desktop
+        log_info "Removed Obsidian AppImage"
+        uninstalled=true
+    fi
+    
+    if [ "$uninstalled" = true ]; then
+        track_uninstalled "Obsidian"
     fi
 }
 
