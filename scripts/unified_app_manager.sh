@@ -119,6 +119,24 @@ EOF
         log_warning "⚠️  ${#FAILED_APPS[@]} application(s) failed"
     fi
     
+    # Show helpful tips
+    echo
+    log_heredoc "${CYAN}" <<EOF
+💡 Helpful Tips:
+
+Manage mise tools:
+  • View installed: mise list
+  • Add a tool: mise use -g <tool>@latest
+  • Remove a tool: Remove from ~/.config/mise/mise.toml, then: mise uninstall <tool>
+  • Update all: mise upgrade
+
+Re-run this manager:
+  ./scripts/unified_app_manager.sh
+
+View detailed logs:
+  cat /tmp/app_install.log
+EOF
+    
     echo
 }
 
@@ -137,7 +155,31 @@ select_applications() {
         previous=$(cat ~/.config/dotfiles/app-selections)
     fi
     
-    # Show warning if re-running
+    # Show information banner
+    whiptail --title "ℹ️  Application Manager" --msgbox \
+"Welcome to the Unified Application Manager!
+
+📦 MISE TOOLS:
+   If you select 'mise', the script will automatically run
+   'mise install' to install ALL tools from your mise.toml:
+   
+   • AWS/Terraform tools
+   • Languages (Node, Python, Go, Rust)
+   • CLI tools (ripgrep, fd, fzf, bat, eza, jq, yq)
+   • Git tools (lazygit, delta, gh)
+   • AI tools (claude, gemini, aider, opencode)
+   • And more...
+
+   To remove a tool later:
+   1. Remove it from ~/.config/mise/mise.toml
+   2. Run: mise uninstall <tool-name>
+
+⚠️  UNINSTALL WARNING:
+   Unchecking an installed app will UNINSTALL it!
+
+Press OK to continue to app selection..." 25 75
+    
+    # Show re-run warning if applicable
     if [ -n "$previous" ]; then
         whiptail --title "⚠️  IMPORTANT WARNING" --msgbox \
 "You have previously installed applications.
@@ -153,17 +195,12 @@ Press OK to continue..." 12 60
     local selections=$(whiptail --title "Application Manager" --checklist \
 "Select applications to install (Space=select, Enter=confirm)
 
-System Tools:" 30 78 22 \
+System Tools:" 30 78 20 \
 "zsh" "Zsh shell" ON \
 "tmux" "Terminal multiplexer" ON \
 "neovim" "Text editor" ON \
 "" "" OFF \
-"mise" "Runtime manager (required for CLI tools)" ON \
-"cli_core" "Core CLI tools (ripgrep, fd, fzf, bat, eza)" ON \
-"" "" OFF \
-"ollama" "Ollama - Local LLM (CLI)" OFF \
-"claude_code" "Claude Code - AI assistant (CLI)" OFF \
-"opencode" "OpenCode - AI IDE (CLI)" OFF \
+"mise" "mise - Runtime manager (installs CLI tools from mise.toml)" ON \
 "" "" OFF \
 "ghostty" "Ghostty terminal" ON \
 "cursor" "Cursor AI IDE" ON \
@@ -260,73 +297,62 @@ install_mise() {
     log_info "Installing mise..."
     if curl https://mise.run | sh >> /tmp/app_install.log 2>&1; then
         export PATH="$HOME/.local/bin:$PATH"
-        track_installed "mise"
+        
+        log_success "✅ mise installed"
+        
+        # Install tools from mise.toml if it exists
+        if [ -f ~/.config/mise/mise.toml ]; then
+            echo
+            log_heredoc "${CYAN}" <<EOF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📦 Installing Tools from mise.toml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This will install ALL tools configured in:
+  ~/.config/mise/mise.toml
+
+Including:
+  • AWS/Terraform tools (aws-cli, terraform, etc.)
+  • Languages (node, python, go, rust)
+  • CLI tools (ripgrep, fd, fzf, bat, eza, jq, yq)
+  • Git tools (lazygit, delta, gh)
+  • AI tools (claude, gemini, aider, opencode)
+  • And more...
+
+⏱️  This may take 5-10 minutes depending on your system.
+
+💡 TIP: To manage tools later:
+   • View installed: mise list
+   • Add a tool: mise use -g <tool>@latest
+   • Remove a tool: 
+     1. Delete from ~/.config/mise/mise.toml
+     2. Run: mise uninstall <tool>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EOF
+            echo
+            log_info "Installing tools (this may take a while)..."
+            
+            if mise install >> /tmp/app_install.log 2>&1; then
+                echo
+                log_success "✅ Tools installed from mise.toml"
+                echo
+                log_info "Installed tools:"
+                mise list
+                echo
+            else
+                log_warning "Some tools failed to install from mise.toml"
+                log_info "Check /tmp/app_install.log for details"
+                log_info "You can retry with: mise install"
+            fi
+        else
+            log_info "No mise.toml found - tools will be available after stowing dotfiles"
+            log_info "After stowing, run: mise install"
+        fi
+        
+        track_installed "mise + CLI tools from mise.toml"
     else
         track_failed "mise" "install script failed"
-    fi
-}
-
-install_cli_core() {
-    if ! command_exists mise; then
-        track_failed "Core CLI tools" "mise not installed"
-        return 1
-    fi
-    
-    export PATH="$HOME/.local/bin:$PATH"
-    
-    local tools=("ripgrep" "fd" "fzf" "bat" "eza")
-    local all_installed=true
-    
-    for tool in "${tools[@]}"; do
-        log_info "Installing $tool..."
-        if ! mise use -g "$tool@latest" >> /tmp/app_install.log 2>&1; then
-            all_installed=false
-        fi
-    done
-    
-    if [ "$all_installed" = true ]; then
-        track_installed "Core CLI tools (ripgrep, fd, fzf, bat, eza)"
-    else
-        track_failed "Core CLI tools" "some tools failed to install"
-    fi
-}
-
-install_ollama() {
-    if command_exists ollama; then
-        track_skipped "Ollama"
-        return 0
-    fi
-    
-    if curl -fsSL https://ollama.com/install.sh | sh >> /tmp/app_install.log 2>&1; then
-        track_installed "Ollama"
-    else
-        track_failed "Ollama" "install script failed"
-    fi
-}
-
-install_claude_code() {
-    if command_exists claude-code; then
-        track_skipped "Claude Code"
-        return 0
-    fi
-    
-    if npm install -g @anthropic-ai/claude-code >> /tmp/app_install.log 2>&1; then
-        track_installed "Claude Code"
-    else
-        track_failed "Claude Code" "npm install failed"
-    fi
-}
-
-install_opencode() {
-    if ! command_exists mise; then
-        track_failed "OpenCode" "mise not installed"
-        return 1
-    fi
-    
-    if mise use -g "npm:@opencode/cli@latest" >> /tmp/app_install.log 2>&1; then
-        track_installed "OpenCode"
-    else
-        track_failed "OpenCode" "mise install failed"
     fi
 }
 
@@ -516,36 +542,17 @@ uninstall_neovim() {
     fi
 }
 
-uninstall_cli_core() {
+uninstall_mise() {
     if command_exists mise; then
-        for tool in ripgrep fd fzf bat eza; do
-            mise uninstall "$tool" >> /tmp/app_install.log 2>&1 || true
-        done
-        track_uninstalled "Core CLI tools"
+        log_warning "Removing mise will remove ALL tools installed via mise"
+        # User should manually uninstall if needed
+        track_uninstalled "mise (manual cleanup recommended)"
     fi
 }
 
-uninstall_ollama() {
-    if command_exists ollama; then
-        # Ollama uninstall varies by system, basic removal
-        sudo rm -f /usr/local/bin/ollama >> /tmp/app_install.log 2>&1
-        track_uninstalled "Ollama"
-    fi
-}
-
-uninstall_claude_code() {
-    if command_exists claude-code; then
-        npm uninstall -g @anthropic-ai/claude-code >> /tmp/app_install.log 2>&1
-        track_uninstalled "Claude Code"
-    fi
-}
-
-uninstall_opencode() {
-    if command_exists mise && mise list | grep -q opencode; then
-        mise uninstall npm:@opencode/cli >> /tmp/app_install.log 2>&1
-        track_uninstalled "OpenCode"
-    fi
-}
+################################################################################
+# GUI App Uninstall Functions
+################################################################################
 
 uninstall_ghostty() {
     if command_exists ghostty; then
