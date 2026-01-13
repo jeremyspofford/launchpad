@@ -37,7 +37,8 @@ track_skipped() {
 
 track_uninstalled() {
     UNINSTALLED_APPS+=("$1")
-    log_info "🗑️  Uninstalled"
+    # Output to stderr to avoid contaminating function return values
+    log_info "🗑️  Uninstalled" >&2
 }
 
 ################################################################################
@@ -137,6 +138,73 @@ View detailed logs:
   cat /tmp/app_install.log
 EOF
     
+    # Open terminal font guide if mdview is installed
+    if command_exists mdview; then
+        # Check if neovim or fonts were installed/relevant
+        local should_show_guide=false
+        
+        # Check if neovim was newly installed
+        for app in "${INSTALLED_APPS[@]}"; do
+            if [[ "$app" == *"Neovim"* ]] || [[ "$app" == *"Font"* ]]; then
+                should_show_guide=true
+                break
+            fi
+        done
+        
+        # Also show if neovim exists and mdview was just installed
+        if command_exists nvim; then
+            for app in "${INSTALLED_APPS[@]}"; do
+                if [[ "$app" == *"mdview"* ]]; then
+                    should_show_guide=true
+                    break
+                fi
+            done
+        fi
+        
+        if [ "$should_show_guide" = true ]; then
+            echo
+            log_heredoc "${CYAN}" <<EOF
+📖 Opening Terminal Font Setup Guide in Browser...
+EOF
+            # Find the TERMINAL_FONT_SETUP.md file
+            local font_guide=""
+            if [ -f "$SCRIPT_DIR/../docs/TERMINAL_FONT_SETUP.md" ]; then
+                font_guide="$SCRIPT_DIR/../docs/TERMINAL_FONT_SETUP.md"
+            elif [ -f "$SCRIPT_DIR/../TERMINAL_FONT_SETUP.md" ]; then
+                font_guide="$SCRIPT_DIR/../TERMINAL_FONT_SETUP.md"
+            elif [ -f "$(dirname "$SCRIPT_DIR")/docs/TERMINAL_FONT_SETUP.md" ]; then
+                font_guide="$(dirname "$SCRIPT_DIR")/docs/TERMINAL_FONT_SETUP.md"
+            fi
+            
+            if [ -n "$font_guide" ] && [ -f "$font_guide" ]; then
+                log_info "Starting mdview server..."
+                
+                # mdview might need the directory, not the file
+                local guide_dir=$(dirname "$font_guide")
+                
+                # Start mdview pointing to the directory
+                (cd "$guide_dir" && mdview . --port 8765) > /dev/null 2>&1 &
+                local mdview_pid=$!
+                sleep 2
+                
+                # Try to open browser to the specific file
+                local guide_file=$(basename "$font_guide")
+                if command -v xdg-open > /dev/null; then
+                    xdg-open "http://localhost:8765/${guide_file}" > /dev/null 2>&1
+                elif command -v open > /dev/null; then
+                    open "http://localhost:8765/${guide_file}" > /dev/null 2>&1
+                fi
+                
+                log_success "✅ Font setup guide opened at http://localhost:8765/${guide_file}"
+                log_info "Follow the instructions to set your terminal font to 'JetBrainsMono Nerd Font Mono'"
+                log_info "Press Ctrl+C in this terminal to stop the mdview server when done"
+            else
+                log_warning "Font guide not found (looked in: $SCRIPT_DIR/../docs/, $SCRIPT_DIR/../)"
+                log_info "Manually set your terminal font to: JetBrainsMono Nerd Font Mono"
+            fi
+        fi
+    fi
+    
     echo
 }
 
@@ -156,6 +224,7 @@ select_applications() {
     local tmux_status="OFF"
     local neovim_status="OFF"
     local mise_status="OFF"
+    local mdview_status="OFF"
     local ghostty_status="OFF"
     local cursor_status="OFF"
     local antigravity_status="OFF"
@@ -174,6 +243,7 @@ select_applications() {
     command_exists tmux && tmux_status="ON"
     command_exists nvim && neovim_status="ON"
     command_exists mise && mise_status="ON"
+    command_exists mdview && mdview_status="ON"
     command_exists ghostty && ghostty_status="ON"
     [ -f ~/.local/bin/cursor.AppImage ] && cursor_status="ON"
     (dpkg -l 2>/dev/null | grep -q antigravity) && antigravity_status="ON"
@@ -210,11 +280,12 @@ Press OK to continue..." 13 60 3>&1 1>&2 2>&3 || {
 
 ⚠️  WARNING: Unchecking installed apps will UNINSTALL them!
 
-System Tools:" 28 78 18 \
+System Tools:" 28 78 19 \
 "zsh" "Zsh shell" "$zsh_status" \
 "tmux" "Terminal multiplexer" "$tmux_status" \
 "neovim" "Text editor" "$neovim_status" \
 "mise" "mise (installs ALL tools from mise.toml)" "$mise_status" \
+"mdview" "Markdown viewer (renders .md in browser)" "$mdview_status" \
 "ghostty" "Ghostty terminal" "$ghostty_status" \
 "cursor" "Cursor AI IDE" "$cursor_status" \
 "antigravity" "Antigravity IDE (Google)" "$antigravity_status" \
@@ -248,10 +319,12 @@ System Tools:" 28 78 18 \
             if [ -z "$prev_app" ]; then continue; fi
             
             if ! echo "$selections" | grep -q "$prev_app"; then
-                # Redirect to stderr so it doesn't get captured in return value
-                log_section "Uninstalling $(echo $prev_app | tr '_' ' ' | sed 's/\b\(.\)/\u\1/g')" >&2
-                uninstall_"$prev_app" 2>/dev/null || log_warning "No uninstall function" >&2
-                echo >&2
+                # Redirect ALL output to stderr so nothing contaminates the return value
+                {
+                    log_section "Uninstalling $(echo $prev_app | tr '_' ' ' | sed 's/\b\(.\)/\u\1/g')"
+                    uninstall_"$prev_app" 2>&1 || log_warning "No uninstall function"
+                    echo
+                } >&2
             fi
         done
     fi
@@ -486,6 +559,28 @@ EOF
         track_installed "mise + CLI tools from mise.toml"
     else
         track_failed "mise" "install script failed"
+    fi
+}
+
+install_mdview() {
+    if command_exists mdview; then
+        track_skipped "mdview"
+        return 0
+    fi
+    
+    # Check if npm is available (either system or via mise)
+    if ! command_exists npm; then
+        log_warning "npm not found - install mise first or Node.js"
+        track_failed "mdview" "npm not available"
+        return 1
+    fi
+    
+    log_info "Installing mdview..."
+    if npm install -g mdview >> /tmp/app_install.log 2>&1; then
+        log_success "✅ mdview installed"
+        track_installed "mdview"
+    else
+        track_failed "mdview" "npm install failed"
     fi
 }
 
@@ -781,6 +876,13 @@ uninstall_mise() {
         log_warning "Removing mise will remove ALL tools installed via mise"
         # User should manually uninstall if needed
         track_uninstalled "mise (manual cleanup recommended)"
+    fi
+}
+
+uninstall_mdview() {
+    if command_exists mdview; then
+        npm uninstall -g mdview >> /tmp/app_install.log 2>&1
+        track_uninstalled "mdview"
     fi
 }
 
