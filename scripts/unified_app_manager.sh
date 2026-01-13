@@ -119,6 +119,24 @@ EOF
         log_warning "⚠️  ${#FAILED_APPS[@]} application(s) failed"
     fi
     
+    # Show helpful tips
+    echo
+    log_heredoc "${CYAN}" <<EOF
+💡 Helpful Tips:
+
+Manage mise tools:
+  • View installed: mise list
+  • Add a tool: mise use -g <tool>@latest
+  • Remove a tool: Remove from ~/.config/mise/mise.toml, then: mise uninstall <tool>
+  • Update all: mise upgrade
+
+Re-run this manager:
+  ./scripts/unified_app_manager.sh
+
+View detailed logs:
+  cat /tmp/app_install.log
+EOF
+    
     echo
 }
 
@@ -127,45 +145,43 @@ EOF
 ################################################################################
 
 select_applications() {
-    if ! command_exists whiptail; then
-        sudo apt-get install -y whiptail >> /tmp/app_install.log 2>&1
-    fi
-    
     # Load previous selections
     local previous=""
     if [ -f ~/.config/dotfiles/app-selections ]; then
         previous=$(cat ~/.config/dotfiles/app-selections)
     fi
     
-    # Show warning if re-running
+    # Show re-run warning if applicable (but skip welcome banner to avoid hang)
     if [ -n "$previous" ]; then
-        whiptail --title "⚠️  IMPORTANT WARNING" --msgbox \
+        whiptail --title "⚠️  UNINSTALL WARNING" --msgbox \
 "You have previously installed applications.
 
 ⚠️  UNCHECKING = UNINSTALL
 
 Unchecked applications will be REMOVED from your system.
 
-Press OK to continue..." 12 60
+Press OK to continue..." 11 60 3>&1 1>&2 2>&3 || {
+            log_error "Selection cancelled"
+            exit 1
+        }
     fi
     
     # Unified selection menu
     local selections=$(whiptail --title "Application Manager" --checklist \
-"Select applications to install (Space=select, Enter=confirm)
+"Select applications (Space=select, Enter=confirm)
 
-System Tools:" 30 78 20 \
+⚠️  WARNING: Unchecking installed apps will UNINSTALL them!
+
+System Tools:" 28 78 16 \
 "zsh" "Zsh shell" ON \
 "tmux" "Terminal multiplexer" ON \
 "neovim" "Text editor" ON \
-"" "" OFF \
-"mise" "mise - Runtime manager (installs CLI tools from mise.toml)" ON \
-"" "" OFF \
+"mise" "mise (installs ALL tools from mise.toml)" ON \
 "ghostty" "Ghostty terminal" ON \
 "cursor" "Cursor AI IDE" ON \
 "claude_desktop" "Claude Desktop" ON \
 "chrome" "Google Chrome" ON \
 "docker_desktop" "Docker Desktop" ON \
-"" "" OFF \
 "vscode" "VS Code" OFF \
 "brave" "Brave browser" OFF \
 "notion" "Notion" OFF \
@@ -173,9 +189,16 @@ System Tools:" 30 78 20 \
 "orca_slicer" "Orca Slicer" OFF \
 3>&1 1>&2 2>&3)
     
+    # Check if user cancelled
     if [ $? -ne 0 ]; then
-        log_error "Selection cancelled"
+        log_error "Selection cancelled by user"
         exit 1
+    fi
+    
+    # Check if we got selections
+    if [ -z "$selections" ]; then
+        log_warning "No applications selected"
+        exit 0
     fi
     
     # Handle uninstalls
@@ -260,19 +283,52 @@ install_mise() {
         
         # Install tools from mise.toml if it exists
         if [ -f ~/.config/mise/mise.toml ]; then
-            log_info "Installing tools from mise.toml..."
-            log_warning "This may take a few minutes..."
+            echo
+            log_heredoc "${CYAN}" <<EOF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📦 Installing Tools from mise.toml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This will install ALL tools configured in:
+  ~/.config/mise/mise.toml
+
+Including:
+  • AWS/Terraform tools (aws-cli, terraform, etc.)
+  • Languages (node, python, go, rust)
+  • CLI tools (ripgrep, fd, fzf, bat, eza, jq, yq)
+  • Git tools (lazygit, delta, gh)
+  • AI tools (claude, gemini, aider, opencode)
+  • And more...
+
+⏱️  This may take 5-10 minutes depending on your system.
+
+💡 TIP: To manage tools later:
+   • View installed: mise list
+   • Add a tool: mise use -g <tool>@latest
+   • Remove a tool: 
+     1. Delete from ~/.config/mise/mise.toml
+     2. Run: mise uninstall <tool>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EOF
+            echo
+            log_info "Installing tools (this may take a while)..."
             
             if mise install >> /tmp/app_install.log 2>&1; then
+                echo
                 log_success "✅ Tools installed from mise.toml"
+                echo
                 log_info "Installed tools:"
                 mise list
+                echo
             else
                 log_warning "Some tools failed to install from mise.toml"
                 log_info "Check /tmp/app_install.log for details"
+                log_info "You can retry with: mise install"
             fi
         else
             log_info "No mise.toml found - tools will be available after stowing dotfiles"
+            log_info "After stowing, run: mise install"
         fi
         
         track_installed "mise + CLI tools from mise.toml"
@@ -526,8 +582,30 @@ main() {
     log_info "Installation log: /tmp/app_install.log"
     echo
     
+    # Debug: Log start
+    echo "DEBUG: Starting unified app manager" >> /tmp/app_install.log
+    
+    # Ensure whiptail is available
+    if ! command_exists whiptail; then
+        log_info "Installing whiptail for interactive menu..."
+        sudo apt-get update >> /tmp/app_install.log 2>&1
+        sudo apt-get install -y whiptail >> /tmp/app_install.log 2>&1
+        
+        if ! command_exists whiptail; then
+            log_error "Failed to install whiptail - cannot show interactive menu"
+            log_info "Please install whiptail manually: sudo apt-get install whiptail"
+            exit 1
+        fi
+    fi
+    
+    echo "DEBUG: whiptail is available" >> /tmp/app_install.log
+    echo "DEBUG: About to call select_applications" >> /tmp/app_install.log
+    
     # Show unified selection menu
     selections=$(select_applications)
+    
+    echo "DEBUG: Returned from select_applications" >> /tmp/app_install.log
+    echo "DEBUG: Selections = $selections" >> /tmp/app_install.log
     
     # Install selected applications
     for app in $selections; do
