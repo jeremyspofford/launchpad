@@ -62,6 +62,9 @@ dotfiles/
 |------|---------|
 | `scripts/setup.sh` | Single entry point for installation |
 | `scripts/unified_app_manager.sh` | Interactive app installer (replaces old install_gui_apps.sh) |
+| `.config.template` | User configuration template |
+| `.config` | User's personal config (not tracked, created from template) |
+| `scripts/lib/config.sh` | Configuration management functions |
 | `home/.config/mise/mise.toml` | Runtime versions (27+ tools including Claude, Gemini) |
 | `home/.secrets.template` | 1Password secrets template |
 | `home/.config/git/identity.gitconfig.template` | Git identity (not tracked) |
@@ -70,12 +73,28 @@ dotfiles/
 ## Development Commands
 
 ```bash
-./scripts/setup.sh                  # Full setup
+./scripts/setup.sh                  # Full setup (prompts for config)
 ./scripts/setup.sh --update         # Re-stow dotfiles only
 ./scripts/setup.sh --revert         # Restore from backups
 ./scripts/unified_app_manager.sh    # Run app installer standalone
 stow --restow home                  # Re-symlink after changes
 ```
+
+## Configuration System
+
+Users configure personal settings via `.config` file:
+
+1. **First run**: Setup script prompts for essential settings (name, email, editor)
+2. **Template**: `.config.template` contains all available options with defaults
+3. **Personal config**: `.config` (git-ignored) stores user's actual values
+4. **Application**: Scripts use values from `.config` to configure git, generate SSH keys, etc.
+
+**Key features:**
+- Interactive prompts for first-time setup
+- Non-interactive mode supported (uses defaults)
+- Git config automatically applied
+- SSH key generation optional
+- All preferences documented in template
 
 ## Application Management
 

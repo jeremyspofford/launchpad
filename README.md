@@ -7,8 +7,9 @@ Cross-platform dotfiles for macOS, Linux, and WSL. Clone, run one command, start
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/jeremyspofford/dotfiles/main/scripts/bootstrap.sh)
 ./scripts/setup.sh
-
 ```
+
+**First-time setup**: The script will prompt you for essential configuration (name, email, preferences). You can skip and edit `.config` manually later.
 
 ## ✨ What's Included
 
@@ -109,8 +110,9 @@ git pull
 
 ```bash
 ./scripts/setup.sh          # Full setup
-./scripts/setup.sh --stow   # Only symlink dotfiles
-./scripts/setup.sh --help   # Show help
+./scripts/setup.sh --update # Re-stow after git pull
+./scripts/setup.sh --revert # Restore from backups
+./scripts/setup.sh --help   # Show all options
 ```
 
 ## 🌐 Platform Support

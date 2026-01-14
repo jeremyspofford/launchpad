@@ -1,0 +1,147 @@
+# Dotfiles Configuration Template
+# Copy this file to .config and customize with your personal settings
+# The setup script will use these values to configure your environment
+
+# ============================================================================ #
+# Git Configuration
+# ============================================================================ #
+
+# Your full name for git commits
+GIT_USER_NAME="Your Name"
+
+# Your email for git commits
+# Use GitHub's noreply email if you want privacy: USERNAME@users.noreply.github.com
+GIT_USER_EMAIL="your.email@example.com"
+
+# Git commit signing (optional)
+# Options: "gpg", "ssh", "none"
+GIT_SIGNING="none"
+
+# GPG key ID (if using GPG signing)
+GIT_GPG_KEY=""
+
+# SSH key path (if using SSH signing)
+# Example: ~/.ssh/id_ed25519.pub
+GIT_SSH_KEY=""
+
+# ============================================================================ #
+# SSH Configuration
+# ============================================================================ #
+
+# Preferred SSH key type for new keys
+# Options: "ed25519" (recommended), "rsa"
+SSH_KEY_TYPE="ed25519"
+
+# Generate SSH key during setup?
+# Options: "true", "false"
+SSH_GENERATE_KEY="false"
+
+# SSH key comment (usually your email)
+SSH_KEY_COMMENT="${GIT_USER_EMAIL}"
+
+# ============================================================================ #
+# Shell Configuration
+# ============================================================================ #
+
+# Default shell
+# Options: "zsh" (recommended), "bash"
+DEFAULT_SHELL="zsh"
+
+# Oh My Zsh theme
+# Options: "robbyrussell", "agnoster", "powerlevel10k", etc.
+ZSH_THEME="robbyrussell"
+
+# ============================================================================ #
+# Terminal Configuration
+# ============================================================================ #
+
+# Preferred terminal emulator
+# Options: "ghostty", "alacritty", "wezterm", "kitty"
+PREFERRED_TERMINAL="ghostty"
+
+# Terminal font
+TERMINAL_FONT="JetBrainsMono Nerd Font Mono"
+
+# Terminal font size
+TERMINAL_FONT_SIZE="12"
+
+# Color scheme
+# Options: "catppuccin-mocha", "catppuccin-latte", "dracula", "nord"
+COLOR_SCHEME="catppuccin-mocha"
+
+# ============================================================================ #
+# Development Tools
+# ============================================================================ #
+
+# Preferred code editor
+# Options: "nvim", "cursor", "vscode", "vim"
+PREFERRED_EDITOR="nvim"
+
+# Node.js version (for mise)
+NODE_VERSION="24.10.0"
+
+# Python version (for mise)
+PYTHON_VERSION="3.12.11"
+
+# Go version (for mise)
+GO_VERSION="latest"
+
+# ============================================================================ #
+# Cloud & Infrastructure (Optional)
+# ============================================================================ #
+
+# Default AWS region
+AWS_DEFAULT_REGION="us-east-1"
+
+# Default timezone
+TIMEZONE="America/New_York"
+
+# ============================================================================ #
+# Application Preferences
+# ============================================================================ #
+
+# Browser preference
+# Options: "chrome", "brave", "firefox"
+PREFERRED_BROWSER="chrome"
+
+# Install Docker?
+# Options: "true", "false"
+# Note: Installs via mise, not Docker Desktop
+INSTALL_DOCKER="false"
+
+# Install Obsidian?
+INSTALL_OBSIDIAN="false"
+
+# Install 1Password?
+INSTALL_1PASSWORD="true"
+
+# ============================================================================ #
+# Privacy & Security
+# ============================================================================ #
+
+# Use GitHub noreply email?
+# If true, uses USERNAME@users.noreply.github.com
+USE_GITHUB_NOREPLY="true"
+
+# Enable git commit signing by default?
+ENABLE_GIT_SIGNING="false"
+
+# Store secrets in 1Password?
+# Requires 1Password CLI
+USE_1PASSWORD_SECRETS="true"
+
+# ============================================================================ #
+# System Preferences
+# ============================================================================ #
+
+# Create system backup before setup?
+CREATE_BACKUP="true"
+
+# Skip system package updates?
+SKIP_SYSTEM_UPDATES="false"
+
+# Install in minimal mode (dotfiles only)?
+MINIMAL_MODE="false"
+
+# Run in non-interactive mode?
+NON_INTERACTIVE="false"

@@ -64,11 +64,12 @@ RESTORE_DIR="$HOME/.system-snapshots"
 PACKAGE_MANIFEST="$RESTORE_DIR/packages-$BACKUP_TIMESTAMP.txt"
 
 ################################################################################
-# Load logger functions
+# Load logger and configuration functions
 ################################################################################
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/logger.sh"
+source "$SCRIPT_DIR/lib/config.sh"
 
 ################################################################################
 # Installation Tracking
@@ -1233,7 +1234,7 @@ stow_dotfiles() {
 
 create_template_files() {
     log_section "Creating Template Files"
-    
+
     # Create .secrets if it doesn't exist
     if [ ! -f "$HOME/.secrets" ]; then
         if [ -f "$HOME/.secrets.template" ]; then
@@ -1242,16 +1243,28 @@ create_template_files() {
             log_warning "Remember to fill in your actual secrets!"
         fi
     fi
-    
+
     # Create Git identity config if it doesn't exist
+    # Use values from .config if available
     if [ ! -f "$HOME/.config/git/identity.gitconfig" ]; then
         if [ -f "$HOME/.config/git/identity.gitconfig.template" ]; then
             cp "$HOME/.config/git/identity.gitconfig.template" "$HOME/.config/git/identity.gitconfig"
+
+            # Populate with values from .config if they exist
+            if load_config 2>/dev/null; then
+                if [ -n "$GIT_USER_NAME" ] && [ "$GIT_USER_NAME" != "Your Name" ]; then
+                    sed -i "s/Your Name/$GIT_USER_NAME/" "$HOME/.config/git/identity.gitconfig"
+                fi
+                if [ -n "$GIT_USER_EMAIL" ] && [ "$GIT_USER_EMAIL" != "your.email@example.com" ]; then
+                    sed -i "s/your.email@example.com/$GIT_USER_EMAIL/" "$HOME/.config/git/identity.gitconfig"
+                fi
+            fi
+
             log_success "✅ Created Git identity config from template"
             log_warning "Remember to configure your Git identity!"
         fi
     fi
-    
+
     # Don't overwrite mise.toml if user already has one configured
     if [ ! -f "$HOME/.config/mise/mise.toml" ] && [ ! -f "$HOME/mise.toml" ]; then
         if [ -f "$HOME/.config/mise/mise.toml.template" ] || [ -L "$HOME/.config/mise/mise.toml.template" ]; then
@@ -1262,7 +1275,7 @@ create_template_files() {
     else
         log_info "mise config already exists, skipping template"
     fi
-    
+
     echo
 }
 
@@ -1318,25 +1331,34 @@ EOF
 
 main() {
     parse_args "$@"
-    
+
     # Load saved preferences
     load_tool_preferences
-    
+
     # Handle special modes
     if [ "$LIST_BACKUPS" = true ]; then
         list_backups
         exit 0
     fi
-    
+
     if [ "$REVERT" = true ]; then
         revert_dotfiles
         exit 0
     fi
-    
+
     # Normal setup flow
     log_section "Dotfiles Setup"
     log_kv "Platform" "$(detect_platform)"
     log_kv "Dotfiles" "$DOTFILES_DIR"
+    echo
+
+    # Configuration setup (first-time or if missing)
+    if [ ! -f "$CONFIG_FILE" ]; then
+        prompt_for_config
+    else
+        load_config
+        log_info "Using existing configuration: $CONFIG_FILE"
+    fi
     echo
     
     if [ "$UPDATE_ONLY" = false ]; then
@@ -1420,11 +1442,26 @@ main() {
     else
         track_failed "Template files" "creation failed"
     fi
-    
+
+    # Apply git configuration from .config file
+    if apply_git_config; then
+        track_completed "Git configuration applied"
+    else
+        track_skipped "Git configuration (no config file)"
+    fi
+
+    # Setup SSH key if requested
+    if setup_ssh_key; then
+        track_completed "SSH key setup"
+    fi
+
     # Show restore point info before dashboard
     if [ "$UPDATE_ONLY" = false ]; then
         show_restore_info
     fi
+
+    # Show configuration summary
+    show_config_summary
     
     # Show setup dashboard
     show_setup_dashboard
