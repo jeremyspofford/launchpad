@@ -1226,9 +1226,9 @@ setup_zsh() {
 
 stow_dotfiles() {
     log_section "Installing Dotfiles"
-    
+
     cd "$DOTFILES_DIR"
-    
+
     # Remove backed-up files that would conflict with stow
     # (They're already backed up, safe to remove)
     if [ -f "$MANIFEST_FILE" ]; then
@@ -1240,11 +1240,37 @@ stow_dotfiles() {
             fi
         done < "$MANIFEST_FILE"
     fi
-    
+
+    # Remove broken symlinks and symlinks pointing to old dotfiles locations
+    log_info "Checking for broken or outdated symlinks..."
+    find "$HOME" -maxdepth 3 -type l ! -path "$HOME/.local/*" ! -path "$HOME/.cache/*" 2>/dev/null | while read -r symlink; do
+        # Check if symlink is broken
+        if [ ! -e "$symlink" ]; then
+            local target=$(readlink "$symlink")
+            # Only remove if it looks like it was from dotfiles (contains /dotfiles/)
+            if [[ "$target" == *"/dotfiles/"* ]]; then
+                rm "$symlink"
+                log_info "Removed broken symlink: ${symlink#$HOME/} -> $target"
+            fi
+        else
+            # Check if symlink points to wrong dotfiles directory
+            local target=$(readlink "$symlink")
+            if [[ "$target" == *"/dotfiles/"* ]] && [[ "$target" != "$DOTFILES_DIR"* ]]; then
+                rm "$symlink"
+                log_info "Removed outdated symlink: ${symlink#$HOME/} -> $target"
+            fi
+        fi
+    done
+
     log_info "Stowing dotfiles to $HOME..."
-    stow -v -d "$DOTFILES_DIR" -t "$HOME" home
-    
-    log_success "✅ Dotfiles symlinked successfully"
+    if stow -v -d "$DOTFILES_DIR" -t "$HOME" home 2>&1; then
+        log_success "✅ Dotfiles symlinked successfully"
+    else
+        log_error "Stow encountered errors. Some dotfiles may not be linked."
+        log_info "You may need to manually resolve conflicts or run: stow -D home && stow home"
+        return 1
+    fi
+
     echo
 }
 
