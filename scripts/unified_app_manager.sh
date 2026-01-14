@@ -852,11 +852,24 @@ install_orca_slicer() {
     fi
     
     mkdir -p ~/.local/bin
-    
-    log_info "Downloading Orca Slicer (large file, ~200MB)..."
-    # Use direct URL to latest Ubuntu AppImage
-    local url="https://github.com/SoftFever/OrcaSlicer/releases/latest/download/OrcaSlicer_Linux_Ubuntu.AppImage"
-    
+
+    log_info "Fetching latest Orca Slicer release info..."
+    # Get latest release URL from GitHub API (repo moved to OrcaSlicer org)
+    local url=$(curl -s https://api.github.com/repos/OrcaSlicer/OrcaSlicer/releases/latest 2>/dev/null | \
+        grep '"browser_download_url"' | \
+        grep -i "linux.*appimage.*ubuntu" | \
+        head -1 | \
+        cut -d '"' -f 4)
+
+    if [ -z "$url" ]; then
+        log_error "Could not fetch latest Orca Slicer download URL"
+        track_failed "Orca Slicer" "failed to fetch download URL from GitHub"
+        return
+    fi
+
+    log_info "Downloading Orca Slicer from: $url"
+    log_info "This is a large file (~200MB), please wait..."
+
     if curl -L "$url" -o ~/.local/bin/orca-slicer.AppImage 2>&1 | tee -a /tmp/app_install.log; then
         # Verify it downloaded something substantial (AppImage should be >100MB)
         local filesize=$(stat -c%s ~/.local/bin/orca-slicer.AppImage 2>/dev/null || echo "0")
