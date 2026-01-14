@@ -8,26 +8,32 @@
 # ============================================================================
 node = "24.10.0"      # Node.js (required for npm packages)
 python = "3.12.11"    # Python
-go = "latest"         # Go
-rust = "latest"       # Rust
+# go = "latest"         # Go
+# rust = "latest"       # Rust
 
 # ============================================================================
 # Cloud & Infrastructure
 # ============================================================================
 aws-cli = "2.32.3"
 aws-sam-cli = "1.150.1"
+# iam-policy-json-to-terraform = "latest"
+# gcloud = "latest"
+# jules = "latest"
 terraform = "1.14.0"
 terragrunt = "0.93.12"
 opentofu = "1.10.7"
 infracost = "latest"
 driftctl = "latest"
+# localstack = "latest"
 
 # ============================================================================
 # AI & Coding Assistants
 # ============================================================================
 claude = "latest"
 gemini = "latest"
+# codex = "latest"
 "pipx:aider-chat" = "latest"
+"npm:opencode-ai" = "latest"
 
 # ============================================================================
 # Git & Version Control
@@ -36,6 +42,9 @@ lazygit = "latest"
 delta = "latest"
 gh = "latest"         # GitHub CLI
 glab = "latest"       # GitLab CLI
+gitconfig = "latest"
+gh = "latest"
+# glab = "latest"
 
 # ============================================================================
 # Modern Unix Tools (CLI replacements)
@@ -56,18 +65,35 @@ shellcheck = "latest"
 shfmt = "latest"
 yamlfmt = "latest"
 yamllint = "latest"
-lefthook = "latest"
+# lefthook = "latest"
+tflint = "latest"
+# terraform-ls = "latest"
+
+# ============================================================================
+# Security
+# ============================================================================
+gitleaks = "latest"
+# terrascan = "latest"
+# tfsec = "latest"
+# checkov = "latest"
 
 # ============================================================================
 # Docker & Containers
 # ============================================================================
+docker-cli = "latest"
+docker-compose = "latest"
 lazydocker = "latest"
+# kubectl = "latest"
+# argocd = "latest"
+# podman = "latest"
 
 # ============================================================================
 # Package Managers
 # ============================================================================
 yarn = "latest"
 # npm comes with node, no need to install separately
+uv = "latest"
+pipx = "latest"
 
 # ============================================================================
 # Misc CLI Tools
@@ -75,6 +101,10 @@ yarn = "latest"
 tlrc = "latest"
 hcl2json = "latest"
 direnv = "latest"
+# lazyssh = "latest"
+# 1password = "latest"
+# bitwarden = "latest"
+# terraform-docs = "latest"
 
 # ============================================================================
 # Project-Specific npm Packages (requires node to be installed first)
@@ -107,5 +137,4 @@ legacy_version_file = true
 # - Run 'mise upgrade' to upgrade all tools
 # - Run 'mise list' to see installed versions
 # - Per-project: create .mise.toml or .tool-versions in project directory
-
 
