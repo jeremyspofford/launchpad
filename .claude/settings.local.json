@@ -23,7 +23,15 @@
       "Bash(nvim:*)",
       "WebFetch(domain:github.com)",
       "Bash(time zsh:*)",
-      "Bash(markdownlint-cli2:*)"
+      "Bash(markdownlint-cli2:*)",
+      "WebFetch(domain:claude.ai)",
+      "Bash(git config:*)",
+      "Bash(curl:*)",
+      "Bash(echo:*)",
+      "Bash(dpkg:*)",
+      "Bash(sudo apt:*)",
+      "Bash(mise registry:*)",
+      "Bash(mise ls-remote:*)"
     ],
     "deny": [],
     "ask": []
