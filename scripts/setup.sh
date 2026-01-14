@@ -399,6 +399,9 @@ backup_dotfiles() {
         "$HOME/.gitconfig"
         "$HOME/.config/nvim"
         "$HOME/.config/ghostty"
+        "$HOME/.config/Cursor/User/settings.json"
+        "$HOME/.config/Cursor/User/keybindings.json"
+        "$HOME/.config/Antigravity/User/settings.json"
     )
     
     local backed_up=false
