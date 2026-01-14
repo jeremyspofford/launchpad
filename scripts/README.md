@@ -4,9 +4,9 @@ Essential scripts for managing the dotfiles repository and system setup.
 
 ## Overview
 
-This directory contains automation scripts that handle installation, validation, synchronization, and maintenance of the dotfiles system.
+This directory contains automation scripts that handle installation, validation, and maintenance of the dotfiles system.
 
-## Scripts
+## Main Scripts
 
 ### `setup.sh` - Main Installation Script
 
@@ -18,26 +18,29 @@ The primary entry point for setting up the dotfiles system.
 ./scripts/setup.sh [OPTIONS]
 
 Options:
-  -h, --help              Show help message
-  -f, --force             Force all tasks to run
-  --minimal               Skip package installation
-  --update                Re-stow dotfiles only
-  --revert                Restore backups
-  --create-restore-point  Create system snapshot (Timeshift)
+  --help                  Show help message
+  --minimal               Install dotfiles only, skip package installation
+  --update                Re-stow dotfiles without reinstalling packages
+  --revert                Restore backed-up files and remove dotfile symlinks
+  --revert=BACKUP         Restore from specific backup
+  --list-backups          List available backups
+  --non-interactive       Skip interactive tool selection
+  --create-restore-point  Create Timeshift system snapshot before changes
+  --skip-restore-prompt   Don't prompt for restore point creation
 ```
 
 **What it does:**
 
-- Auto-detects operating system
-- Creates backups of existing configurations
-- Creates system restore points (optional Timeshift)
-- Delegates application installation to `unified_app_manager.sh`
-- Configures GNU Stow to symlink dotfiles
-- Provides setup summary and next steps
+1. Auto-detects operating system (macOS, Linux, WSL)
+2. Creates backups of existing configurations
+3. Optionally creates system restore points (Timeshift)
+4. Launches unified application manager for app selection
+5. Configures GNU Stow to symlink dotfiles
+6. Provides setup summary and next steps
 
 ### `unified_app_manager.sh` - Application Manager
 
-The core logic for installing, uninstalling, and managing applications.
+Interactive application installer with whiptail menu system.
 
 **Usage:**
 
@@ -46,16 +49,20 @@ The core logic for installing, uninstalling, and managing applications.
 ```
 
 **Features:**
-- Interactive menu (whiptail) for selecting applications
-- Handles installation of System Tools (Zsh, Tmux, Neovim)
-- Installs GUI Apps (Ghostty, Browsers, etc.)
-- Manages uninstallation of unchecked items
-- Robust detection of installed packages
-- Font setup guide integration
+- Interactive selection menu for all applications
+- Install/uninstall management
+- Tracks installation status
+- Supports:
+  - System tools (Zsh, Tmux, Neovim, mise)
+  - Terminal emulators (Ghostty)
+  - IDEs (Cursor, VS Code, Antigravity)
+  - Browsers (Chrome, Brave)
+  - Productivity apps (Obsidian, Notion, 1Password)
+  - Development tools (Orca Slicer, Claude Desktop)
 
 ### `validate-setup.sh` - System Validation
 
-Comprehensive validation script that verifies the dotfiles setup is working correctly.
+Comprehensive validation script that verifies the dotfiles setup.
 
 **Usage:**
 
@@ -63,75 +70,100 @@ Comprehensive validation script that verifies the dotfiles setup is working corr
 ./scripts/validate-setup.sh
 ```
 
-**Checks performed:**
+**Checks:**
+- Required tools are installed
+- Symlinks are properly created
+- Shell configuration loads correctly
+- Git configuration is valid
+- SSH keys are set up
+- Neovim configuration works
 
-- Verifies required tools are installed
-- Validates symlinks are properly created
-- Tests shell configuration loading
-- Validates Git configuration
-- Tests SSH key setup
-- Ensures Neovim configuration is working
+### `bootstrap.sh` - Quick Start
 
-### `sync.sh` - Dotfiles Synchronization
-
-Synchronizes dotfiles across machines and handles updates.
+Downloads and runs the dotfiles setup from GitHub.
 
 **Usage:**
 
 ```bash
-./scripts/sync.sh [OPTIONS]
+bash <(curl -fsSL https://raw.githubusercontent.com/jeremyspofford/dotfiles/main/scripts/bootstrap.sh)
 ```
 
-**What it does:**
+Clones the repository and initiates setup.
 
-- Pulls latest changes from Git repository
-- Re-runs stow operations to ensure symlinks are current
-- Updates package installations if needed
+## Docker Scripts
 
-### `utils.sh` - Shared Utilities
+### `remove-docker-desktop.sh`
 
-Common utility functions used by other scripts.
+Removes Docker Desktop and installs Docker Engine (native Linux approach).
 
-**Functions:**
+### `remove-docker-desktop-only.sh`
 
-- Logging and output formatting
-- Operating system detection
-- Error handling helpers
-- File and directory utilities
+Only removes Docker Desktop without installing anything.
 
-### `doc-update-hook.sh` - Documentation Hook
+### `uninstall-docker-engine.sh`
+
+Removes Docker Engine packages.
+
+## Utility Scripts
+
+### `sync-secrets.sh`
+
+Fetches secrets from 1Password and creates `~/.secrets` file.
+
+Requires 1Password CLI and proper vault setup.
+
+### `doc-update-hook.sh`
 
 Claude Code integration hook for automatic documentation updates.
 
-**Purpose:**
+### `lib/logger.sh`
 
-- Automatically triggered when code changes are detected
-- Updates relevant documentation to stay in sync with implementation
+Shared logging utilities used by all scripts.
 
 ## Platform Support
 
-Currently, the scripts are optimized for:
-- **Linux** (Debian/Ubuntu 22.04+) - Full application support
-- **macOS** - Basic dotfile linking (application support via Homebrew pending update)
-- **WSL2** - Fully supported
+- **Linux** (Ubuntu 22.04+) - Full support
+- **macOS** - Basic dotfile linking
+- **WSL2** - Full support
+
+## Directory Structure
+
+```
+scripts/
+├── README.md                     # This file
+├── setup.sh                      # Main entry point
+├── unified_app_manager.sh        # Application installer
+├── validate-setup.sh             # System validation
+├── bootstrap.sh                  # Quick start script
+├── sync-secrets.sh               # 1Password integration
+├── doc-update-hook.sh            # Documentation hook
+├── remove-docker-desktop.sh      # Docker Desktop removal + Engine install
+├── remove-docker-desktop-only.sh # Docker Desktop removal only
+├── uninstall-docker-engine.sh    # Docker Engine removal
+├── lib/
+│   └── logger.sh                 # Logging utilities
+└── install/
+    ├── common.sh                 # Cross-platform installers
+    ├── linux.sh                  # Linux-specific
+    ├── macos.sh                  # macOS-specific
+    └── wsl.sh                    # WSL-specific
+```
 
 ## Error Handling
 
-Scripts use comprehensive error handling:
+All scripts use comprehensive error handling:
 
 - **Exit codes**: Non-zero exit codes indicate failures
 - **Logging**: All operations are logged with timestamps
 - **Rollback**: Failed operations attempt to rollback changes
+- **Dashboards**: Visual summary of installation results
 
-## File Structure
+## Development
 
-```
-scripts/
-├── README.md              # This file
-├── setup.sh              # Main entry point
-├── unified_app_manager.sh # Application installer
-├── validate-setup.sh      # System validation
-├── sync.sh               # Synchronization tool
-├── utils.sh              # Shared libraries
-└── doc-update-hook.sh    # Documentation hook
-```
+To add a new application to the unified manager:
+
+1. Add status variable (e.g., `local myapp_status="OFF"`)
+2. Add detection logic (e.g., `command_exists myapp && myapp_status="ON"`)
+3. Add menu item in the whiptail dialog
+4. Create `install_myapp()` function
+5. Optionally create `uninstall_myapp()` function

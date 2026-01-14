@@ -129,3 +129,10 @@ backup_*/
 !home/.claude/
 !home/.claude/agents/
 home/.claude/.credentials.json
+home/.claude/paste-cache/
+
+# ============================================================================ #
+# Application Output Files
+# ============================================================================ #
+
+result.json
