@@ -262,11 +262,13 @@ sellistbox=black,cyan
     command_exists mise && mise_status="ON"
     command_exists mdview && mdview_status="ON"
     command_exists ghostty && ghostty_status="ON"
-    [ -f ~/.local/bin/cursor.AppImage ] && cursor_status="ON"
-    (dpkg -l 2>/dev/null | grep -q antigravity) && antigravity_status="ON"
+    (command_exists cursor || [ -f ~/.local/bin/cursor.AppImage ]) && cursor_status="ON"
+    # Antigravity: check for package (handles spaces before status)
+    (dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii") && antigravity_status="ON"
     (snap list 2>/dev/null | grep -q "claudeai-desktop") && claude_desktop_status="ON"
     command_exists google-chrome && chrome_status="ON"
-    (dpkg -l 2>/dev/null | grep -q docker-desktop) && docker_desktop_status="ON"
+    # Docker Desktop: check for package (handles spaces before status)
+    (dpkg -l 2>/dev/null | grep -i docker-desktop | grep -qE "^[^ ]*(ii|iU)") && docker_desktop_status="ON"
     command_exists code && vscode_status="ON"
     command_exists brave-browser && brave_status="ON"
     (snap list 2>/dev/null | grep -q "notion-snap-reborn") && notion_status="ON"
@@ -619,44 +621,50 @@ install_ghostty() {
 }
 
 install_cursor() {
-    if [ -f ~/.local/bin/cursor.AppImage ]; then
+    # Check both AppImage and deb installation
+    if command_exists cursor || [ -f ~/.local/bin/cursor.AppImage ]; then
         track_skipped "Cursor"
         return 0
     fi
     
-    mkdir -p ~/.local/bin
-    if curl -L "https://downloader.cursor.sh/linux/appImage/x64" -o ~/.local/bin/cursor.AppImage >> /tmp/app_install.log 2>&1; then
-        chmod +x ~/.local/bin/cursor.AppImage
-        track_installed "Cursor"
+    local temp_deb="/tmp/cursor.deb"
+    
+    log_info "Downloading Cursor IDE..."
+    # Use direct download URL that works
+    if curl -L "https://api2.cursor.sh/updates/download/golden/linux-x64-deb/cursor/2.3" -o "$temp_deb" 2>&1 | tee -a /tmp/app_install.log; then
+        # Check if it's actually a deb file
+        if file "$temp_deb" | grep -q "Debian"; then
+            log_info "Installing Cursor..."
+            if sudo dpkg -i "$temp_deb" >> /tmp/app_install.log 2>&1; then
+                sudo apt-get install -f -y >> /tmp/app_install.log 2>&1
+                rm -f "$temp_deb"
+                track_installed "Cursor"
+            else
+                rm -f "$temp_deb"
+                track_failed "Cursor" "installation failed"
+            fi
+        else
+            log_error "Downloaded file is not a valid .deb package"
+            rm -f "$temp_deb"
+            track_failed "Cursor" "invalid file type"
+        fi
     else
-        track_failed "Cursor" "download failed"
+        rm -f "$temp_deb"
+        track_failed "Cursor" "download failed - check network"
     fi
 }
 
 install_antigravity() {
-    if [ -f ~/.local/bin/antigravity ]; then
+    # Check if installed (look for ii status, handling dpkg spacing)
+    if dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii"; then
         track_skipped "Antigravity"
         return 0
     fi
     
-    mkdir -p ~/.local/bin
-    local temp_deb="/tmp/antigravity.deb"
-    
-    log_info "Downloading Antigravity IDE..."
-    if curl -L "https://antigravity.google/download/linux" -o "$temp_deb" >> /tmp/app_install.log 2>&1; then
-        log_info "Installing Antigravity..."
-        if sudo dpkg -i "$temp_deb" >> /tmp/app_install.log 2>&1; then
-            sudo apt-get install -f -y >> /tmp/app_install.log 2>&1
-            rm -f "$temp_deb"
-            track_installed "Antigravity IDE"
-        else
-            rm -f "$temp_deb"
-            track_failed "Antigravity" "installation failed"
-        fi
-    else
-        rm -f "$temp_deb"
-        track_failed "Antigravity" "download failed"
-    fi
+    log_warning "Antigravity installation requires manual download"
+    log_info "Visit: https://antigravity.google/download/linux"
+    log_info "Download the .deb file and install with: sudo dpkg -i antigravity.deb"
+    track_failed "Antigravity" "requires manual download from website"
 }
 
 install_claude_desktop() {
@@ -690,19 +698,35 @@ install_chrome() {
 }
 
 install_docker_desktop() {
-    if dpkg -l | grep -q docker-desktop; then
+    # Check if installed (look for ii or iU status, handling dpkg spacing)
+    if dpkg -l 2>/dev/null | grep -i docker-desktop | grep -qE "^[^ ]*(ii|iU)"; then
         track_skipped "Docker Desktop"
         return 0
     fi
     
-    wget -q https://desktop.docker.com/linux/main/amd64/docker-desktop-latest-amd64.deb -O /tmp/docker.deb >> /tmp/app_install.log 2>&1
-    if sudo dpkg -i /tmp/docker.deb >> /tmp/app_install.log 2>&1; then
-        sudo apt-get install -f -y >> /tmp/app_install.log 2>&1
-        rm -f /tmp/docker.deb
-        track_installed "Docker Desktop"
+    local temp_deb="/tmp/docker-desktop.deb"
+    
+    log_info "Downloading Docker Desktop (large file, may take a while)..."
+    if curl -L "https://desktop.docker.com/linux/main/amd64/docker-desktop-amd64.deb" -o "$temp_deb" 2>&1 | tee -a /tmp/app_install.log; then
+        # Verify it's a valid deb file
+        if file "$temp_deb" | grep -q "Debian"; then
+            log_info "Installing Docker Desktop..."
+            if sudo dpkg -i "$temp_deb" >> /tmp/app_install.log 2>&1; then
+                sudo apt-get install -f -y >> /tmp/app_install.log 2>&1
+                rm -f "$temp_deb"
+                track_installed "Docker Desktop"
+            else
+                rm -f "$temp_deb"
+                track_failed "Docker Desktop" "installation failed"
+            fi
+        else
+            log_error "Downloaded file is not a valid .deb package"
+            rm -f "$temp_deb"
+            track_failed "Docker Desktop" "invalid file downloaded"
+        fi
     else
-        rm -f /tmp/docker.deb
-        track_failed "Docker Desktop" "installation failed"
+        rm -f "$temp_deb"
+        track_failed "Docker Desktop" "download failed - check network"
     fi
 }
 
@@ -828,12 +852,24 @@ install_orca_slicer() {
     fi
     
     mkdir -p ~/.local/bin
-    local url=$(curl -s https://api.github.com/repos/SoftFever/OrcaSlicer/releases/latest 2>/dev/null | grep "browser_download_url.*AppImage" | head -1 | cut -d '"' -f 4)
     
-    if [ -n "$url" ] && curl -L "$url" -o ~/.local/bin/orca-slicer.AppImage >> /tmp/app_install.log 2>&1; then
-        chmod +x ~/.local/bin/orca-slicer.AppImage
-        track_installed "Orca Slicer"
+    log_info "Downloading Orca Slicer (large file, ~200MB)..."
+    # Use direct URL to latest Ubuntu AppImage
+    local url="https://github.com/SoftFever/OrcaSlicer/releases/latest/download/OrcaSlicer_Linux_Ubuntu.AppImage"
+    
+    if curl -L "$url" -o ~/.local/bin/orca-slicer.AppImage 2>&1 | tee -a /tmp/app_install.log; then
+        # Verify it downloaded something substantial (AppImage should be >100MB)
+        local filesize=$(stat -c%s ~/.local/bin/orca-slicer.AppImage 2>/dev/null || echo "0")
+        if [ "$filesize" -gt 100000000 ]; then
+            chmod +x ~/.local/bin/orca-slicer.AppImage
+            track_installed "Orca Slicer"
+        else
+            log_error "Downloaded file is too small to be valid AppImage (${filesize} bytes)"
+            rm -f ~/.local/bin/orca-slicer.AppImage
+            track_failed "Orca Slicer" "invalid file size"
+        fi
     else
+        rm -f ~/.local/bin/orca-slicer.AppImage
         track_failed "Orca Slicer" "download failed"
     fi
 }

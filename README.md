@@ -5,9 +5,9 @@ Cross-platform dotfiles for macOS, Linux, and WSL. Clone, run one command, start
 ## ⚡ Quick Start
 
 ```bash
-git clone https://github.com/yourusername/dotfiles.git ~/workspace/dotfiles
-cd ~/workspace/dotfiles
+bash <(curl -fsSL https://raw.githubusercontent.com/jeremyspofford/dotfiles/main/scripts/bootstrap.sh)
 ./scripts/setup.sh
+
 ```
 
 ## ✨ What's Included

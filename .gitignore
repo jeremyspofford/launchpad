@@ -123,8 +123,9 @@ backup_*/
 *.orig
 
 # ============================================================================ #
-# Allow Claude agents directory
+# Allow Claude agents directory but exclude credentials
 # ============================================================================ #
 
 !home/.claude/
 !home/.claude/agents/
+home/.claude/.credentials.json
