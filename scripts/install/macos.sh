@@ -32,6 +32,31 @@ install_homebrew() {
     log_success "Homebrew installed"
 }
 
+# --- Install base packages ---
+install_base_packages() {
+    log_info "Installing base packages..."
+
+    local packages=(
+        git
+        stow
+        curl
+        unzip
+        zsh
+        tmux
+    )
+
+    for package in "${packages[@]}"; do
+        if brew list --formula "$package" &>/dev/null; then
+            log_success "$package already installed"
+        else
+            log_info "Installing $package..."
+            brew install "$package" || log_warning "Failed to install $package"
+        fi
+    done
+
+    log_success "Base packages installed"
+}
+
 # --- Install macOS casks ---
 install_casks() {
     log_info "Installing macOS applications..."
@@ -75,13 +100,21 @@ install_cursor() {
     fi
 
     log_info "Installing Cursor IDE..."
-    curl -fsSL https://cursor.com/install | bash
+    if brew list --cask cursor &>/dev/null; then
+        log_success "Cursor already installed via Homebrew"
+    else
+        brew install --cask cursor || {
+            log_warning "Homebrew install failed, trying script..."
+            curl -fsSL https://cursor.com/install | bash
+        }
+    fi
     log_success "Cursor installed"
 }
 
 # --- Main macOS installation ---
 install_macos() {
     install_homebrew
+    install_base_packages
     install_casks
     install_tpm
     install_cursor

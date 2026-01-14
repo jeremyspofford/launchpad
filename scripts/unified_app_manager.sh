@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Unified Application Manager
 # Handles installation/uninstallation of all applications (system, CLI, GUI)
+# Cross-platform: Linux, macOS, WSL
 
 set -uo pipefail
 
@@ -10,6 +11,23 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/logger.sh"
+
+################################################################################
+# Platform Detection
+################################################################################
+
+detect_platform() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "macos"
+    elif grep -q Microsoft /proc/version 2>/dev/null;
+ then
+        echo "wsl"
+    else
+        echo "linux"
+    fi
+}
+
+PLATFORM=$(detect_platform)
 
 ################################################################################
 # Installation Tracking
@@ -39,6 +57,51 @@ track_uninstalled() {
     UNINSTALLED_APPS+=("$1")
     # Output to stderr to avoid contaminating function return values
     log_info "🗑️  Uninstalled" >&2
+}
+
+################################################################################
+# Helper Functions
+################################################################################
+
+# Check if we are in WSL and warn about GUI apps
+check_wsl_gui() {
+    if [ "$PLATFORM" = "wsl" ]; then
+        log_warning "GUI applications are not typically installed inside WSL."
+        log_info "Please install the Windows version of this application."
+        return 1
+    fi
+    return 0
+}
+
+# Install brew package (macOS only helper)
+install_brew() {
+    local package="$1"
+    local cask="${2:-false}"
+    
+    if [ "$cask" = "true" ]; then
+        if brew list --cask "$package" &>/dev/null; then
+            track_skipped "$package"
+            return 0
+        fi
+        log_info "Installing $package via Homebrew Cask..."
+        if brew install --cask "$package" >> /tmp/app_install.log 2>&1; then
+            track_installed "$package"
+            return 0
+        fi
+    else
+        if brew list --formula "$package" &>/dev/null; then
+            track_skipped "$package"
+            return 0
+        fi
+        log_info "Installing $package via Homebrew..."
+        if brew install "$package" >> /tmp/app_install.log 2>&1; then
+            track_installed "$package"
+            return 0
+        fi
+    fi
+    
+    track_failed "$package" "brew install failed"
+    return 1
 }
 
 ################################################################################
@@ -278,7 +341,7 @@ select_applications() {
     fi
 
     # Interactive mode: Set high contrast colors for all whiptail dialogs
-    export NEWT_COLORS='
+    export NEWT_COLORS=' 
 root=white,black
 window=white,black
 border=cyan,black
@@ -334,17 +397,34 @@ sellistbox=black,cyan
     (command_exists nvim || [ "$INSTALL_NEOVIM" = "true" ]) && neovim_status="ON"
     (command_exists mise || [ "$INSTALL_MISE" = "true" ]) && mise_status="ON"
     (command_exists mdview || [ "$INSTALL_MDVIEW" = "true" ]) && mdview_status="ON"
-    (command_exists ghostty || [ "$INSTALL_GHOSTTY" = "true" ]) && ghostty_status="ON"
-    ((command_exists cursor || [ -f ~/.local/bin/cursor.AppImage ]) || [ "$INSTALL_CURSOR" = "true" ]) && cursor_status="ON"
-    ((dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii") || [ "$INSTALL_ANTIGRAVITY" = "true" ]) && antigravity_status="ON"
-    ((snap list 2>/dev/null | grep -q "claudeai-desktop") || [ "$INSTALL_CLAUDE_DESKTOP" = "true" ]) && claude_desktop_status="ON"
-    (command_exists google-chrome || [ "$INSTALL_CHROME" = "true" ]) && chrome_status="ON"
-    (command_exists code || [ "$INSTALL_VSCODE" = "true" ]) && vscode_status="ON"
-    (command_exists brave-browser || [ "$INSTALL_BRAVE" = "true" ]) && brave_status="ON"
-    ((snap list 2>/dev/null | grep -q "notion-snap-reborn") || [ "$INSTALL_NOTION" = "true" ]) && notion_status="ON"
-    ((command_exists obsidian || snap list 2>/dev/null | grep -q "obsidian") || [ "$INSTALL_OBSIDIAN" = "true" ]) && obsidian_status="ON"
-    (command_exists 1password || [ "$INSTALL_1PASSWORD" = "true" ]) && onepassword_status="ON"
-    ([ -f ~/.local/bin/orca-slicer.AppImage ] || [ "$INSTALL_ORCA_SLICER" = "true" ]) && orca_slicer_status="ON"
+    
+    # Platform-specific checks
+    if [ "$PLATFORM" = "macos" ]; then
+        (brew list --cask ghostty &>/dev/null || [ "$INSTALL_GHOSTTY" = "true" ]) && ghostty_status="ON"
+        (brew list --cask cursor &>/dev/null || [ "$INSTALL_CURSOR" = "true" ]) && cursor_status="ON"
+        [ "$INSTALL_ANTIGRAVITY" = "true" ] && antigravity_status="ON"
+        (brew list --cask claude &>/dev/null || [ "$INSTALL_CLAUDE_DESKTOP" = "true" ]) && claude_desktop_status="ON"
+        (brew list --cask google-chrome &>/dev/null || [ "$INSTALL_CHROME" = "true" ]) && chrome_status="ON"
+        (brew list --cask visual-studio-code &>/dev/null || [ "$INSTALL_VSCODE" = "true" ]) && vscode_status="ON"
+        (brew list --cask brave-browser &>/dev/null || [ "$INSTALL_BRAVE" = "true" ]) && brave_status="ON"
+        (brew list --cask notion &>/dev/null || [ "$INSTALL_NOTION" = "true" ]) && notion_status="ON"
+        (brew list --cask obsidian &>/dev/null || [ "$INSTALL_OBSIDIAN" = "true" ]) && obsidian_status="ON"
+        (brew list --cask 1password &>/dev/null || [ "$INSTALL_1PASSWORD" = "true" ]) && onepassword_status="ON"
+        (brew list --cask orca-slicer &>/dev/null || [ "$INSTALL_ORCA_SLICER" = "true" ]) && orca_slicer_status="ON"
+    else
+        # Linux / WSL
+        (command_exists ghostty || [ "$INSTALL_GHOSTTY" = "true" ]) && ghostty_status="ON"
+        ((command_exists cursor || [ -f ~/.local/bin/cursor.AppImage ]) || [ "$INSTALL_CURSOR" = "true" ]) && cursor_status="ON"
+        ((dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii") || [ "$INSTALL_ANTIGRAVITY" = "true" ]) && antigravity_status="ON"
+        ((snap list 2>/dev/null | grep -q "claudeai-desktop") || [ "$INSTALL_CLAUDE_DESKTOP" = "true" ]) && claude_desktop_status="ON"
+        (command_exists google-chrome || [ "$INSTALL_CHROME" = "true" ]) && chrome_status="ON"
+        (command_exists code || [ "$INSTALL_VSCODE" = "true" ]) && vscode_status="ON"
+        (command_exists brave-browser || [ "$INSTALL_BRAVE" = "true" ]) && brave_status="ON"
+        ((snap list 2>/dev/null | grep -q "notion-snap-reborn") || [ "$INSTALL_NOTION" = "true" ]) && notion_status="ON"
+        ((command_exists obsidian || snap list 2>/dev/null | grep -q "obsidian") || [ "$INSTALL_OBSIDIAN" = "true" ]) && obsidian_status="ON"
+        (command_exists 1password || [ "$INSTALL_1PASSWORD" = "true" ]) && onepassword_status="ON"
+        ([ -f ~/.local/bin/orca-slicer.AppImage ] || [ "$INSTALL_ORCA_SLICER" = "true" ]) && orca_slicer_status="ON"
+    fi
     
     # Show re-run warning if applicable
     if [ -n "$previous" ]; then
@@ -363,8 +443,8 @@ Press OK to continue..." 13 60 3>&1 1>&2 2>&3 || {
         }
     fi
     
-    # Unified selection menu with dynamic ON/OFF based on what's installed
-    local selections=$(whiptail --title "Application Manager" --checklist \
+    # Unified selection menu
+    local selections=$(whiptail --title "Application Manager ($PLATFORM)" --checklist \
 "Select applications (Space=select, Enter=confirm)
 
 ⚠️  WARNING: Unchecking installed apps will UNINSTALL them!
@@ -434,6 +514,11 @@ install_zsh() {
         return 0
     fi
     
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "zsh"
+        return
+    fi
+    
     if sudo apt-get install -y zsh >> /tmp/app_install.log 2>&1; then
         track_installed "Zsh"
     else
@@ -445,6 +530,11 @@ install_tmux() {
     if command_exists tmux; then
         track_skipped "Tmux"
         return 0
+    fi
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "tmux"
+        return
     fi
     
     if sudo apt-get install -y tmux >> /tmp/app_install.log 2>&1; then
@@ -472,12 +562,25 @@ install_neovim() {
                 return 0
             else
                 log_warning "Neovim v$current_version is too old (need >= 0.11.2), upgrading..."
-                # Remove old version first
-                sudo apt-get remove -y neovim >> /tmp/app_install.log 2>&1 || true
+                if [ "$PLATFORM" != "macos" ]; then
+                    sudo apt-get remove -y neovim >> /tmp/app_install.log 2>&1 || true
+                fi
             fi
         fi
     fi
+
+    # macOS Installation
+    if [ "$PLATFORM" = "macos" ]; then
+        if install_brew "neovim"; then
+             log_info "Installing Nerd Font for icons via Homebrew..."
+             install_brew "font-jetbrains-mono-nerd-font" "true"
+             return 0
+        else
+             return 1
+        fi
+    fi
     
+    # Linux/WSL Installation
     # Method 1: Try unstable PPA (has latest versions including 0.11+)
     log_info "Installing Neovim from unstable PPA (has v0.11+)..."
     sudo add-apt-repository -y ppa:neovim-ppa/unstable >> /tmp/app_install.log 2>&1
@@ -500,7 +603,7 @@ install_neovim() {
             sudo apt-get install -y ripgrep >> /tmp/app_install.log 2>&1
         fi
         
-        # Install a Nerd Font for icons
+        # Install a Nerd Font for icons (Manual install for Linux)
         log_info "Installing Nerd Font for icons..."
         
         # Create fonts directory with proper permissions
@@ -538,7 +641,9 @@ install_neovim() {
                         local font_count=$(ls ~/.local/share/fonts/JetBrainsMono/*.ttf 2>/dev/null | wc -l)
                         if [ "$font_count" -gt 0 ]; then
                             log_info "Rebuilding font cache..."
-                            fc-cache -fv ~/.local/share/fonts >> /tmp/app_install.log 2>&1
+                            if command_exists fc-cache; then
+                                fc-cache -fv ~/.local/share/fonts >> /tmp/app_install.log 2>&1
+                            fi
                             log_success "✅ JetBrainsMono Nerd Font installed ($font_count fonts)"
                             log_warning "⚠️  Set your terminal font to 'JetBrainsMono Nerd Font Mono' for icons"
                         else
@@ -558,13 +663,12 @@ install_neovim() {
         fi
         
         log_info "LazyVim dependencies installed"
-        log_info "On first nvim launch, LazyVim will install Tree-sitter parsers"
         
         track_installed "Neovim v$ppa_version (PPA)"
         return 0
     fi
     
-    # Method 2: Try snap as fallback
+    # Method 2: Try snap as fallback (Linux only)
     if command_exists snap; then
         log_info "PPA failed, trying Neovim via snap..."
         if sudo snap install nvim --classic >> /tmp/app_install.log 2>&1; then
@@ -596,55 +700,16 @@ install_mise() {
         
         # Install tools from config.toml if it exists
         if [ -f ~/.config/mise/config.toml ]; then
-            echo
-            log_heredoc "${CYAN}" <<EOF
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📦 Installing Tools from config.toml
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-This will install ALL tools configured in:
-  ~/.config/mise/config.toml
-
-Including:
-  • AWS/Terraform tools (aws-cli, terraform, etc.)
-  • Languages (node, python, go, rust)
-  • CLI tools (ripgrep, fd, fzf, bat, eza, jq, yq)
-  • Git tools (lazygit, delta, gh)
-  • AI tools (claude, gemini, aider, opencode)
-  • And more...
-
-⏱️  This may take 5-10 minutes depending on your system.
-
-💡 TIP: To manage tools later:
-   • View installed: mise list
-   • Add a tool: mise use -g <tool>@latest
-   • Remove a tool: 
-     1. Delete from ~/.config/mise/config.toml
-     2. Run: mise uninstall <tool>
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EOF
-            echo
-            log_info "Installing tools (this may take a while)..."
+            log_info "Installing tools from ~/.config/mise/config.toml..."
             
             if mise install >> /tmp/app_install.log 2>&1; then
-                echo
                 log_success "✅ Tools installed from config.toml"
-                echo
-                log_info "Installed tools:"
-                mise list
-                echo
             else
                 log_warning "Some tools failed to install from config.toml"
-                log_info "Check /tmp/app_install.log for details"
-                log_info "You can retry with: mise install"
             fi
-        else
-            log_info "No config.toml found - tools will be available after stowing dotfiles"
-            log_info "After stowing, run: mise install"
         fi
         
-        track_installed "mise + CLI tools from config.toml"
+        track_installed "mise + CLI tools"
     else
         track_failed "mise" "install script failed"
     fi
@@ -677,6 +742,13 @@ install_mdview() {
 ################################################################################
 
 install_ghostty() {
+    check_wsl_gui || { track_skipped "Ghostty (WSL)"; return 0; }
+
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "ghostty" "true"
+        return
+    fi
+
     if command_exists ghostty; then
         track_skipped "Ghostty"
         return 0
@@ -690,31 +762,33 @@ install_ghostty() {
 }
 
 install_cursor() {
-    # Check if main app is installed
+    check_wsl_gui || { track_skipped "Cursor (WSL)"; return 0; }
+
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "cursor" "true"
+        return
+    fi
+
+    # Linux Installation
     local app_installed=false
     if command_exists cursor || [ -f ~/.local/bin/cursor.AppImage ]; then
         app_installed=true
     fi
 
-    # Check if CLI is installed
     local cli_installed=false
     if [ -f ~/.local/bin/cursor-agent ]; then
         cli_installed=true
     fi
 
-    # If both installed, skip
     if [ "$app_installed" = true ] && [ "$cli_installed" = true ]; then
         track_skipped "Cursor"
         return 0
     fi
 
-    # If app installed but CLI missing, install CLI only
     if [ "$app_installed" = true ]; then
         log_info "Installing missing Cursor CLI..."
         if curl -fsSL https://cursor.com/install | bash >> /tmp/app_install.log 2>&1; then
             log_success "Cursor CLI installed"
-        else
-            log_warning "Cursor CLI installation failed"
         fi
         track_skipped "Cursor (added CLI)"
         return 0
@@ -723,9 +797,7 @@ install_cursor() {
     local temp_deb="/tmp/cursor.deb"
     
     log_info "Downloading Cursor IDE..."
-    # Use direct download URL that works
     if curl -L "https://api2.cursor.sh/updates/download/golden/linux-x64-deb/cursor/2.3" -o "$temp_deb" 2>&1 | tee -a /tmp/app_install.log; then
-        # Check if it's actually a deb file
         if file "$temp_deb" | grep -q "Debian"; then
             log_info "Installing Cursor..."
             if sudo dpkg -i "$temp_deb" >> /tmp/app_install.log 2>&1; then
@@ -741,18 +813,24 @@ install_cursor() {
                 track_failed "Cursor" "installation failed"
             fi
         else
-            log_error "Downloaded file is not a valid .deb package"
             rm -f "$temp_deb"
             track_failed "Cursor" "invalid file type"
         fi
     else
         rm -f "$temp_deb"
-        track_failed "Cursor" "download failed - check network"
+        track_failed "Cursor" "download failed"
     fi
 }
 
 install_antigravity() {
-    # Check if installed (look for ii status, handling dpkg spacing)
+    check_wsl_gui || { track_skipped "Antigravity (WSL)"; return 0; }
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        log_warning "Antigravity installation requires manual steps on macOS."
+        track_skipped "Antigravity (Manual)"
+        return
+    fi
+    
     if dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii"; then
         track_skipped "Antigravity"
         return 0
@@ -760,11 +838,17 @@ install_antigravity() {
     
     log_warning "Antigravity installation requires manual download"
     log_info "Visit: https://antigravity.google/download/linux"
-    log_info "Download the .deb file and install with: sudo dpkg -i antigravity.deb"
-    track_failed "Antigravity" "requires manual download from website"
+    track_failed "Antigravity" "requires manual download"
 }
 
 install_claude_desktop() {
+    check_wsl_gui || { track_skipped "Claude Desktop (WSL)"; return 0; }
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "claude" "true"
+        return
+    fi
+
     if snap list 2>/dev/null | grep -q "claudeai-desktop"; then
         track_skipped "Claude Desktop"
         return 0
@@ -778,6 +862,13 @@ install_claude_desktop() {
 }
 
 install_chrome() {
+    check_wsl_gui || { track_skipped "Chrome (WSL)"; return 0; }
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "google-chrome" "true"
+        return
+    fi
+
     if command_exists google-chrome; then
         track_skipped "Google Chrome"
         return 0
@@ -794,8 +885,14 @@ install_chrome() {
     fi
 }
 
-
 install_vscode() {
+    check_wsl_gui || { track_skipped "VS Code (WSL)"; return 0; }
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "visual-studio-code" "true"
+        return
+    fi
+
     if command_exists code; then
         track_skipped "VS Code"
         return 0
@@ -815,6 +912,13 @@ install_vscode() {
 }
 
 install_brave() {
+    check_wsl_gui || { track_skipped "Brave (WSL)"; return 0; }
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "brave-browser" "true"
+        return
+    fi
+
     if command_exists brave-browser; then
         track_skipped "Brave"
         return 0
@@ -831,6 +935,13 @@ install_brave() {
 }
 
 install_notion() {
+    check_wsl_gui || { track_skipped "Notion (WSL)"; return 0; }
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "notion" "true"
+        return
+    fi
+
     if snap list 2>/dev/null | grep -q "notion-snap-reborn"; then
         track_skipped "Notion"
         return 0
@@ -844,39 +955,38 @@ install_notion() {
 }
 
 install_obsidian() {
-    # Check if already installed
+    check_wsl_gui || { track_skipped "Obsidian (WSL)"; return 0; }
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "obsidian" "true"
+        return
+    fi
+
     if command_exists obsidian || snap list 2>/dev/null | grep -q "obsidian"; then
         track_skipped "Obsidian"
         return 0
     fi
     
-    # Try snap first (easiest method)
     if command_exists snap; then
-        log_info "Installing Obsidian via snap..."
         if sudo snap install obsidian --classic >> /tmp/app_install.log 2>&1; then
             track_installed "Obsidian (snap)"
             return 0
         fi
     fi
     
-    # Fallback to AppImage
-    log_info "Installing Obsidian AppImage..."
+    # AppImage fallback
     mkdir -p ~/.local/bin
-    
-    # Get latest version from GitHub
     local latest_url=$(curl -s https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest 2>/dev/null | grep "browser_download_url.*AppImage" | cut -d '"' -f 4)
     
     if [ -n "$latest_url" ] && curl -L "$latest_url" -o ~/.local/bin/obsidian.AppImage >> /tmp/app_install.log 2>&1; then
         chmod +x ~/.local/bin/obsidian.AppImage
         
-        # Create wrapper script
         cat > ~/.local/bin/obsidian << 'EOF'
 #!/bin/bash
 exec ~/.local/bin/obsidian.AppImage "$@"
 EOF
         chmod +x ~/.local/bin/obsidian
         
-        # Create desktop entry
         mkdir -p ~/.local/share/applications
         cat > ~/.local/share/applications/obsidian.desktop << 'EOF'
 [Desktop Entry]
@@ -886,7 +996,6 @@ Icon=obsidian
 Type=Application
 Categories=Office;
 EOF
-        
         track_installed "Obsidian (AppImage)"
     else
         track_failed "Obsidian" "installation failed"
@@ -894,6 +1003,13 @@ EOF
 }
 
 install_1password() {
+    check_wsl_gui || { track_skipped "1Password (WSL)"; return 0; }
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "1password" "true"
+        return
+    fi
+
     if command_exists 1password; then
         track_skipped "1Password"
         return 0
@@ -911,6 +1027,13 @@ install_1password() {
 }
 
 install_orca_slicer() {
+    check_wsl_gui || { track_skipped "Orca Slicer (WSL)"; return 0; }
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "orca-slicer" "true"
+        return
+    fi
+
     if [ -f ~/.local/bin/orca-slicer.AppImage ]; then
         track_skipped "Orca Slicer"
         return 0
@@ -919,7 +1042,6 @@ install_orca_slicer() {
     mkdir -p ~/.local/bin
 
     log_info "Fetching latest Orca Slicer release info..."
-    # Get latest release URL from GitHub API (repo moved to OrcaSlicer org)
     local url=$(curl -s https://api.github.com/repos/OrcaSlicer/OrcaSlicer/releases/latest 2>/dev/null | \
         grep '"browser_download_url"' | \
         grep -i "linux.*appimage.*ubuntu" | \
@@ -928,30 +1050,20 @@ install_orca_slicer() {
 
     if [ -z "$url" ]; then
         log_error "Could not fetch latest Orca Slicer download URL"
-        track_failed "Orca Slicer" "failed to fetch download URL from GitHub"
+        track_failed "Orca Slicer" "failed to fetch download URL"
         return
     fi
 
-    log_info "Downloading Orca Slicer from: $url"
-    log_info "This is a large file (~200MB), please wait..."
-
+    log_info "Downloading Orca Slicer..."
     if curl -L "$url" -o ~/.local/bin/orca-slicer.AppImage 2>&1 | tee -a /tmp/app_install.log; then
-        # Verify it downloaded something substantial (AppImage should be >100MB)
         local filesize=$(stat -c%s ~/.local/bin/orca-slicer.AppImage 2>/dev/null || echo "0")
         if [ "$filesize" -gt 100000000 ]; then
             chmod +x ~/.local/bin/orca-slicer.AppImage
 
-            # Download and install icon
-            log_info "Installing Orca Slicer icon..."
             mkdir -p "$HOME/.local/share/icons/hicolor/256x256/apps"
-            if curl -sL "https://raw.githubusercontent.com/OrcaSlicer/OrcaSlicer/main/resources/images/OrcaSlicer_192px.png" \
-                -o "$HOME/.local/share/icons/hicolor/256x256/apps/orca-slicer.png" >> /tmp/app_install.log 2>&1; then
-                log_info "Icon installed successfully"
-            else
-                log_warning "Could not download icon, using default"
-            fi
+            curl -sL "https://raw.githubusercontent.com/OrcaSlicer/OrcaSlicer/main/resources/images/OrcaSlicer_192px.png" \
+                -o "$HOME/.local/share/icons/hicolor/256x256/apps/orca-slicer.png" >> /tmp/app_install.log 2>&1
 
-            # Create desktop entry
             mkdir -p "$HOME/.local/share/applications"
             cat > "$HOME/.local/share/applications/orca-slicer.desktop" << EOF
 [Desktop Entry]
@@ -967,14 +1079,12 @@ StartupNotify=true
 EOF
             chmod +x "$HOME/.local/share/applications/orca-slicer.desktop"
 
-            # Update desktop database if available
             if command_exists update-desktop-database; then
                 update-desktop-database "$HOME/.local/share/applications/" 2>/dev/null || true
             fi
 
             track_installed "Orca Slicer"
         else
-            log_error "Downloaded file is too small to be valid AppImage (${filesize} bytes)"
             rm -f ~/.local/bin/orca-slicer.AppImage
             track_failed "Orca Slicer" "invalid file size"
         fi
@@ -989,57 +1099,53 @@ EOF
 ################################################################################
 
 uninstall_zsh() {
-    if command_exists zsh; then
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall zsh >> /tmp/app_install.log 2>&1
+        track_uninstalled "Zsh"
+    elif command_exists zsh; then
         sudo apt-get remove -y zsh >> /tmp/app_install.log 2>&1
         track_uninstalled "Zsh"
     fi
 }
 
 uninstall_tmux() {
-    if command_exists tmux; then
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall tmux >> /tmp/app_install.log 2>&1
+        track_uninstalled "Tmux"
+    elif command_exists tmux; then
         sudo apt-get remove -y tmux >> /tmp/app_install.log 2>&1
         track_uninstalled "Tmux"
     fi
 }
 
 uninstall_neovim() {
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall neovim >> /tmp/app_install.log 2>&1
+        track_uninstalled "Neovim"
+        return
+    fi
+
     local uninstalled=false
-    
-    # Check for AppImage version
     if [ -f ~/.local/bin/nvim.appimage ]; then
         rm -f ~/.local/bin/nvim.appimage
         rm -f ~/.local/bin/nvim
-        log_info "Removed Neovim AppImage"
         uninstalled=true
     fi
-    
-    # Check if installed via snap
     if snap list 2>/dev/null | grep -q "nvim"; then
         sudo snap remove nvim >> /tmp/app_install.log 2>&1
-        log_info "Removed Neovim snap"
         uninstalled=true
     fi
-    
-    # Check if installed via apt
     if command_exists nvim && ! [ -f ~/.local/bin/nvim.appimage ]; then
         sudo apt-get remove -y neovim >> /tmp/app_install.log 2>&1
-        # Remove PPA if it was added
         sudo add-apt-repository -y --remove ppa:neovim-ppa/unstable >> /tmp/app_install.log 2>&1 || true
-        log_info "Removed Neovim apt package"
         uninstalled=true
     fi
-    
-    if [ "$uninstalled" = true ]; then
-        track_uninstalled "Neovim"
-    fi
+    [ "$uninstalled" = true ] && track_uninstalled "Neovim"
 }
 
 uninstall_mise() {
-    if command_exists mise; then
-        log_warning "Removing mise will remove ALL tools installed via mise"
-        # User should manually uninstall if needed
-        track_uninstalled "mise (manual cleanup recommended)"
-    fi
+    log_warning "Removing mise will remove ALL tools installed via mise"
+    track_uninstalled "mise (manual cleanup recommended)"
 }
 
 uninstall_mdview() {
@@ -1049,47 +1155,39 @@ uninstall_mdview() {
     fi
 }
 
-################################################################################
-# GUI App Uninstall Functions
-################################################################################
-
 uninstall_ghostty() {
-    if command_exists ghostty; then
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask ghostty >> /tmp/app_install.log 2>&1
+        track_uninstalled "Ghostty"
+    elif command_exists ghostty; then
         sudo snap remove ghostty >> /tmp/app_install.log 2>&1
         track_uninstalled "Ghostty"
     fi
 }
 
 uninstall_cursor() {
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask cursor >> /tmp/app_install.log 2>&1
+        track_uninstalled "Cursor"
+        return
+    fi
+    
     local uninstalled=false
-
-    # Uninstall CLI first
     if [ -f ~/.local/bin/cursor-agent ] || [ -d ~/.local/share/cursor-agent ]; then
-        log_info "Removing Cursor CLI..."
         rm -f ~/.local/bin/agent
         rm -f ~/.local/bin/cursor-agent
         rm -rf ~/.local/share/cursor-agent
-        # We don't mark uninstalled yet, as we want to remove the main app too
     fi
-
-    # Check for AppImage
     if [ -f ~/.local/bin/cursor.AppImage ]; then
         rm -f ~/.local/bin/cursor.AppImage
         rm -f ~/.local/share/applications/cursor.desktop
-        log_info "Removed Cursor AppImage"
         uninstalled=true
     fi
-
-    # Check for Deb/Apt package
     if dpkg -l | grep -qE "^ii\s+cursor\s+"; then
         sudo apt-get remove -y cursor >> /tmp/app_install.log 2>&1
-        log_info "Removed Cursor package"
         uninstalled=true
     fi
-
-    if [ "$uninstalled" = true ]; then
-        track_uninstalled "Cursor"
-    fi
+    [ "$uninstalled" = true ] && track_uninstalled "Cursor"
 }
 
 uninstall_antigravity() {
@@ -1100,46 +1198,51 @@ uninstall_antigravity() {
 }
 
 uninstall_claude_desktop() {
-    if snap list 2>/dev/null | grep -q "claudeai-desktop"; then
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask claude >> /tmp/app_install.log 2>&1
+        track_uninstalled "Claude Desktop"
+    elif snap list 2>/dev/null | grep -q "claudeai-desktop"; then
         sudo snap remove claudeai-desktop >> /tmp/app_install.log 2>&1
         track_uninstalled "Claude Desktop"
     fi
 }
 
 uninstall_chrome() {
-    if command_exists google-chrome; then
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask google-chrome >> /tmp/app_install.log 2>&1
+        track_uninstalled "Google Chrome"
+    elif command_exists google-chrome; then
         sudo apt-get remove -y google-chrome-stable >> /tmp/app_install.log 2>&1
         track_uninstalled "Google Chrome"
     fi
 }
 
-
 uninstall_obsidian() {
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask obsidian >> /tmp/app_install.log 2>&1
+        track_uninstalled "Obsidian"
+        return
+    fi
+    
     local uninstalled=false
-
-    # Check for snap version
     if snap list 2>/dev/null | grep -q "obsidian"; then
         sudo snap remove obsidian >> /tmp/app_install.log 2>&1
-        log_info "Removed Obsidian snap"
         uninstalled=true
     fi
-
-    # Check for AppImage version
     if [ -f ~/.local/bin/obsidian.AppImage ]; then
         rm -f ~/.local/bin/obsidian.AppImage
         rm -f ~/.local/bin/obsidian
         rm -f ~/.local/share/applications/obsidian.desktop
-        log_info "Removed Obsidian AppImage"
         uninstalled=true
     fi
-
-    if [ "$uninstalled" = true ]; then
-        track_uninstalled "Obsidian"
-    fi
+    [ "$uninstalled" = true ] && track_uninstalled "Obsidian"
 }
 
 uninstall_vscode() {
-    if command_exists code; then
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask visual-studio-code >> /tmp/app_install.log 2>&1
+        track_uninstalled "VS Code"
+    elif command_exists code; then
         sudo apt-get remove -y code >> /tmp/app_install.log 2>&1
         sudo rm -f /etc/apt/sources.list.d/vscode.list
         sudo rm -f /etc/apt/keyrings/packages.microsoft.gpg
@@ -1148,7 +1251,10 @@ uninstall_vscode() {
 }
 
 uninstall_brave() {
-    if command_exists brave-browser; then
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask brave-browser >> /tmp/app_install.log 2>&1
+        track_uninstalled "Brave Browser"
+    elif command_exists brave-browser; then
         sudo apt-get remove -y brave-browser >> /tmp/app_install.log 2>&1
         sudo rm -f /etc/apt/sources.list.d/brave-browser-release.list
         sudo rm -f /usr/share/keyrings/brave-browser-archive-keyring.gpg
@@ -1157,14 +1263,20 @@ uninstall_brave() {
 }
 
 uninstall_notion() {
-    if snap list 2>/dev/null | grep -q "notion-snap-reborn"; then
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask notion >> /tmp/app_install.log 2>&1
+        track_uninstalled "Notion"
+    elif snap list 2>/dev/null | grep -q "notion-snap-reborn"; then
         sudo snap remove notion-snap-reborn >> /tmp/app_install.log 2>&1
         track_uninstalled "Notion"
     fi
 }
 
 uninstall_1password() {
-    if command_exists 1password; then
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask 1password >> /tmp/app_install.log 2>&1
+        track_uninstalled "1Password"
+    elif command_exists 1password; then
         sudo apt-get remove -y 1password >> /tmp/app_install.log 2>&1
         sudo rm -f /etc/apt/sources.list.d/1password.list
         sudo rm -f /usr/share/keyrings/1password-archive-keyring.gpg
@@ -1173,7 +1285,10 @@ uninstall_1password() {
 }
 
 uninstall_orca_slicer() {
-    if [ -f ~/.local/bin/orca-slicer.AppImage ]; then
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask orca-slicer >> /tmp/app_install.log 2>&1
+        track_uninstalled "Orca Slicer"
+    elif [ -f ~/.local/bin/orca-slicer.AppImage ]; then
         rm -f ~/.local/bin/orca-slicer.AppImage
         rm -f ~/.local/share/applications/orca-slicer.desktop
         rm -f ~/.local/share/icons/hicolor/256x256/apps/orca-slicer.png
@@ -1188,11 +1303,10 @@ uninstall_orca_slicer() {
 main() {
     > /tmp/app_install.log
 
-    log_section "Application Manager"
+    log_section "Application Manager ($PLATFORM)"
     log_info "Installation log: /tmp/app_install.log"
     echo
 
-    # Parse arguments to check for non-interactive mode
     local non_interactive_flag=""
     for arg in "$@"; do
         if [ "$arg" = "--non-interactive" ]; then
@@ -1201,50 +1315,32 @@ main() {
         fi
     done
 
-    # Debug: Log start
-    echo "DEBUG: Starting unified app manager" >> /tmp/app_install.log
+    echo "DEBUG: Starting unified app manager for $PLATFORM" >> /tmp/app_install.log
 
-    # Only check for whiptail in interactive mode
     if [ -z "$non_interactive_flag" ]; then
-        # Ensure whiptail is available
-        if ! command_exists whiptail; then
-            log_info "Installing whiptail for interactive menu..."
-            sudo apt-get update >> /tmp/app_install.log 2>&1
-            sudo apt-get install -y whiptail >> /tmp/app_install.log 2>&1
-
+        if [ "$PLATFORM" = "linux" ] || [ "$PLATFORM" = "wsl" ]; then
             if ! command_exists whiptail; then
-                log_error "Failed to install whiptail - cannot show interactive menu"
-                log_info "Please install whiptail manually: sudo apt-get install whiptail"
-                exit 1
+                log_info "Installing whiptail for interactive menu..."
+                sudo apt-get update >> /tmp/app_install.log 2>&1
+                sudo apt-get install -y whiptail >> /tmp/app_install.log 2>&1
             fi
         fi
-
-        echo "DEBUG: whiptail is available" >> /tmp/app_install.log
+        # macOS has dialog/whiptail via brew or system sometimes, but assume present or skip if not critical
     fi
 
-    echo "DEBUG: About to call select_applications" >> /tmp/app_install.log
-
-    # Show unified selection menu (pass flag if present)
+    # Show unified selection menu
     selections=$(select_applications $non_interactive_flag)
-
-    echo "DEBUG: Returned from select_applications" >> /tmp/app_install.log
-    echo "DEBUG: Selections = $selections" >> /tmp/app_install.log
 
     # Install selected applications
     for app in $selections; do
         app=$(echo "$app" | tr -d '"')
-
-        # Skip empty entries (from separator lines)
-        if [ -z "$app" ]; then
-            continue
-        fi
+        if [ -z "$app" ]; then continue; fi
 
         log_section "Installing $(echo $app | tr '_' ' ' | sed 's/\b\(.\)/\u\1/g')"
         install_"$app" || true
         echo
     done
 
-    # Show dashboard
     show_dashboard
 }
 
