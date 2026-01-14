@@ -875,6 +875,28 @@ install_orca_slicer() {
         local filesize=$(stat -c%s ~/.local/bin/orca-slicer.AppImage 2>/dev/null || echo "0")
         if [ "$filesize" -gt 100000000 ]; then
             chmod +x ~/.local/bin/orca-slicer.AppImage
+
+            # Create desktop entry
+            mkdir -p "$HOME/.local/share/applications"
+            cat > "$HOME/.local/share/applications/orca-slicer.desktop" << EOF
+[Desktop Entry]
+Name=Orca Slicer
+Comment=3D Printing Slicer
+Exec=$HOME/.local/bin/orca-slicer.AppImage %F
+Icon=orca-slicer
+Terminal=false
+Type=Application
+Categories=Graphics;3DGraphics;Engineering;
+MimeType=model/stl;application/x-3mf;application/vnd.ms-3mfdocument;
+StartupNotify=true
+EOF
+            chmod +x "$HOME/.local/share/applications/orca-slicer.desktop"
+
+            # Update desktop database if available
+            if command_exists update-desktop-database; then
+                update-desktop-database "$HOME/.local/share/applications/" 2>/dev/null || true
+            fi
+
             track_installed "Orca Slicer"
         else
             log_error "Downloaded file is too small to be valid AppImage (${filesize} bytes)"
