@@ -247,7 +247,6 @@ sellistbox=black,cyan
     local antigravity_status="OFF"
     local claude_desktop_status="OFF"
     local chrome_status="OFF"
-    local docker_desktop_status="OFF"
     local vscode_status="OFF"
     local brave_status="OFF"
     local notion_status="OFF"
@@ -267,8 +266,6 @@ sellistbox=black,cyan
     (dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii") && antigravity_status="ON"
     (snap list 2>/dev/null | grep -q "claudeai-desktop") && claude_desktop_status="ON"
     command_exists google-chrome && chrome_status="ON"
-    # Docker Desktop: check for package (handles spaces before status)
-    (dpkg -l 2>/dev/null | grep -i docker-desktop | grep -qE "^[^ ]*(ii|iU)") && docker_desktop_status="ON"
     command_exists code && vscode_status="ON"
     command_exists brave-browser && brave_status="ON"
     (snap list 2>/dev/null | grep -q "notion-snap-reborn") && notion_status="ON"
@@ -310,7 +307,6 @@ System Tools:" 28 78 19 \
 "antigravity" "Antigravity IDE (Google)" "$antigravity_status" \
 "claude_desktop" "Claude Desktop" "$claude_desktop_status" \
 "chrome" "Google Chrome" "$chrome_status" \
-"docker_desktop" "Docker Desktop" "$docker_desktop_status" \
 "vscode" "VS Code" "$vscode_status" \
 "brave" "Brave browser" "$brave_status" \
 "notion" "Notion" "$notion_status" \
@@ -697,78 +693,6 @@ install_chrome() {
     fi
 }
 
-install_docker_desktop() {
-    # Check if properly installed (only ii status, not iU which is broken)
-    if dpkg -l 2>/dev/null | grep -i docker-desktop | grep -qE "^ii"; then
-        track_skipped "Docker Desktop"
-        return 0
-    fi
-
-    # Remove broken installation if exists
-    if dpkg -l 2>/dev/null | grep -i docker-desktop | grep -qE "^[^ ]*(iU|iF)"; then
-        log_warning "Found broken Docker Desktop installation, removing..."
-        sudo dpkg --remove --force-remove-reinstreq docker-desktop >> /tmp/app_install.log 2>&1 || true
-    fi
-
-    # Install Docker repository and dependencies
-    log_info "Installing Docker dependencies..."
-
-    # Add Docker's official GPG key and repository
-    sudo apt-get update >> /tmp/app_install.log 2>&1
-    sudo apt-get install -y ca-certificates curl gnupg lsb-release >> /tmp/app_install.log 2>&1
-
-    # Add Docker's official GPG key
-    sudo install -m 0755 -d /etc/apt/keyrings >> /tmp/app_install.log 2>&1
-    if [ ! -f /etc/apt/keyrings/docker.gpg ]; then
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg >> /tmp/app_install.log 2>&1
-        sudo chmod a+r /etc/apt/keyrings/docker.gpg >> /tmp/app_install.log 2>&1
-    fi
-
-    # Add Docker repository
-    if [ ! -f /etc/apt/sources.list.d/docker.list ]; then
-        echo \
-          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-          $(lsb_release -cs) stable" | \
-          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-        sudo apt-get update >> /tmp/app_install.log 2>&1
-    fi
-
-    # Install required dependencies
-    log_info "Installing Docker Desktop dependencies (qemu, pass, uidmap)..."
-    sudo apt-get install -y \
-        qemu-system-x86 \
-        pass \
-        uidmap \
-        docker-ce-cli \
-        docker-buildx-plugin \
-        docker-compose-plugin >> /tmp/app_install.log 2>&1
-
-    local temp_deb="/tmp/docker-desktop.deb"
-
-    log_info "Downloading Docker Desktop (large file, may take a while)..."
-    if curl -L "https://desktop.docker.com/linux/main/amd64/docker-desktop-amd64.deb" -o "$temp_deb" 2>&1 | tee -a /tmp/app_install.log; then
-        # Verify it's a valid deb file
-        if file "$temp_deb" | grep -q "Debian"; then
-            log_info "Installing Docker Desktop..."
-            if sudo dpkg -i "$temp_deb" >> /tmp/app_install.log 2>&1; then
-                sudo apt-get install -f -y >> /tmp/app_install.log 2>&1
-                rm -f "$temp_deb"
-                track_installed "Docker Desktop"
-                log_info "You may need to log out and back in for Docker Desktop to work"
-            else
-                rm -f "$temp_deb"
-                track_failed "Docker Desktop" "installation failed"
-            fi
-        else
-            log_error "Downloaded file is not a valid .deb package"
-            rm -f "$temp_deb"
-            track_failed "Docker Desktop" "invalid file downloaded"
-        fi
-    else
-        rm -f "$temp_deb"
-        track_failed "Docker Desktop" "download failed - check network"
-    fi
-}
 
 install_vscode() {
     if command_exists code; then
@@ -1064,12 +988,6 @@ uninstall_chrome() {
     fi
 }
 
-uninstall_docker_desktop() {
-    if dpkg -l | grep -q docker-desktop; then
-        sudo apt-get remove -y docker-desktop >> /tmp/app_install.log 2>&1
-        track_uninstalled "Docker Desktop"
-    fi
-}
 
 uninstall_obsidian() {
     local uninstalled=false
