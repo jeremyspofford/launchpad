@@ -690,9 +690,33 @@ install_ghostty() {
 }
 
 install_cursor() {
-    # Check both AppImage and deb installation
+    # Check if main app is installed
+    local app_installed=false
     if command_exists cursor || [ -f ~/.local/bin/cursor.AppImage ]; then
+        app_installed=true
+    fi
+
+    # Check if CLI is installed
+    local cli_installed=false
+    if [ -f ~/.local/bin/cursor-agent ]; then
+        cli_installed=true
+    fi
+
+    # If both installed, skip
+    if [ "$app_installed" = true ] && [ "$cli_installed" = true ]; then
         track_skipped "Cursor"
+        return 0
+    fi
+
+    # If app installed but CLI missing, install CLI only
+    if [ "$app_installed" = true ]; then
+        log_info "Installing missing Cursor CLI..."
+        if curl -fsSL https://cursor.com/install | bash >> /tmp/app_install.log 2>&1; then
+            log_success "Cursor CLI installed"
+        else
+            log_warning "Cursor CLI installation failed"
+        fi
+        track_skipped "Cursor (added CLI)"
         return 0
     fi
     
@@ -707,6 +731,10 @@ install_cursor() {
             if sudo dpkg -i "$temp_deb" >> /tmp/app_install.log 2>&1; then
                 sudo apt-get install -f -y >> /tmp/app_install.log 2>&1
                 rm -f "$temp_deb"
+                
+                log_info "Installing Cursor CLI..."
+                curl -fsSL https://cursor.com/install | bash >> /tmp/app_install.log 2>&1
+                
                 track_installed "Cursor"
             else
                 rm -f "$temp_deb"
@@ -1033,9 +1061,33 @@ uninstall_ghostty() {
 }
 
 uninstall_cursor() {
+    local uninstalled=false
+
+    # Uninstall CLI first
+    if [ -f ~/.local/bin/cursor-agent ] || [ -d ~/.local/share/cursor-agent ]; then
+        log_info "Removing Cursor CLI..."
+        rm -f ~/.local/bin/agent
+        rm -f ~/.local/bin/cursor-agent
+        rm -rf ~/.local/share/cursor-agent
+        # We don't mark uninstalled yet, as we want to remove the main app too
+    fi
+
+    # Check for AppImage
     if [ -f ~/.local/bin/cursor.AppImage ]; then
         rm -f ~/.local/bin/cursor.AppImage
         rm -f ~/.local/share/applications/cursor.desktop
+        log_info "Removed Cursor AppImage"
+        uninstalled=true
+    fi
+
+    # Check for Deb/Apt package
+    if dpkg -l | grep -qE "^ii\s+cursor\s+"; then
+        sudo apt-get remove -y cursor >> /tmp/app_install.log 2>&1
+        log_info "Removed Cursor package"
+        uninstalled=true
+    fi
+
+    if [ "$uninstalled" = true ]; then
         track_uninstalled "Cursor"
     fi
 }
