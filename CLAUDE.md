@@ -49,7 +49,7 @@ dotfiles/
 
 - **Shell-based setup** - Pure bash scripts, no Ansible
 - **Multi-platform** - macOS, Linux (apt/dnf/pacman), WSL
-- **Interactive installer** - Whiptail menu for app selection
+- **Hybrid app selection** - Interactive checkbox menu OR config-based automation
 - **Automatic backups** - All dotfiles backed up before changes
 - **Theme** - Catppuccin with auto dark/light mode
 - **AI tools** - Neovim with Copilot, Avante, Aider
@@ -61,11 +61,11 @@ dotfiles/
 | File | Purpose |
 |------|---------|
 | `scripts/setup.sh` | Single entry point for installation |
-| `scripts/unified_app_manager.sh` | Interactive app installer (replaces old install_gui_apps.sh) |
-| `.config.template` | User configuration template |
+| `scripts/unified_app_manager.sh` | Hybrid app installer (interactive whiptail OR non-interactive .config) |
+| `.config.template` | Configuration template for git identity, editor preferences, shell choice, terminal settings, and **application selection** (INSTALL_* variables) |
 | `.config` | User's personal config (not tracked, created from template) |
 | `scripts/lib/config.sh` | Configuration management functions |
-| `home/.config/mise/mise.toml` | Runtime versions (27+ tools including Claude, Gemini) |
+| `home/.config/mise/config.toml` | Runtime versions (27+ tools including Claude, Gemini) |
 | `home/.secrets.template` | 1Password secrets template |
 | `home/.config/git/identity.gitconfig.template` | Git identity (not tracked) |
 | `home/.zshrc` | Shell config with ~/.local/bin in PATH |

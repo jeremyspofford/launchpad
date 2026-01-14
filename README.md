@@ -69,6 +69,35 @@ Machine-specific config (not tracked):
 cp ~/.zshrc.local.template ~/.zshrc.local
 ```
 
+### Application Selection
+
+Control which applications get installed:
+
+**Interactive Mode** (default):
+```bash
+./scripts/setup.sh
+# Shows checkbox menu with apps pre-selected based on .config
+```
+
+**Non-Interactive Mode** (for automation):
+```bash
+# Edit .config to set INSTALL_* variables
+vim .config
+
+# Run without interactive prompts
+./scripts/setup.sh --non-interactive
+```
+
+**Configuration Variables**:
+All applications have `INSTALL_*` variables in `.config`:
+- `INSTALL_ZSH="true"` - Zsh shell
+- `INSTALL_NEOVIM="true"` - Neovim editor
+- `INSTALL_GHOSTTY="true"` - Ghostty terminal
+- `INSTALL_CHROME="true"` - Google Chrome
+- See `.config.template` for complete list
+
+**Note**: Non-interactive mode only installs apps, never uninstalls. Use interactive mode to uninstall.
+
 ## 🔑 Multi-Identity SSH
 
 Use different SSH keys for personal/work:

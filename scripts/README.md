@@ -40,25 +40,39 @@ Options:
 
 ### `unified_app_manager.sh` - Application Manager
 
-Interactive application installer with whiptail menu system.
+Unified application installer with interactive checkbox menu and configuration-based automation.
 
 **Usage:**
 
 ```bash
+# Interactive mode (shows whiptail menu)
 ./scripts/unified_app_manager.sh
+
+# Non-interactive mode (reads from .config)
+./scripts/unified_app_manager.sh --non-interactive
 ```
 
 **Features:**
-- Interactive selection menu for all applications
-- Install/uninstall management
-- Tracks installation status
-- Supports:
-  - System tools (Zsh, Tmux, Neovim, mise)
-  - Terminal emulators (Ghostty)
-  - IDEs (Cursor, VS Code, Antigravity)
-  - Browsers (Chrome, Brave)
-  - Productivity apps (Obsidian, Notion, 1Password)
-  - Development tools (Orca Slicer, Claude Desktop)
+- **Interactive Mode**: Shows checkbox menu with apps pre-selected based on:
+  - Current installations (prevents accidental uninstall)
+  - `.config` defaults (INSTALL_* variables)
+- **Non-Interactive Mode**: Installs apps based on `.config` without prompting
+- **Uninstall Support**: Unchecking installed apps removes them (interactive only)
+- **Tracking**: Saves selections to `~/.config/dotfiles/app-selections`
+
+**Configuration:**
+Set `INSTALL_*` variables in `.config` to control defaults:
+- `INSTALL_ZSH="true"` - System tools (zsh, tmux, neovim, mise)
+- `INSTALL_GHOSTTY="true"` - Terminal emulators
+- `INSTALL_CURSOR="false"` - IDEs and code editors
+- `INSTALL_CHROME="true"` - Browsers and desktop apps
+
+See `.config.template` for complete list of 16+ applications.
+
+**Safety:**
+- Non-interactive mode NEVER uninstalls, only installs
+- Interactive mode warns before uninstalling
+- Previous selections tracked to detect uninstalls
 
 ### `validate-setup.sh` - System Validation
 

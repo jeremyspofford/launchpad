@@ -19,7 +19,7 @@ The setup is managed by a series of shell scripts that handle everything from sy
 *   `home/`: This directory mirrors the user's home (`~`) directory. It contains all the configuration files (dotfiles) that will be symlinked into place. This includes configurations for Zsh (`.zshrc`), Git (`.gitconfig`), Neovim (`.config/nvim/`), tmux (`.tmux.conf`), and more.
 *   `docs/`: Contains supplementary documentation, including a detailed `USAGE.md` guide and cheatsheets for various tools.
 *   `templates/`: Holds reusable components, such as a logger script and a Terraform formatter setup, which can be copied into other projects.
-*   `home/.config/mise/mise.toml.template`: Defines the command-line tools to be installed and managed by `mise`, ensuring consistent versions across all systems.
+*   `home/.config/mise/config.toml.template`: Defines the command-line tools to be installed and managed by `mise`, ensuring consistent versions across all systems.
 
 ## Usage and Workflows
 
@@ -74,7 +74,7 @@ cd ~/workspace/dotfiles
 
 ## Development Conventions
 
-*   **Tool Version Management:** The `mise` tool is used to manage versions of command-line tools. New tools should be added to the `home/.config/mise/mise.toml.template` file.
+*   **Tool Version Management:** The `mise` tool is used to manage versions of command-line tools. New tools should be added to the `home/.config/mise/config.toml.template` file.
 *   **Configuration Management:** All dotfiles are managed via GNU Stow. To add a new configuration, place the file in the `home/` directory in its corresponding location, and `stow` will handle the symlinking.
 *   **Idempotency:** The setup scripts are designed to be idempotent, meaning they can be run multiple times without causing issues. Any new scripts or modifications should follow this principle.
 *   **Cross-Platform Compatibility:** Changes should be compatible with macOS, Linux (Debian/Ubuntu), and WSL. The scripts use platform detection to handle any necessary differences.

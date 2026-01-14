@@ -128,7 +128,7 @@ EOF
 Manage mise tools:
   • View installed: mise list
   • Add a tool: mise use -g <tool>@latest
-  • Remove a tool: Remove from ~/.config/mise/mise.toml, then: mise uninstall <tool>
+  • Remove a tool: Remove from ~/.config/mise/config.toml, then: mise uninstall <tool>
   • Update all: mise upgrade
 
 Re-run this manager:
@@ -213,7 +213,71 @@ EOF
 ################################################################################
 
 select_applications() {
-    # Set high contrast colors for all whiptail dialogs
+    local non_interactive=false
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --non-interactive)
+                non_interactive=true
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    # Non-interactive mode: read from .config file
+    if [ "$non_interactive" = true ]; then
+        log_info "Non-interactive mode: reading app selections from .config"
+
+        # Source config if exists
+        local config_file="${DOTFILES_DIR:-$HOME/workspace/dotfiles}/.config"
+        if [ ! -f "$config_file" ]; then
+            log_warning "No .config file found, using template defaults"
+            config_file="${DOTFILES_DIR:-$HOME/workspace/dotfiles}/.config.template"
+        fi
+
+        if [ -f "$config_file" ]; then
+            source "$config_file"
+        fi
+
+        # Build selection list based on INSTALL_* variables
+        local selections=""
+
+        [ "$INSTALL_ZSH" = "true" ] && selections="$selections zsh"
+        [ "$INSTALL_TMUX" = "true" ] && selections="$selections tmux"
+        [ "$INSTALL_NEOVIM" = "true" ] && selections="$selections neovim"
+        [ "$INSTALL_MISE" = "true" ] && selections="$selections mise"
+        [ "$INSTALL_MDVIEW" = "true" ] && selections="$selections mdview"
+        [ "$INSTALL_GHOSTTY" = "true" ] && selections="$selections ghostty"
+        [ "$INSTALL_CURSOR" = "true" ] && selections="$selections cursor"
+        [ "$INSTALL_ANTIGRAVITY" = "true" ] && selections="$selections antigravity"
+        [ "$INSTALL_CLAUDE_DESKTOP" = "true" ] && selections="$selections claude_desktop"
+        [ "$INSTALL_CHROME" = "true" ] && selections="$selections chrome"
+        [ "$INSTALL_VSCODE" = "true" ] && selections="$selections vscode"
+        [ "$INSTALL_BRAVE" = "true" ] && selections="$selections brave"
+        [ "$INSTALL_NOTION" = "true" ] && selections="$selections notion"
+        [ "$INSTALL_OBSIDIAN" = "true" ] && selections="$selections obsidian"
+        [ "$INSTALL_1PASSWORD" = "true" ] && selections="$selections 1password"
+        [ "$INSTALL_ORCA_SLICER" = "true" ] && selections="$selections orca_slicer"
+
+        # Save selections
+        mkdir -p ~/.config/dotfiles
+        echo "$selections" > ~/.config/dotfiles/app-selections
+
+        if [ -z "$selections" ]; then
+            log_warning "No applications configured for installation"
+        else
+            log_info "Selected apps: $selections"
+        fi
+
+        echo "$selections"
+        return 0
+    fi
+
+    # Interactive mode: Set high contrast colors for all whiptail dialogs
     export NEWT_COLORS='
 root=white,black
 window=white,black
@@ -229,13 +293,23 @@ listbox=white,black
 actlistbox=black,cyan
 sellistbox=black,cyan
 '
-    
+
+    # Interactive mode: Load config for defaults
+    local config_file="${DOTFILES_DIR:-$HOME/workspace/dotfiles}/.config"
+    if [ ! -f "$config_file" ]; then
+        config_file="${DOTFILES_DIR:-$HOME/workspace/dotfiles}/.config.template"
+    fi
+
+    if [ -f "$config_file" ]; then
+        source "$config_file"
+    fi
+
     # Load previous selections
     local previous=""
     if [ -f ~/.config/dotfiles/app-selections ]; then
         previous=$(cat ~/.config/dotfiles/app-selections)
     fi
-    
+
     # Detect what's currently installed to pre-check items
     local zsh_status="OFF"
     local tmux_status="OFF"
@@ -253,25 +327,24 @@ sellistbox=black,cyan
     local obsidian_status="OFF"
     local onepassword_status="OFF"
     local orca_slicer_status="OFF"
-    
-    # Check what's installed
-    command_exists zsh && zsh_status="ON"
-    command_exists tmux && tmux_status="ON"
-    command_exists nvim && neovim_status="ON"
-    command_exists mise && mise_status="ON"
-    command_exists mdview && mdview_status="ON"
-    command_exists ghostty && ghostty_status="ON"
-    (command_exists cursor || [ -f ~/.local/bin/cursor.AppImage ]) && cursor_status="ON"
-    # Antigravity: check for package (handles spaces before status)
-    (dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii") && antigravity_status="ON"
-    (snap list 2>/dev/null | grep -q "claudeai-desktop") && claude_desktop_status="ON"
-    command_exists google-chrome && chrome_status="ON"
-    command_exists code && vscode_status="ON"
-    command_exists brave-browser && brave_status="ON"
-    (snap list 2>/dev/null | grep -q "notion-snap-reborn") && notion_status="ON"
-    (command_exists obsidian || snap list 2>/dev/null | grep -q "obsidian") && obsidian_status="ON"
-    command_exists 1password && onepassword_status="ON"
-    [ -f ~/.local/bin/orca-slicer.AppImage ] && orca_slicer_status="ON"
+
+    # Pre-check if installed OR if config says to install
+    (command_exists zsh || [ "$INSTALL_ZSH" = "true" ]) && zsh_status="ON"
+    (command_exists tmux || [ "$INSTALL_TMUX" = "true" ]) && tmux_status="ON"
+    (command_exists nvim || [ "$INSTALL_NEOVIM" = "true" ]) && neovim_status="ON"
+    (command_exists mise || [ "$INSTALL_MISE" = "true" ]) && mise_status="ON"
+    (command_exists mdview || [ "$INSTALL_MDVIEW" = "true" ]) && mdview_status="ON"
+    (command_exists ghostty || [ "$INSTALL_GHOSTTY" = "true" ]) && ghostty_status="ON"
+    ((command_exists cursor || [ -f ~/.local/bin/cursor.AppImage ]) || [ "$INSTALL_CURSOR" = "true" ]) && cursor_status="ON"
+    ((dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii") || [ "$INSTALL_ANTIGRAVITY" = "true" ]) && antigravity_status="ON"
+    ((snap list 2>/dev/null | grep -q "claudeai-desktop") || [ "$INSTALL_CLAUDE_DESKTOP" = "true" ]) && claude_desktop_status="ON"
+    (command_exists google-chrome || [ "$INSTALL_CHROME" = "true" ]) && chrome_status="ON"
+    (command_exists code || [ "$INSTALL_VSCODE" = "true" ]) && vscode_status="ON"
+    (command_exists brave-browser || [ "$INSTALL_BRAVE" = "true" ]) && brave_status="ON"
+    ((snap list 2>/dev/null | grep -q "notion-snap-reborn") || [ "$INSTALL_NOTION" = "true" ]) && notion_status="ON"
+    ((command_exists obsidian || snap list 2>/dev/null | grep -q "obsidian") || [ "$INSTALL_OBSIDIAN" = "true" ]) && obsidian_status="ON"
+    (command_exists 1password || [ "$INSTALL_1PASSWORD" = "true" ]) && onepassword_status="ON"
+    ([ -f ~/.local/bin/orca-slicer.AppImage ] || [ "$INSTALL_ORCA_SLICER" = "true" ]) && orca_slicer_status="ON"
     
     # Show re-run warning if applicable
     if [ -n "$previous" ]; then
@@ -300,7 +373,7 @@ System Tools:" 28 78 19 \
 "zsh" "Zsh shell" "$zsh_status" \
 "tmux" "Terminal multiplexer" "$tmux_status" \
 "neovim" "Text editor" "$neovim_status" \
-"mise" "mise (installs ALL tools from mise.toml)" "$mise_status" \
+"mise" "mise (installs ALL tools from config.toml)" "$mise_status" \
 "mdview" "Markdown viewer (renders .md in browser)" "$mdview_status" \
 "ghostty" "Ghostty terminal" "$ghostty_status" \
 "cursor" "Cursor AI IDE" "$cursor_status" \
@@ -521,16 +594,16 @@ install_mise() {
         
         log_success "✅ mise installed"
         
-        # Install tools from mise.toml if it exists
-        if [ -f ~/.config/mise/mise.toml ]; then
+        # Install tools from config.toml if it exists
+        if [ -f ~/.config/mise/config.toml ]; then
             echo
             log_heredoc "${CYAN}" <<EOF
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📦 Installing Tools from mise.toml
+📦 Installing Tools from config.toml
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 This will install ALL tools configured in:
-  ~/.config/mise/mise.toml
+  ~/.config/mise/config.toml
 
 Including:
   • AWS/Terraform tools (aws-cli, terraform, etc.)
@@ -546,7 +619,7 @@ Including:
    • View installed: mise list
    • Add a tool: mise use -g <tool>@latest
    • Remove a tool: 
-     1. Delete from ~/.config/mise/mise.toml
+     1. Delete from ~/.config/mise/config.toml
      2. Run: mise uninstall <tool>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -556,22 +629,22 @@ EOF
             
             if mise install >> /tmp/app_install.log 2>&1; then
                 echo
-                log_success "✅ Tools installed from mise.toml"
+                log_success "✅ Tools installed from config.toml"
                 echo
                 log_info "Installed tools:"
                 mise list
                 echo
             else
-                log_warning "Some tools failed to install from mise.toml"
+                log_warning "Some tools failed to install from config.toml"
                 log_info "Check /tmp/app_install.log for details"
                 log_info "You can retry with: mise install"
             fi
         else
-            log_info "No mise.toml found - tools will be available after stowing dotfiles"
+            log_info "No config.toml found - tools will be available after stowing dotfiles"
             log_info "After stowing, run: mise install"
         fi
         
-        track_installed "mise + CLI tools from mise.toml"
+        track_installed "mise + CLI tools from config.toml"
     else
         track_failed "mise" "install script failed"
     fi
@@ -991,14 +1064,14 @@ uninstall_chrome() {
 
 uninstall_obsidian() {
     local uninstalled=false
-    
+
     # Check for snap version
     if snap list 2>/dev/null | grep -q "obsidian"; then
         sudo snap remove obsidian >> /tmp/app_install.log 2>&1
         log_info "Removed Obsidian snap"
         uninstalled=true
     fi
-    
+
     # Check for AppImage version
     if [ -f ~/.local/bin/obsidian.AppImage ]; then
         rm -f ~/.local/bin/obsidian.AppImage
@@ -1007,9 +1080,52 @@ uninstall_obsidian() {
         log_info "Removed Obsidian AppImage"
         uninstalled=true
     fi
-    
+
     if [ "$uninstalled" = true ]; then
         track_uninstalled "Obsidian"
+    fi
+}
+
+uninstall_vscode() {
+    if command_exists code; then
+        sudo apt-get remove -y code >> /tmp/app_install.log 2>&1
+        sudo rm -f /etc/apt/sources.list.d/vscode.list
+        sudo rm -f /etc/apt/keyrings/packages.microsoft.gpg
+        track_uninstalled "VS Code"
+    fi
+}
+
+uninstall_brave() {
+    if command_exists brave-browser; then
+        sudo apt-get remove -y brave-browser >> /tmp/app_install.log 2>&1
+        sudo rm -f /etc/apt/sources.list.d/brave-browser-release.list
+        sudo rm -f /usr/share/keyrings/brave-browser-archive-keyring.gpg
+        track_uninstalled "Brave Browser"
+    fi
+}
+
+uninstall_notion() {
+    if snap list 2>/dev/null | grep -q "notion-snap-reborn"; then
+        sudo snap remove notion-snap-reborn >> /tmp/app_install.log 2>&1
+        track_uninstalled "Notion"
+    fi
+}
+
+uninstall_1password() {
+    if command_exists 1password; then
+        sudo apt-get remove -y 1password >> /tmp/app_install.log 2>&1
+        sudo rm -f /etc/apt/sources.list.d/1password.list
+        sudo rm -f /usr/share/keyrings/1password-archive-keyring.gpg
+        track_uninstalled "1Password"
+    fi
+}
+
+uninstall_orca_slicer() {
+    if [ -f ~/.local/bin/orca-slicer.AppImage ]; then
+        rm -f ~/.local/bin/orca-slicer.AppImage
+        rm -f ~/.local/share/applications/orca-slicer.desktop
+        rm -f ~/.local/share/icons/hicolor/256x256/apps/orca-slicer.png
+        track_uninstalled "Orca Slicer"
     fi
 }
 
@@ -1019,50 +1135,63 @@ uninstall_obsidian() {
 
 main() {
     > /tmp/app_install.log
-    
+
     log_section "Application Manager"
     log_info "Installation log: /tmp/app_install.log"
     echo
-    
+
+    # Parse arguments to check for non-interactive mode
+    local non_interactive_flag=""
+    for arg in "$@"; do
+        if [ "$arg" = "--non-interactive" ]; then
+            non_interactive_flag="--non-interactive"
+            log_info "Running in non-interactive mode"
+        fi
+    done
+
     # Debug: Log start
     echo "DEBUG: Starting unified app manager" >> /tmp/app_install.log
-    
-    # Ensure whiptail is available
-    if ! command_exists whiptail; then
-        log_info "Installing whiptail for interactive menu..."
-        sudo apt-get update >> /tmp/app_install.log 2>&1
-        sudo apt-get install -y whiptail >> /tmp/app_install.log 2>&1
-        
+
+    # Only check for whiptail in interactive mode
+    if [ -z "$non_interactive_flag" ]; then
+        # Ensure whiptail is available
         if ! command_exists whiptail; then
-            log_error "Failed to install whiptail - cannot show interactive menu"
-            log_info "Please install whiptail manually: sudo apt-get install whiptail"
-            exit 1
+            log_info "Installing whiptail for interactive menu..."
+            sudo apt-get update >> /tmp/app_install.log 2>&1
+            sudo apt-get install -y whiptail >> /tmp/app_install.log 2>&1
+
+            if ! command_exists whiptail; then
+                log_error "Failed to install whiptail - cannot show interactive menu"
+                log_info "Please install whiptail manually: sudo apt-get install whiptail"
+                exit 1
+            fi
         fi
+
+        echo "DEBUG: whiptail is available" >> /tmp/app_install.log
     fi
-    
-    echo "DEBUG: whiptail is available" >> /tmp/app_install.log
+
     echo "DEBUG: About to call select_applications" >> /tmp/app_install.log
-    
-    # Show unified selection menu
-    selections=$(select_applications)
-    
+
+    # Show unified selection menu (pass flag if present)
+    selections=$(select_applications $non_interactive_flag)
+
     echo "DEBUG: Returned from select_applications" >> /tmp/app_install.log
     echo "DEBUG: Selections = $selections" >> /tmp/app_install.log
-    
+
     # Install selected applications
     for app in $selections; do
         app=$(echo "$app" | tr -d '"')
-        
+
         # Skip empty entries (from separator lines)
         if [ -z "$app" ]; then
             continue
         fi
-        
+
         log_section "Installing $(echo $app | tr '_' ' ' | sed 's/\b\(.\)/\u\1/g')"
         install_"$app" || true
         echo
     done
-    
+
     # Show dashboard
     show_dashboard
 }

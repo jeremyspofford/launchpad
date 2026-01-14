@@ -107,14 +107,14 @@ install_oh_my_zsh() {
 
 # --- Run mise install ---
 run_mise_install() {
-    local mise_config="$HOME/.config/mise/mise.toml"
+    local mise_config="$HOME/.config/mise/config.toml"
 
     if [[ ! -f "$mise_config" ]]; then
-        log_warning "mise.toml not found at $mise_config - skipping tool installation"
+        log_warning "config.toml not found at $mise_config - skipping tool installation"
         return
     fi
 
-    log_info "Installing tools from mise.toml..."
+    log_info "Installing tools from config.toml..."
     mise install --yes
     log_success "mise tools installed"
 }

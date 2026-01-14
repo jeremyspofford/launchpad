@@ -106,7 +106,7 @@ PREFERRED_BROWSER="chrome"
 
 # Install Docker?
 # Options: "true", "false"
-# Note: Installs via mise, not Docker Desktop
+# Note: Docker is not managed by the unified app manager - install via mise
 INSTALL_DOCKER="false"
 
 # Install Obsidian?
@@ -114,6 +114,33 @@ INSTALL_OBSIDIAN="false"
 
 # Install 1Password?
 INSTALL_1PASSWORD="true"
+
+# ============================================================================ #
+# Application Installation Preferences
+# ============================================================================ #
+# Control which applications are installed during setup
+# Interactive mode: pre-selects these apps in the checkbox menu
+# Non-interactive mode: installs these apps without prompting
+
+# System Tools
+INSTALL_ZSH="true"
+INSTALL_TMUX="true"
+INSTALL_NEOVIM="true"
+INSTALL_MISE="true"          # Installs ALL tools from config.toml
+INSTALL_MDVIEW="false"
+
+# Terminals & IDEs
+INSTALL_GHOSTTY="true"
+INSTALL_CURSOR="false"
+INSTALL_ANTIGRAVITY="false"
+INSTALL_VSCODE="false"
+
+# Desktop Applications
+INSTALL_CLAUDE_DESKTOP="false"
+INSTALL_CHROME="true"
+INSTALL_BRAVE="false"
+INSTALL_NOTION="false"
+INSTALL_ORCA_SLICER="false"
 
 # ============================================================================ #
 # Privacy & Security

@@ -59,6 +59,23 @@ INSTALL_OBSIDIAN=false
 PREFERENCES_DIR="$HOME/.config/dotfiles"
 PREFERENCES_FILE="$PREFERENCES_DIR/preferences"
 
+# Set high contrast colors for all whiptail dialogs
+export NEWT_COLORS='
+root=white,black
+window=white,black
+border=cyan,black
+textbox=white,black
+button=black,cyan
+compactbutton=white,black
+checkbox=white,black
+actcheckbox=black,cyan
+entry=white,black
+label=white,black
+listbox=white,black
+actlistbox=black,cyan
+sellistbox=black,cyan
+'
+
 # System restore configuration
 RESTORE_DIR="$HOME/.system-snapshots"
 PACKAGE_MANIFEST="$RESTORE_DIR/packages-$BACKUP_TIMESTAMP.txt"
@@ -1265,12 +1282,12 @@ create_template_files() {
         fi
     fi
 
-    # Don't overwrite mise.toml if user already has one configured
-    if [ ! -f "$HOME/.config/mise/mise.toml" ] && [ ! -f "$HOME/mise.toml" ]; then
-        if [ -f "$HOME/.config/mise/mise.toml.template" ] || [ -L "$HOME/.config/mise/mise.toml.template" ]; then
-            cp "$HOME/.config/mise/mise.toml.template" "$HOME/.config/mise/mise.toml"
+    # Don't overwrite config.toml if user already has one configured
+    if [ ! -f "$HOME/.config/mise/config.toml" ] && [ ! -f "$HOME/mise.toml" ]; then
+        if [ -f "$HOME/.config/mise/config.toml.template" ] || [ -L "$HOME/.config/mise/config.toml.template" ]; then
+            cp "$HOME/.config/mise/config.toml.template" "$HOME/.config/mise/config.toml"
             log_success "✅ Created mise config from template"
-            log_info "Edit ~/.config/mise/mise.toml to add tools"
+            log_info "Edit ~/.config/mise/config.toml to add tools"
         fi
     else
         log_info "mise config already exists, skipping template"
@@ -1402,18 +1419,30 @@ main() {
         
         # Run unified application manager (handles ALL app installations)
         log_section "Application Manager"
-        log_info "Opening unified application manager..."
+
+        if [ "$SKIP_INTERACTIVE" = true ]; then
+            log_info "Running application manager in non-interactive mode..."
+        else
+            log_info "Opening unified application manager..."
+        fi
         echo
-        
+
         if [ -f "$SCRIPT_DIR/unified_app_manager.sh" ]; then
             # Ensure it's executable
             chmod +x "$SCRIPT_DIR/unified_app_manager.sh"
-            
-            # Call it directly to preserve terminal
-            # If user cancels (exit 1), stop the whole setup
-            if ! "$SCRIPT_DIR/unified_app_manager.sh"; then
-                log_warning "Application installation cancelled by user"
-                exit 0
+
+            # Pass --non-interactive flag if in non-interactive mode
+            if [ "$SKIP_INTERACTIVE" = true ]; then
+                if ! "$SCRIPT_DIR/unified_app_manager.sh" --non-interactive; then
+                    log_warning "Application installation had issues"
+                fi
+            else
+                # Call it directly to preserve terminal
+                # If user cancels (exit 1), stop the whole setup
+                if ! "$SCRIPT_DIR/unified_app_manager.sh"; then
+                    log_warning "Application installation cancelled by user"
+                    exit 0
+                fi
             fi
             track_completed "Applications installed"
         else
