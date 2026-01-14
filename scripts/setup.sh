@@ -1405,7 +1405,11 @@ main() {
             chmod +x "$SCRIPT_DIR/unified_app_manager.sh"
             
             # Call it directly to preserve terminal
-            "$SCRIPT_DIR/unified_app_manager.sh" || true
+            # If user cancels (exit 1), stop the whole setup
+            if ! "$SCRIPT_DIR/unified_app_manager.sh"; then
+                log_warning "Application installation cancelled by user"
+                exit 0
+            fi
             track_completed "Applications installed"
         else
             log_warning "Unified app manager not found at $SCRIPT_DIR/unified_app_manager.sh"

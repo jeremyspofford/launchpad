@@ -13,7 +13,7 @@ window-padding-x = 10
 window-padding-y = 10
 
 # Theme - TokyoNight (auto-switches with system)
-theme = light:TokyoNight Day,dark:TokyoNight
+theme = dark:TokyoNight,light:TokyoNight Day
 
 # Shell integration
 shell-integration = zsh

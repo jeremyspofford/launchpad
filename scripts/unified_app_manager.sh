@@ -164,7 +164,7 @@ EOF
         if [ "$should_show_guide" = true ]; then
             echo
             log_heredoc "${CYAN}" <<EOF
-📖 Opening Terminal Font Setup Guide...
+📖 Opening Terminal Font Setup Guide in Browser...
 EOF
             # Find the TERMINAL_FONT_SETUP.md file
             local font_guide=""
@@ -177,12 +177,27 @@ EOF
             fi
             
             if [ -n "$font_guide" ] && [ -f "$font_guide" ]; then
-                # Render directly in the terminal using cat
-                log_success "✅ Font setup guide:"
-                echo
-                cat "$font_guide"
-                echo
-                log_info "Follow the instructions above to set your terminal font to 'JetBrainsMono Nerd Font Mono'"
+                log_info "Starting mdview server..."
+                
+                # mdview might need the directory, not the file
+                local guide_dir=$(dirname "$font_guide")
+                
+                # Start mdview pointing to the directory
+                (cd "$guide_dir" && mdview . --port 8765) > /dev/null 2>&1 &
+                local mdview_pid=$!
+                sleep 2
+                
+                # Try to open browser to the specific file
+                local guide_file=$(basename "$font_guide")
+                if command -v xdg-open > /dev/null; then
+                    xdg-open "http://localhost:8765/${guide_file}" > /dev/null 2>&1
+                elif command -v open > /dev/null; then
+                    open "http://localhost:8765/${guide_file}" > /dev/null 2>&1
+                fi
+                
+                log_success "✅ Font setup guide opened at http://localhost:8765/${guide_file}"
+                log_info "Follow the instructions to set your terminal font to 'JetBrainsMono Nerd Font Mono'"
+                log_info "Press Ctrl+C in this terminal to stop the mdview server when done"
             else
                 log_warning "Font guide not found (looked in: $SCRIPT_DIR/../docs/, $SCRIPT_DIR/../)"
                 log_info "Manually set your terminal font to: JetBrainsMono Nerd Font Mono"
@@ -198,7 +213,24 @@ EOF
 ################################################################################
 
 select_applications() {
-    # Load previous selections for pre-checking
+    # Set high contrast colors for all whiptail dialogs
+    export NEWT_COLORS='
+root=white,black
+window=white,black
+border=cyan,black
+textbox=white,black
+button=black,cyan
+compactbutton=white,black
+checkbox=white,black
+actcheckbox=black,cyan
+entry=white,black
+label=white,black
+listbox=white,black
+actlistbox=black,cyan
+sellistbox=black,cyan
+'
+    
+    # Load previous selections
     local previous=""
     if [ -f ~/.config/dotfiles/app-selections ]; then
         previous=$(cat ~/.config/dotfiles/app-selections)
@@ -211,6 +243,8 @@ select_applications() {
     local mise_status="OFF"
     local mdview_status="OFF"
     local ghostty_status="OFF"
+    local cursor_status="OFF"
+    local antigravity_status="OFF"
     local claude_desktop_status="OFF"
     local chrome_status="OFF"
     local docker_desktop_status="OFF"
@@ -228,6 +262,8 @@ select_applications() {
     command_exists mise && mise_status="ON"
     command_exists mdview && mdview_status="ON"
     command_exists ghostty && ghostty_status="ON"
+    [ -f ~/.local/bin/cursor.AppImage ] && cursor_status="ON"
+    (dpkg -l 2>/dev/null | grep -q antigravity) && antigravity_status="ON"
     (snap list 2>/dev/null | grep -q "claudeai-desktop") && claude_desktop_status="ON"
     command_exists google-chrome && chrome_status="ON"
     (dpkg -l 2>/dev/null | grep -q docker-desktop) && docker_desktop_status="ON"
@@ -268,6 +304,8 @@ System Tools:" 28 78 19 \
 "mise" "mise (installs ALL tools from mise.toml)" "$mise_status" \
 "mdview" "Markdown viewer (renders .md in browser)" "$mdview_status" \
 "ghostty" "Ghostty terminal" "$ghostty_status" \
+"cursor" "Cursor AI IDE" "$cursor_status" \
+"antigravity" "Antigravity IDE (Google)" "$antigravity_status" \
 "claude_desktop" "Claude Desktop" "$claude_desktop_status" \
 "chrome" "Google Chrome" "$chrome_status" \
 "docker_desktop" "Docker Desktop" "$docker_desktop_status" \
@@ -284,6 +322,33 @@ System Tools:" 28 78 19 \
         log_error "Selection cancelled by user"
         exit 1
     fi
+    
+    # Check if we got selections
+    if [ -z "$selections" ]; then
+        log_warning "No applications selected"
+        exit 0
+    fi
+    
+    # Handle uninstalls
+    if [ -n "$previous" ]; then
+        for prev_app in $previous; do
+            prev_app=$(echo "$prev_app" | tr -d '"')
+            if [ -z "$prev_app" ]; then continue; fi
+            
+            if ! echo "$selections" | grep -q "$prev_app"; then
+                # Redirect ALL output to stderr so nothing contaminates the return value
+                {
+                    log_section "Uninstalling $(echo $prev_app | tr '_' ' ' | sed 's/\b\(.\)/\u\1/g')"
+                    uninstall_"$prev_app" 2>&1 || log_warning "No uninstall function"
+                    echo
+                } >&2
+            fi
+        done
+    fi
+    
+    # Save selections
+    mkdir -p ~/.config/dotfiles
+    echo "$selections" > ~/.config/dotfiles/app-selections
     
     echo "$selections"
 }
@@ -527,13 +592,7 @@ install_mdview() {
         return 1
     fi
     
-    log_info "Installing mdview and its 'lynx' dependency..."
-    
-    # Install lynx for terminal rendering
-    if ! command_exists lynx; then
-        sudo apt-get install -y lynx >> /tmp/app_install.log 2>&1
-    fi
-
+    log_info "Installing mdview..."
     if npm install -g mdview >> /tmp/app_install.log 2>&1; then
         log_success "✅ mdview installed"
         track_installed "mdview"
@@ -552,13 +611,51 @@ install_ghostty() {
         return 0
     fi
     
-    log_info "Installing Ghostty via official Ubuntu install script..."
-    
-    # Official install command from ghostty.org/docs/install/binary#ubuntu
-    if /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkasberg/ghostty-ubuntu/HEAD/install.sh)" >> /tmp/app_install.log 2>&1; then
+    if sudo snap install ghostty --edge >> /tmp/app_install.log 2>&1; then
         track_installed "Ghostty"
     else
-        track_failed "Ghostty" "install script failed"
+        track_failed "Ghostty" "snap install failed"
+    fi
+}
+
+install_cursor() {
+    if [ -f ~/.local/bin/cursor.AppImage ]; then
+        track_skipped "Cursor"
+        return 0
+    fi
+    
+    mkdir -p ~/.local/bin
+    if curl -L "https://downloader.cursor.sh/linux/appImage/x64" -o ~/.local/bin/cursor.AppImage >> /tmp/app_install.log 2>&1; then
+        chmod +x ~/.local/bin/cursor.AppImage
+        track_installed "Cursor"
+    else
+        track_failed "Cursor" "download failed"
+    fi
+}
+
+install_antigravity() {
+    if [ -f ~/.local/bin/antigravity ]; then
+        track_skipped "Antigravity"
+        return 0
+    fi
+    
+    mkdir -p ~/.local/bin
+    local temp_deb="/tmp/antigravity.deb"
+    
+    log_info "Downloading Antigravity IDE..."
+    if curl -L "https://antigravity.google/download/linux" -o "$temp_deb" >> /tmp/app_install.log 2>&1; then
+        log_info "Installing Antigravity..."
+        if sudo dpkg -i "$temp_deb" >> /tmp/app_install.log 2>&1; then
+            sudo apt-get install -f -y >> /tmp/app_install.log 2>&1
+            rm -f "$temp_deb"
+            track_installed "Antigravity IDE"
+        else
+            rm -f "$temp_deb"
+            track_failed "Antigravity" "installation failed"
+        fi
+    else
+        rm -f "$temp_deb"
+        track_failed "Antigravity" "download failed"
     fi
 }
 
@@ -803,12 +900,6 @@ uninstall_mdview() {
     if command_exists mdview; then
         npm uninstall -g mdview >> /tmp/app_install.log 2>&1
         track_uninstalled "mdview"
-        
-        # Also uninstall lynx if it was installed as a dependency for mdview
-        if command_exists lynx; then
-            sudo apt-get remove -y lynx >> /tmp/app_install.log 2>&1
-            log_info "Uninstalled lynx (mdview dependency)"
-        fi
     fi
 }
 
@@ -818,8 +909,23 @@ uninstall_mdview() {
 
 uninstall_ghostty() {
     if command_exists ghostty; then
-        sudo apt-get remove -y ghostty >> /tmp/app_install.log 2>&1
+        sudo snap remove ghostty >> /tmp/app_install.log 2>&1
         track_uninstalled "Ghostty"
+    fi
+}
+
+uninstall_cursor() {
+    if [ -f ~/.local/bin/cursor.AppImage ]; then
+        rm -f ~/.local/bin/cursor.AppImage
+        rm -f ~/.local/share/applications/cursor.desktop
+        track_uninstalled "Cursor"
+    fi
+}
+
+uninstall_antigravity() {
+    if dpkg -l | grep -q antigravity; then
+        sudo apt-get remove -y antigravity >> /tmp/app_install.log 2>&1
+        track_uninstalled "Antigravity"
     fi
 }
 
@@ -896,13 +1002,6 @@ main() {
     fi
     
     echo "DEBUG: whiptail is available" >> /tmp/app_install.log
-    
-    # Load previous selections BEFORE getting new ones
-    local previous=""
-    if [ -f ~/.config/dotfiles/app-selections ]; then
-        previous=$(cat ~/.config/dotfiles/app-selections)
-    fi
-    
     echo "DEBUG: About to call select_applications" >> /tmp/app_install.log
     
     # Show unified selection menu
@@ -910,33 +1009,6 @@ main() {
     
     echo "DEBUG: Returned from select_applications" >> /tmp/app_install.log
     echo "DEBUG: Selections = $selections" >> /tmp/app_install.log
-    
-    # Check if we got selections (empty implies user cancelled or deselected all, but function handles cancel)
-    if [ -z "$selections" ]; then
-        log_warning "No applications selected"
-        # If previous existed, we might want to uninstall all? 
-        # But for safety, if string is empty, we assume nothing to do unless we want to support 'uninstall all'.
-        # The current select_applications exits on cancel. If empty string returned, it means OK with nothing selected.
-    fi
-
-    # Handle Uninstalls
-    if [ -n "$previous" ]; then
-        for prev_app in $previous; do
-            prev_app=$(echo "$prev_app" | tr -d '"')
-            if [ -z "$prev_app" ]; then continue; fi
-            
-            # If prev_app is NOT in new selections, uninstall it
-            if ! echo "$selections" | grep -q "$prev_app"; then
-                log_section "Uninstalling $(echo $prev_app | tr '_' ' ' | sed 's/\b\(.\)/\u\1/g')"
-                uninstall_"$prev_app" || log_warning "No uninstall function for $prev_app"
-                echo
-            fi
-        done
-    fi
-    
-    # Save NEW selections
-    mkdir -p ~/.config/dotfiles
-    echo "$selections" > ~/.config/dotfiles/app-selections
     
     # Install selected applications
     for app in $selections; do

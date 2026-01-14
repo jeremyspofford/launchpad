@@ -17,13 +17,14 @@ rust = "latest"
 # AI & Coding Assistants
 claude = "latest"
 gemini = "latest"
+"npm:opencode-ai" = "latest"
 "pipx:aider-chat" = "latest"
 
 # Git & Version Control
 lazygit = "latest"
 delta = "latest"
 gh = "latest"
-glab = "latest"
+# glab = "latest"
 
 # File & Text Tools
 bat = "latest"
