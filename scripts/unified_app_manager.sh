@@ -876,6 +876,16 @@ install_orca_slicer() {
         if [ "$filesize" -gt 100000000 ]; then
             chmod +x ~/.local/bin/orca-slicer.AppImage
 
+            # Download and install icon
+            log_info "Installing Orca Slicer icon..."
+            mkdir -p "$HOME/.local/share/icons/hicolor/256x256/apps"
+            if curl -sL "https://raw.githubusercontent.com/OrcaSlicer/OrcaSlicer/main/resources/images/OrcaSlicer_192px.png" \
+                -o "$HOME/.local/share/icons/hicolor/256x256/apps/orca-slicer.png" >> /tmp/app_install.log 2>&1; then
+                log_info "Icon installed successfully"
+            else
+                log_warning "Could not download icon, using default"
+            fi
+
             # Create desktop entry
             mkdir -p "$HOME/.local/share/applications"
             cat > "$HOME/.local/share/applications/orca-slicer.desktop" << EOF
