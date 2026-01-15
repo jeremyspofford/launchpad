@@ -167,5 +167,6 @@
     "repomix-commands@repomix": true,
     "serverless-eda@aws-skills": true
   },
-  "alwaysThinkingEnabled": true
+  "alwaysThinkingEnabled": true,
+  "model": "sonnet"
 }

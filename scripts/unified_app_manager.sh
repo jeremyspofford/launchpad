@@ -416,7 +416,7 @@ sellistbox=black,cyan
         (command_exists ghostty || [ "$INSTALL_GHOSTTY" = "true" ]) && ghostty_status="ON"
         ((command_exists cursor || [ -f ~/.local/bin/cursor.AppImage ]) || [ "$INSTALL_CURSOR" = "true" ]) && cursor_status="ON"
         ((dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii") || [ "$INSTALL_ANTIGRAVITY" = "true" ]) && antigravity_status="ON"
-        ((snap list 2>/dev/null | grep -q "claudeai-desktop") || [ "$INSTALL_CLAUDE_DESKTOP" = "true" ]) && claude_desktop_status="ON"
+        ((dpkg -l 2>/dev/null | grep -E "^ii\s+claude-desktop\s+" || snap list 2>/dev/null | grep -q "claudeai-desktop") || [ "$INSTALL_CLAUDE_DESKTOP" = "true" ]) && claude_desktop_status="ON"
         (command_exists google-chrome || [ "$INSTALL_CHROME" = "true" ]) && chrome_status="ON"
         (command_exists code || [ "$INSTALL_VSCODE" = "true" ]) && vscode_status="ON"
         (command_exists brave-browser || [ "$INSTALL_BRAVE" = "true" ]) && brave_status="ON"
@@ -843,21 +843,66 @@ install_antigravity() {
 
 install_claude_desktop() {
     check_wsl_gui || { track_skipped "Claude Desktop (WSL)"; return 0; }
-    
+
     if [ "$PLATFORM" = "macos" ]; then
         install_brew "claude" "true"
         return
     fi
 
-    if snap list 2>/dev/null | grep -q "claudeai-desktop"; then
+    # Check if already installed via dpkg
+    if dpkg -l 2>/dev/null | grep -E "^ii\s+claude-desktop\s+" >> /tmp/app_install.log 2>&1; then
         track_skipped "Claude Desktop"
         return 0
     fi
-    
-    if sudo snap install claudeai-desktop >> /tmp/app_install.log 2>&1; then
-        track_installed "Claude Desktop"
+
+    # Warning about unofficial installation
+    log_warning "⚠️  Using UNOFFICIAL Claude Desktop installation"
+    log_info "Source: https://github.com/aaddrick/claude-desktop-debian"
+    log_info "This is a community-maintained Debian package, not official Anthropic software"
+
+    local temp_deb="/tmp/claude-desktop.deb"
+
+    log_info "Fetching latest Claude Desktop release..."
+    local latest_url=$(curl -s https://api.github.com/repos/aaddrick/claude-desktop-debian/releases/latest 2>/dev/null | \
+        grep '"browser_download_url"' | \
+        grep '\.deb"' | \
+        head -1 | \
+        cut -d '"' -f 4)
+
+    if [ -z "$latest_url" ]; then
+        track_failed "Claude Desktop" "failed to fetch download URL"
+        return 1
+    fi
+
+    log_info "Downloading Claude Desktop from unofficial repo..."
+    if curl -L "$latest_url" -o "$temp_deb" 2>&1 | tee -a /tmp/app_install.log; then
+        if file "$temp_deb" | grep -q "Debian"; then
+            log_info "Installing Claude Desktop..."
+            # Install dependencies first
+            log_info "Installing dependencies (nodejs, npm, p7zip-full)..."
+            sudo apt-get update >> /tmp/app_install.log 2>&1
+            sudo apt-get install -y nodejs npm p7zip-full >> /tmp/app_install.log 2>&1
+
+            # Now install the package - even if dpkg fails due to dependency issues,
+            # we'll fix them with apt-get install -f
+            sudo dpkg -i "$temp_deb" >> /tmp/app_install.log 2>&1 || true
+            sudo apt-get install -f -y >> /tmp/app_install.log 2>&1
+
+            # Check if installation succeeded
+            if dpkg -l 2>/dev/null | grep -E "^ii\s+claude-desktop\s+" >> /tmp/app_install.log 2>&1; then
+                rm -f "$temp_deb"
+                track_installed "Claude Desktop (unofficial)"
+            else
+                rm -f "$temp_deb"
+                track_failed "Claude Desktop" "installation failed"
+            fi
+        else
+            rm -f "$temp_deb"
+            track_failed "Claude Desktop" "invalid file type"
+        fi
     else
-        track_failed "Claude Desktop" "snap install failed"
+        rm -f "$temp_deb"
+        track_failed "Claude Desktop" "download failed"
     fi
 }
 
@@ -1201,10 +1246,31 @@ uninstall_claude_desktop() {
     if [ "$PLATFORM" = "macos" ]; then
         brew uninstall --cask claude >> /tmp/app_install.log 2>&1
         track_uninstalled "Claude Desktop"
-    elif snap list 2>/dev/null | grep -q "claudeai-desktop"; then
-        sudo snap remove claudeai-desktop >> /tmp/app_install.log 2>&1
-        track_uninstalled "Claude Desktop"
+        return
     fi
+
+    local uninstalled=false
+
+    # Remove snap version if exists
+    if snap list 2>/dev/null | grep -q "claudeai-desktop"; then
+        sudo snap remove claudeai-desktop >> /tmp/app_install.log 2>&1
+        uninstalled=true
+    fi
+
+    # Remove debian package version if exists
+    if dpkg -l 2>/dev/null | grep -E "^ii\s+claude-desktop\s+" >> /tmp/app_install.log 2>&1; then
+        log_info "Removing Claude Desktop debian package..."
+        sudo dpkg -P claude-desktop >> /tmp/app_install.log 2>&1
+        uninstalled=true
+    fi
+
+    # Clean up user configuration
+    if [ -d ~/.config/Claude ]; then
+        log_info "Removing Claude Desktop configuration..."
+        rm -rf ~/.config/Claude
+    fi
+
+    [ "$uninstalled" = true ] && track_uninstalled "Claude Desktop"
 }
 
 uninstall_chrome() {
