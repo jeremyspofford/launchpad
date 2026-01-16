@@ -18,14 +18,15 @@ gemini = "latest"
 # codex = "latest"
 "npm:opencode-ai" = "latest"
 "pipx:aider-chat" = "latest"
+"pipx:ralph-orchestrator" = "latest"
 
 # Git & Version Control
 lazygit = "latest"
 delta = "latest"
 gitconfig = "latest"
 gh = "latest"
-# glab = "latest"
 lefthook = "latest"
+# glab = "latest"
 
 # File & Text Tools
 bat = "latest"
@@ -88,4 +89,3 @@ direnv = "latest"
 # lazyssh = "latest"
 # 1password = "latest"
 # bitwarden = "latest"
-

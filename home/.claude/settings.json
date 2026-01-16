@@ -25,11 +25,13 @@
       "Write(//Users/jeremyspofford/.claude/**)",
       "Write(//Users/jeremyspofford/.cursor/**)",
       "MultiEdit(*)",
-      "Find"
+      "Find",
+      "mcp__n8n-mcp__n8n_health_check"
     ],
     "deny": [],
     "ask": []
   },
+  "model": "opus",
   "hooks": {
     "SessionStart": [
       {
@@ -141,31 +143,13 @@
     "command": "~/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
-    "aws-agentic-ai@aws-skills": true,
-    "repomix-explorer@repomix": true,
-    "repomix-mcp@repomix": true,
-    "frontend-design@claude-plugins-official": true,
-    "context7@claude-plugins-official": true,
     "github@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
-    "security-guidance@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true,
     "explanatory-output-style@claude-plugins-official": true,
-    "Notion@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true,
-    "greptile@claude-plugins-official": true,
     "learning-output-style@claude-plugins-official": true,
-    "gitlab@claude-plugins-official": true,
-    "lua-lsp@claude-plugins-official": true,
-    "aws-cdk@aws-skills": true,
-    "aws-cost-ops@aws-skills": true,
-    "pinecone@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": true,
-    "repomix-commands@repomix": true,
-    "serverless-eda@aws-skills": true
+    "typescript-lsp@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true,
   "model": "sonnet"

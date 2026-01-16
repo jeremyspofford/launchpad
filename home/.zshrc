@@ -126,3 +126,6 @@ eval "$(command mise activate zsh)"
 
 # Load aliases immediately - they're lightweight and expected to be available
 [ -f ~/.aliases ] && source ~/.aliases
+
+# Added by Antigravity
+export PATH="/Users/jeremyspofford/.antigravity/antigravity/bin:$PATH"
