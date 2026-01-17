@@ -31,7 +31,8 @@
       "Bash(dpkg:*)",
       "Bash(sudo apt:*)",
       "Bash(mise registry:*)",
-      "Bash(mise ls-remote:*)"
+      "Bash(mise ls-remote:*)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,5 +1,6 @@
 [tools]
 # Cloud & Infrastructure
+1password-cli = "latest"
 aws-cli = "2.32.3"
 aws-sam-cli = "1.150.1"
 # iam-policy-json-to-terraform = "latest"
@@ -25,7 +26,6 @@ lazygit = "latest"
 delta = "latest"
 gitconfig = "latest"
 gh = "latest"
-lefthook = "latest"
 # glab = "latest"
 
 # File & Text Tools
@@ -48,7 +48,7 @@ shfmt = "latest"
 yamlfmt = "latest"
 yamllint = "latest"
 tflint = "latest"
-# lefthook = "latest"
+lefthook = "latest"
 # terraform-ls = "latest"
 
 # Security
@@ -77,8 +77,8 @@ pipx = "latest"
 # npm = "latest"
 node = "24.10.0"
 python = "3.12.11"
-go = "latest"
-rust = "latest"
+# go = "latest"
+# rust = "latest"
 
 # API
 # podman = "latest"

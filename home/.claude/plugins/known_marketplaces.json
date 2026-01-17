@@ -5,7 +5,7 @@
       "repo": "zxkane/aws-skills"
     },
     "installLocation": "/Users/jeremyspofford/.claude/plugins/marketplaces/aws-skills",
-    "lastUpdated": "2026-01-15T03:35:05.975Z"
+    "lastUpdated": "2026-01-17T03:18:54.494Z"
   },
   "repomix": {
     "source": {
@@ -13,7 +13,7 @@
       "repo": "yamadashy/repomix"
     },
     "installLocation": "/Users/jeremyspofford/.claude/plugins/marketplaces/repomix",
-    "lastUpdated": "2026-01-15T03:35:07.894Z"
+    "lastUpdated": "2026-01-17T03:18:56.438Z"
   },
   "claude-plugins-official": {
     "source": {
@@ -21,6 +21,6 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "/Users/jeremyspofford/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-01-15T03:35:00.867Z"
+    "lastUpdated": "2026-01-17T03:18:51.708Z"
   }
 }

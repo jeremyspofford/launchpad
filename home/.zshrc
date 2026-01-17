@@ -129,3 +129,5 @@ eval "$(command mise activate zsh)"
 
 # Added by Antigravity
 export PATH="/Users/jeremyspofford/.antigravity/antigravity/bin:$PATH"
+
+eval "$(op signin)"
