@@ -1,4 +1,141 @@
 {
+  "alwaysThinkingEnabled": true,
+  "enabledPlugins": {
+    "code-review@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "explanatory-output-style@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "learning-output-style@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "command": "if [[ -n \"$SLACK_WEBHOOK_URL\" ]]; then curl -s -X POST -H 'Content-type: application/json' --data '{\"text\":\"🤖 *Claude Code*: Awaiting your input\"}' \"$SLACK_WEBHOOK_URL\"; fi; if [[ -n \"$TEAMS_WEBHOOK_URL\" ]]; then curl -s -X POST -H 'Content-Type: application/json' -d '{\"title\": \"Claude Code\", \"text\": \"🤖 Awaiting your input\"}' \"$TEAMS_WEBHOOK_URL\"; fi; if [[ \"$OSTYPE\" == \"darwin\"* ]]; then osascript -e 'display notification \"Awaiting your input\" with title \"Claude Code\" sound name \"Ping\"' 2\u003e/dev/null; elif grep -qi microsoft /proc/version 2\u003e/dev/null; then powershell.exe -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('Awaiting your input', 'Claude Code', 0, [System.Windows.Forms.MessageBoxIcon]::Information)\" 2\u003e/dev/null; elif command -v notify-send \u0026\u003e/dev/null; then notify-send 'Claude Code' 'Awaiting your input'; fi",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "${DOTFILES_DIR:-$HOME/workspace/dotfiles}/scripts/doc-update-hook.sh '{{filePath}}'",
+            "timeout": 3,
+            "type": "command"
+          },
+          {
+            "command": "~/.claude/scripts/markdown-lint-hook.sh '{{filePath}}'",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": "Write"
+      },
+      {
+        "hooks": [
+          {
+            "command": "${DOTFILES_DIR:-$HOME/workspace/dotfiles}/scripts/doc-update-hook.sh '{{filePath}}'",
+            "timeout": 3,
+            "type": "command"
+          },
+          {
+            "command": "~/.claude/scripts/markdown-lint-hook.sh '{{filePath}}'",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "${DOTFILES_DIR:-$HOME/workspace/dotfiles}/scripts/doc-update-hook.sh '{{filePath}}'",
+            "timeout": 3,
+            "type": "command"
+          },
+          {
+            "command": "~/.claude/scripts/markdown-lint-hook.sh '{{filePath}}'",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": "MultiEdit"
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "command": "bd prime",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "echo 'Memory operation initiated' \u003e\u003e ~/mcp-operations.log",
+            "type": "command"
+          }
+        ],
+        "matcher": "mcp__memory__.*"
+      },
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/scripts/validate-routing.sh '{{toolName}}' '{{filePath}}'",
+            "type": "command"
+          },
+          {
+            "command": "~/.claude/scripts/log-routing-decision.sh 'DIRECT' 'tool-use' '{{toolName}}' '{{filePath}}'",
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write|MultiEdit"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "echo '\n⚠️  ROUTING POLICY REMINDER ⚠️\n\nBefore responding, check the decision tree in CLAUDE.md:\n1. Simple info query? → Handle directly\n2. Trivial command? → Handle directly  \n3. User named specific agent? → Use that agent\n4. Project planning? → Use project-manager\n5. ANYTHING ELSE? → USE ORCHESTRATOR-AGENT\n\n⚠️  If doing technical work directly, you should have used orchestrator!\n' \u003e\u00262",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      },
+      {
+        "hooks": [
+          {
+            "command": "bd prime",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/scripts/log-routing-decision.sh 'SESSION_END' 'session-complete' 'various'",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  },
+  "model": "sonnet",
   "permissions": {
     "allow": [
       "Bash(ansible-doc:*)",
@@ -28,129 +165,11 @@
       "Find",
       "mcp__n8n-mcp__n8n_health_check"
     ],
-    "deny": [],
-    "ask": []
-  },
-  "model": "opus",
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '\n⚠️  ROUTING POLICY REMINDER ⚠️\n\nBefore responding, check the decision tree in CLAUDE.md:\n1. Simple info query? → Handle directly\n2. Trivial command? → Handle directly  \n3. User named specific agent? → Use that agent\n4. Project planning? → Use project-manager\n5. ANYTHING ELSE? → USE ORCHESTRATOR-AGENT\n\n⚠️  If doing technical work directly, you should have used orchestrator!\n' >&2"
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if [[ -n \"$SLACK_WEBHOOK_URL\" ]]; then curl -s -X POST -H 'Content-type: application/json' --data '{\"text\":\"🤖 *Claude Code*: Awaiting your input\"}' \"$SLACK_WEBHOOK_URL\"; fi; if [[ -n \"$TEAMS_WEBHOOK_URL\" ]]; then curl -s -X POST -H 'Content-Type: application/json' -d '{\"title\": \"Claude Code\", \"text\": \"🤖 Awaiting your input\"}' \"$TEAMS_WEBHOOK_URL\"; fi; if [[ \"$OSTYPE\" == \"darwin\"* ]]; then osascript -e 'display notification \"Awaiting your input\" with title \"Claude Code\" sound name \"Ping\"' 2>/dev/null; elif grep -qi microsoft /proc/version 2>/dev/null; then powershell.exe -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('Awaiting your input', 'Claude Code', 0, [System.Windows.Forms.MessageBoxIcon]::Information)\" 2>/dev/null; elif command -v notify-send &>/dev/null; then notify-send 'Claude Code' 'Awaiting your input'; fi"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "mcp__memory__.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo 'Memory operation initiated' >> ~/mcp-operations.log"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/validate-routing.sh '{{toolName}}' '{{filePath}}'"
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/log-routing-decision.sh 'DIRECT' 'tool-use' '{{toolName}}' '{{filePath}}'"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${DOTFILES_DIR:-$HOME/workspace/dotfiles}/scripts/doc-update-hook.sh '{{filePath}}'",
-            "timeout": 3
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/markdown-lint-hook.sh '{{filePath}}'",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${DOTFILES_DIR:-$HOME/workspace/dotfiles}/scripts/doc-update-hook.sh '{{filePath}}'",
-            "timeout": 3
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/markdown-lint-hook.sh '{{filePath}}'",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${DOTFILES_DIR:-$HOME/workspace/dotfiles}/scripts/doc-update-hook.sh '{{filePath}}'",
-            "timeout": 3
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/markdown-lint-hook.sh '{{filePath}}'",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/scripts/log-routing-decision.sh 'SESSION_END' 'session-complete' 'various'"
-          }
-        ]
-      }
-    ]
+    "ask": [],
+    "deny": []
   },
   "statusLine": {
-    "type": "command",
-    "command": "~/.claude/statusline-command.sh"
-  },
-  "enabledPlugins": {
-    "github@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "explanatory-output-style@claude-plugins-official": true,
-    "learning-output-style@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true
-  },
-  "alwaysThinkingEnabled": true,
-  "model": "sonnet"
+    "command": "~/.claude/statusline-command.sh",
+    "type": "command"
+  }
 }

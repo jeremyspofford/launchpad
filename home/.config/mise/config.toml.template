@@ -138,3 +138,4 @@ legacy_version_file = true
 # - Run 'mise list' to see installed versions
 # - Per-project: create .mise.toml or .tool-versions in project directory
 
+

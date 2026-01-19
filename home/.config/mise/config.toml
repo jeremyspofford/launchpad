@@ -20,6 +20,8 @@ gemini = "latest"
 "npm:opencode-ai" = "latest"
 "pipx:aider-chat" = "latest"
 "pipx:ralph-orchestrator" = "latest"
+"npm:@beads/bd" = "latest"           # https://github.com/steveyegge/beads/tree/main
+taskwarrior = "latest"
 
 # Git & Version Control
 lazygit = "latest"

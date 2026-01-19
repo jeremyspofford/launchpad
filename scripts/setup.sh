@@ -1041,6 +1041,21 @@ install_mise() {
         fi
     fi
     
+    # Install custom plugins
+    log_info "Installing custom mise plugins..."
+    mise plugin install taskwarrior https://github.com/massa/mise-taskwarrior.git 2>/dev/null || true
+    
+    # Patch taskwarrior plugin for macOS compatibility (BSD cut vs GNU cut)
+    if [ -d "$HOME/.local/share/mise/plugins/taskwarrior" ]; then
+        log_info "Patching taskwarrior plugin for macOS compatibility..."
+        if [ -f "$HOME/.local/share/mise/plugins/taskwarrior/bin/list-all" ]; then
+            sed -i.bak 's/--delimiter v/-d v/g' "$HOME/.local/share/mise/plugins/taskwarrior/bin/list-all"
+        fi
+        if [ -f "$HOME/.local/share/mise/plugins/taskwarrior/bin/latest-stable" ]; then
+            sed -i.bak 's/--delimiter v/-d v/g' "$HOME/.local/share/mise/plugins/taskwarrior/bin/latest-stable"
+        fi
+    fi
+
     # Install CLI tools via mise if selected
     if [ "${INSTALL_CLI_TOOLS:-true}" = "true" ]; then
         install_cli_tools_with_mise
