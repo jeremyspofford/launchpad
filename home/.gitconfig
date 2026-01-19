@@ -119,3 +119,6 @@
 # AlertVenture/GitLab projects - use GitLab private email
 [includeIf "gitdir:~/workspace/"]
     path = ~/.config/git/alertventure.gitconfig
+
+[includeIf "gitdir:~/workspace/client/"]
+    path = ~/.config/git/client.gitconfig
