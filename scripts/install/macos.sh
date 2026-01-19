@@ -43,6 +43,7 @@ install_base_packages() {
         unzip
         zsh
         tmux
+        cmake
     )
 
     for package in "${packages[@]}"; do

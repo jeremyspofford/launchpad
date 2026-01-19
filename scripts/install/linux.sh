@@ -37,6 +37,7 @@ install_base_packages() {
         unzip
         zsh
         tmux
+        cmake
     )
 
     if command_exists apt-get; then
