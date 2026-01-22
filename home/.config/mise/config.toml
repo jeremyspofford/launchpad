@@ -19,8 +19,11 @@ gemini = "latest"
 # codex = "latest"
 "npm:opencode-ai" = "latest"
 "pipx:aider-chat" = "latest"
-"pipx:ralph-orchestrator" = "latest"
-"npm:@beads/bd" = "latest"           # https://github.com/steveyegge/beads/tree/main
+# "pipx:ralph-orchestrator" = "latest" # Developer is packaging via pip
+"npm:@ralph-orchestrator/ralph-cli" = "latest"
+"npm:@beads/bd" = "latest"                     # https://github.com/steveyegge/beads/tree/main
+"npm:beads-ui" = "latest"                      # https://github.com/steveyegge/beads/tree/main
+"npm:agent-browser" = "latest"
 taskwarrior = "latest"
 
 # Git & Version Control
