@@ -112,13 +112,14 @@
     added = green
     changed = yellow
     untracked = cyan
-[user]
-	name = Jeremy Spofford
-	email = 23528024+jeremyspofford@users.noreply.github.com
 
-# AlertVenture/GitLab projects - use GitLab private email
-[includeIf "gitdir:~/workspace/"]
-    path = ~/.config/git/alertventure.gitconfig
+# ============================================================================ #
+# Conditional Includes (work/client configs)
+# ============================================================================ #
+# Uncomment and customize these if you have separate Git identities for work
 
-[includeIf "gitdir:~/workspace/client/"]
-    path = ~/.config/git/client.gitconfig
+# [includeIf "gitdir:~/workspace/work/"]
+#     path = ~/.config/git/work.gitconfig
+
+# [includeIf "gitdir:~/workspace/client/"]
+#     path = ~/.config/git/client.gitconfig

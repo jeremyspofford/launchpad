@@ -1,6 +1,19 @@
 -- ============================================================================ --
 -- AI Plugins for Neovim
 -- ============================================================================ --
+-- Requires: cmake, build-essential (Linux) or Xcode CLT (macOS)
+-- Set ANTHROPIC_API_KEY environment variable for Claude integration
+-- ============================================================================ --
+
+-- Check if build tools are available
+local function has_build_tools()
+  return vim.fn.executable("cmake") == 1 and vim.fn.executable("make") == 1
+end
+
+-- Get Claude model from environment or use default
+local function get_claude_model()
+  return vim.env.CLAUDE_MODEL or "claude-sonnet-4-20250514"
+end
 
 return {
   -- Avante (Cursor-like AI experience)
@@ -9,12 +22,23 @@ return {
     event = "VeryLazy",
     lazy = false,
     version = false,
-    build = "make",
+    -- Only build if we have the tools
+    build = has_build_tools() and "make" or nil,
+    cond = function()
+      if not has_build_tools() then
+        vim.notify(
+          "avante.nvim: cmake/make not found. Install build tools for AI features.",
+          vim.log.levels.WARN
+        )
+        return false
+      end
+      return true
+    end,
     opts = {
       provider = "claude",
       claude = {
         api_key_name = "ANTHROPIC_API_KEY",
-        model = "claude-sonnet-4-20250514",
+        model = get_claude_model(),
       },
       mappings = {
         ask = "<leader>aa",
