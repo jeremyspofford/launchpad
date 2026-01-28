@@ -1222,6 +1222,23 @@ stow_dotfiles() {
 
     cd "$DOTFILES_DIR"
 
+    # Pre-create parent directories for .config subdirectories
+    # This prevents stow from symlinking the entire .config directory
+    log_info "Creating parent directories..."
+    local config_dirs=(
+        "$HOME/.config/nvim"
+        "$HOME/.config/git"
+        "$HOME/.config/ghostty"
+        "$HOME/.config/mise"
+        "$HOME/.config/Code/User"
+    )
+    for dir in "${config_dirs[@]}"; do
+        if [ ! -d "$dir" ]; then
+            mkdir -p "$dir"
+            log_info "Created: ${dir#$HOME/}"
+        fi
+    done
+
     # Remove backed-up files that would conflict with stow
     # (They're already backed up, safe to remove)
     if [ -f "$MANIFEST_FILE" ]; then
@@ -1255,12 +1272,51 @@ stow_dotfiles() {
         fi
     done
 
+    # Handle existing non-symlink files that would conflict
+    log_info "Checking for conflicting files..."
+    local stow_conflicts=$(stow -n -v -d "$DOTFILES_DIR" -t "$HOME" home 2>&1 | grep "existing target" || true)
+    if [ -n "$stow_conflicts" ]; then
+        log_warning "Found files that would conflict with stow:"
+        echo "$stow_conflicts" | while read -r line; do
+            log_info "  $line"
+        done
+        log_info "Backing up and removing conflicting files..."
+        
+        # Extract file paths and handle them
+        echo "$stow_conflicts" | grep -oP '(?<=existing target is neither a link nor a directory: ).*' | while read -r conflict_file; do
+            local full_path="$HOME/$conflict_file"
+            if [ -e "$full_path" ] && [ ! -L "$full_path" ]; then
+                # Backup to timestamped location
+                local backup_path="$BACKUP_DIR/$conflict_file"
+                mkdir -p "$(dirname "$backup_path")"
+                mv "$full_path" "$backup_path"
+                log_info "Moved conflicting file: $conflict_file -> backup"
+            fi
+        done
+    fi
+
     log_info "Stowing dotfiles to $HOME..."
-    if stow -v -d "$DOTFILES_DIR" -t "$HOME" home 2>&1; then
+    local stow_output
+    if stow_output=$(stow -v -d "$DOTFILES_DIR" -t "$HOME" home 2>&1); then
         log_success "✅ Dotfiles symlinked successfully"
+        # Show what was linked
+        echo "$stow_output" | grep "LINK:" | head -10 | while read -r line; do
+            log_info "  $line"
+        done
+        local link_count=$(echo "$stow_output" | grep -c "LINK:" || echo "0")
+        if [ "$link_count" -gt 10 ]; then
+            log_info "  ... and $((link_count - 10)) more"
+        fi
     else
-        log_error "Stow encountered errors. Some dotfiles may not be linked."
-        log_info "You may need to manually resolve conflicts or run: stow -D home && stow home"
+        log_error "Stow encountered errors:"
+        echo "$stow_output" | grep -E "(ERROR|WARNING|cannot)" | while read -r line; do
+            log_error "  $line"
+        done
+        log_info ""
+        log_info "Troubleshooting tips:"
+        log_info "  1. Check for existing files: ls -la ~/.zshrc ~/.gitconfig"
+        log_info "  2. Remove conflicts manually or use: stow --adopt -d $DOTFILES_DIR -t $HOME home"
+        log_info "  3. Re-run setup: ./scripts/setup.sh --update"
         return 1
     fi
 

@@ -12,6 +12,26 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/logger.sh"
 
+# --- Detect macOS architecture ---
+detect_arch() {
+    local arch=$(uname -m)
+    if [[ "$arch" == "arm64" ]]; then
+        echo "arm64"
+    else
+        echo "x86_64"
+    fi
+}
+
+# --- Get Homebrew path based on architecture ---
+get_brew_path() {
+    local arch=$(detect_arch)
+    if [[ "$arch" == "arm64" ]]; then
+        echo "/opt/homebrew"
+    else
+        echo "/usr/local"
+    fi
+}
+
 # --- Install Homebrew ---
 install_homebrew() {
     if command_exists brew; then
@@ -23,17 +43,31 @@ install_homebrew() {
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
     # Add Homebrew to PATH for current session
-    if [[ -f /opt/homebrew/bin/brew ]]; then
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-    elif [[ -f /usr/local/bin/brew ]]; then
-        eval "$(/usr/local/bin/brew shellenv)"
+    local brew_path=$(get_brew_path)
+    if [[ -f "$brew_path/bin/brew" ]]; then
+        eval "$($brew_path/bin/brew shellenv)"
+        log_success "Homebrew installed at $brew_path"
+    else
+        log_error "Homebrew installation may have failed"
+        return 1
     fi
 
     log_success "Homebrew installed"
 }
 
+# --- Ensure Homebrew is in PATH ---
+ensure_brew_in_path() {
+    if ! command_exists brew; then
+        local brew_path=$(get_brew_path)
+        if [[ -f "$brew_path/bin/brew" ]]; then
+            eval "$($brew_path/bin/brew shellenv)"
+        fi
+    fi
+}
+
 # --- Install base packages ---
 install_base_packages() {
+    ensure_brew_in_path
     log_info "Installing base packages..."
 
     local packages=(
@@ -44,6 +78,7 @@ install_base_packages() {
         zsh
         tmux
         cmake
+        neovim
     )
 
     for package in "${packages[@]}"; do
@@ -58,21 +93,58 @@ install_base_packages() {
     log_success "Base packages installed"
 }
 
+# --- Install dialog for menus (whiptail alternative) ---
+install_dialog() {
+    ensure_brew_in_path
+    
+    if command_exists dialog; then
+        log_success "dialog already installed"
+        return
+    fi
+
+    log_info "Installing dialog for interactive menus..."
+    brew install dialog || log_warning "Failed to install dialog"
+    
+    # Note: We can't create a whiptail alias that persists across scripts easily
+    # Instead, the main setup.sh should detect the platform and use dialog directly
+    log_info "Note: macOS uses 'dialog' instead of 'whiptail' for menus"
+}
+
 # --- Install macOS casks ---
 install_casks() {
+    ensure_brew_in_path
     log_info "Installing macOS applications..."
 
-    local casks=(
-        "ghostty"
+    # Core casks that are always installed
+    local core_casks=(
         "font-jetbrains-mono-nerd-font"
     )
 
-    for cask in "${casks[@]}"; do
+    # Optional casks (user can add via unified_app_manager)
+    local optional_casks=(
+        "ghostty"
+    )
+
+    # Install core casks
+    for cask in "${core_casks[@]}"; do
         if brew list --cask "$cask" &>/dev/null; then
             log_success "$cask already installed"
         else
             log_info "Installing $cask..."
             brew install --cask "$cask" || log_warning "Failed to install $cask"
+        fi
+    done
+
+    # Install optional casks if available
+    for cask in "${optional_casks[@]}"; do
+        if brew list --cask "$cask" &>/dev/null; then
+            log_success "$cask already installed"
+        else
+            log_info "Installing $cask..."
+            # Ghostty might not be in main cask repo yet
+            brew install --cask "$cask" 2>/dev/null || {
+                log_info "$cask not available in Homebrew, skipping"
+            }
         fi
     done
 
@@ -93,32 +165,53 @@ install_tpm() {
     log_success "TPM installed (run prefix + I in tmux to install plugins)"
 }
 
-# --- Install Cursor IDE ---
-install_cursor() {
-    if command_exists cursor; then
-        log_success "Cursor already installed"
-        return
-    fi
+# --- Configure macOS defaults ---
+configure_macos_defaults() {
+    log_info "Configuring macOS defaults..."
 
-    log_info "Installing Cursor IDE..."
-    if brew list --cask cursor &>/dev/null; then
-        log_success "Cursor already installed via Homebrew"
-    else
-        brew install --cask cursor || {
-            log_warning "Homebrew install failed, trying script..."
-            curl -fsSL https://cursor.com/install | bash
-        }
-    fi
-    log_success "Cursor installed"
+    # Show hidden files in Finder
+    defaults write com.apple.finder AppleShowAllFiles -bool true
+
+    # Show file extensions
+    defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+
+    # Disable press-and-hold for keys in favor of key repeat
+    defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+
+    # Fast key repeat
+    defaults write NSGlobalDomain KeyRepeat -int 2
+    defaults write NSGlobalDomain InitialKeyRepeat -int 15
+
+    # Show path bar in Finder
+    defaults write com.apple.finder ShowPathbar -bool true
+
+    # Keep folders on top when sorting by name
+    defaults write com.apple.finder _FXSortFoldersFirst -bool true
+
+    log_success "macOS defaults configured"
+    log_info "Note: Some changes require logout/restart to take effect"
 }
 
 # --- Main macOS installation ---
 install_macos() {
+    log_section "macOS Installation"
+    log_kv "Architecture" "$(detect_arch)"
+    log_kv "Homebrew path" "$(get_brew_path)"
+    echo
+
     install_homebrew
     install_base_packages
+    install_dialog
     install_casks
     install_tpm
-    install_cursor
+    
+    # Ask about macOS defaults
+    if command_exists dialog; then
+        if dialog --title "macOS Defaults" --yesno "Would you like to configure recommended macOS defaults?\n\n- Show hidden files\n- Show file extensions\n- Fast key repeat\n- etc." 12 50; then
+            configure_macos_defaults
+        fi
+        clear
+    fi
 }
 
 # Run if executed directly
