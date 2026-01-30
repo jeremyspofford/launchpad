@@ -1,7 +1,7 @@
 [tools]
 # Cloud & Infrastructure
 1password-cli = "latest"
-aws-cli = "2.32.3"
+aws-cli = { version = "latest", symlink_bins = "true" }
 aws-sam-cli = "1.150.1"
 # iam-policy-json-to-terraform = "latest"
 # gcloud = "latest"
@@ -24,7 +24,7 @@ gemini = "latest"
 "npm:@beads/bd" = "latest"                     # https://github.com/steveyegge/beads/tree/main
 "npm:beads-ui" = "latest"                      # https://github.com/steveyegge/beads/tree/main
 "npm:agent-browser" = "latest"
-taskwarrior = "latest"
+# taskwarrior = "latest"
 
 # Git & Version Control
 lazygit = "latest"
@@ -73,14 +73,15 @@ lazydocker = "latest"
 yarn = "latest"
 uv = "latest"
 pipx = "latest"
+pnpm = "latest"
+npm = "24"
 
 # Project-Specific (npm packages)
 "npm:@mirohq/cloud-data-import" = "latest"
 "npm:@shopify/cli" = "latest"
 
 # Languages & Runtimes
-# npm = "latest"
-node = "24.10.0"
+node = "latest"
 python = "3.12.11"
 # go = "latest"
 # rust = "latest"
