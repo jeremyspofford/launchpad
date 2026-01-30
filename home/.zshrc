@@ -128,6 +128,8 @@ eval "$(command mise activate zsh)"
 [ -f ~/.aliases ] && source ~/.aliases
 
 # Added by Antigravity
-export PATH="/Users/jeremyspofford/.antigravity/antigravity/bin:$PATH"
+export PATH="/Users/jeremyspofford/.antigravity/antigravity/bin:$HOME/.npm-global/bin:$PATH"
 
 # eval "$(op signin)"
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
