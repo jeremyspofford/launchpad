@@ -84,6 +84,7 @@ INSTALL_CLAUDE_DESKTOP="false"
 INSTALL_CHROME="false"
 INSTALL_BRAVE="false"
 INSTALL_NOTION="false"
+INSTALL_TELEGRAM="false"
 INSTALL_ORCA_SLICER="false"
 
 # ============================================================================ #
