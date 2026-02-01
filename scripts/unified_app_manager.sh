@@ -1137,14 +1137,28 @@ install_open_webui() {
         return 1
     fi
     
+    # Check if docker daemon is running
+    if ! sudo systemctl is-active --quiet docker; then
+        log_info "Starting Docker daemon..."
+        sudo systemctl start docker
+    fi
+    
+    # Check docker permissions - if not in group, use sudo for this session
+    local docker_cmd="docker"
+    if ! docker ps > /dev/null 2>&1; then
+        log_warning "Docker permission issue - using sudo for this install"
+        log_info "Run 'newgrp docker' after install, or log out/in for permanent fix"
+        docker_cmd="sudo docker"
+    fi
+    
     # Check if already running
-    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^open-webui$"; then
+    if $docker_cmd ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^open-webui$"; then
         # Check if container is running
-        if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^open-webui$"; then
+        if $docker_cmd ps --format '{{.Names}}' 2>/dev/null | grep -q "^open-webui$"; then
             track_skipped "Open WebUI (already running)"
         else
             log_info "Starting existing Open WebUI container..."
-            docker start open-webui >> /tmp/app_install.log 2>&1
+            $docker_cmd start open-webui >> /tmp/app_install.log 2>&1
             track_installed "Open WebUI (restarted)"
         fi
         return 0
@@ -1162,15 +1176,14 @@ install_open_webui() {
         log_warning "Ollama not detected locally - Open WebUI will need manual Ollama configuration"
     fi
     
-    # Create data volume
-    docker volume create open-webui >> /tmp/app_install.log 2>&1
-    
-    # Run Open WebUI container
     # Pull the image first
     log_info "Pulling Open WebUI image (this may take a minute)..."
-    docker pull ghcr.io/open-webui/open-webui:main >> /tmp/app_install.log 2>&1
+    $docker_cmd pull ghcr.io/open-webui/open-webui:main >> /tmp/app_install.log 2>&1
     
-    if docker run -d \
+    # Create data volume
+    $docker_cmd volume create open-webui >> /tmp/app_install.log 2>&1
+    
+    if $docker_cmd run -d \
         -p 3000:8080 \
         --add-host=host.docker.internal:host-gateway \
         -e OLLAMA_BASE_URL="$ollama_host" \
