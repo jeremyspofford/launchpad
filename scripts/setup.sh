@@ -52,7 +52,6 @@ INSTALL_TERMINAL_TOOLS=true
 INSTALL_EDITOR=true
 INSTALL_CLI_TOOLS=true
 INSTALL_MISE=true
-INSTALL_OLLAMA=false
 INSTALL_CLAUDE_CODE=false
 INSTALL_OBSIDIAN=false
 INSTALL_TELEGRAM=false
@@ -1001,7 +1000,6 @@ select_tools_interactive() {
         "EDITOR" "Neovim (modern text editor)" "${INSTALL_EDITOR:-ON}"
         "CLI_TOOLS" "CLI tools (ripgrep, fd, fzf, bat, exa)" "${INSTALL_CLI_TOOLS:-ON}"
         "MISE" "mise (runtime version manager)" "${INSTALL_MISE:-ON}"
-        "OLLAMA" "Ollama (local LLM)" "${INSTALL_OLLAMA:-OFF}"
         "CLAUDE_CODE" "Claude Code (AI coding assistant)" "${INSTALL_CLAUDE_CODE:-OFF}"
         "OBSIDIAN" "Obsidian (note-taking app)" "${INSTALL_OBSIDIAN:-OFF}"
         "TELEGRAM" "Telegram Desktop (messaging)" "${INSTALL_TELEGRAM:-OFF}"
@@ -1026,7 +1024,6 @@ select_tools_interactive() {
     INSTALL_EDITOR=false
     INSTALL_CLI_TOOLS=false
     INSTALL_MISE=false
-    INSTALL_OLLAMA=false
     INSTALL_CLAUDE_CODE=false
     INSTALL_OBSIDIAN=false
     INSTALL_TELEGRAM=false
@@ -1050,9 +1047,6 @@ select_tools_interactive() {
                 ;;
             MISE)
                 INSTALL_MISE=true
-                ;;
-            OLLAMA)
-                INSTALL_OLLAMA=true
                 ;;
             CLAUDE_CODE)
                 INSTALL_CLAUDE_CODE=true
@@ -1169,33 +1163,6 @@ install_cli_tools_with_mise() {
     log_success "✅ CLI tools installed via mise"
     log_info "Tools installed: ripgrep, fd, fzf, bat, eza"
     log_info "Run 'mise list' to see installed versions"
-    
-    echo
-}
-
-install_ollama() {
-    if [ "${INSTALL_OLLAMA:-false}" = false ]; then
-        return
-    fi
-    
-    log_section "Installing Ollama"
-    
-    if command_exists ollama; then
-        log_success "✅ Ollama already installed"
-        track_skipped "Ollama (already installed)"
-        return
-    fi
-    
-    log_info "Installing Ollama..."
-    if curl -fsSL https://ollama.com/install.sh | sh; then
-        log_success "✅ Ollama installed"
-        log_info "Start with: ollama serve"
-        log_info "Pull models with: ollama pull <model>"
-        track_completed "Ollama installed"
-    else
-        log_error "Failed to install Ollama"
-        track_failed "Ollama" "installation failed"
-    fi
     
     echo
 }
