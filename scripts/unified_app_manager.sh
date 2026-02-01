@@ -874,6 +874,20 @@ install_mdview() {
 
 install_ollama() {
     if command_exists ollama; then
+        # Already installed - offer to configure remote access if not already configured
+        if [ ! -f /etc/systemd/system/ollama.service.d/override.conf ]; then
+            if command_exists whiptail; then
+                if whiptail --title "Ollama Already Installed" --yesno \
+"Ollama is already installed.
+
+Would you like to configure remote access?
+This allows other devices (like a Raspberry Pi) to connect." 10 60 3>&1 1>&2 2>&3; then
+                    configure_ollama_remote_access
+                    track_installed "Ollama (remote access configured)"
+                    return 0
+                fi
+            fi
+        fi
         track_skipped "Ollama"
         return 0
     fi
