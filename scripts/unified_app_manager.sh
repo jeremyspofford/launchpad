@@ -474,6 +474,7 @@ sellistbox=black,cyan
     local neovim_status="OFF"
     local mise_status="OFF"
     local mdview_status="OFF"
+    local ollama_status="OFF"
     local ghostty_status="OFF"
     local cursor_status="OFF"
     local antigravity_status="OFF"
@@ -493,6 +494,7 @@ sellistbox=black,cyan
     (command_exists nvim || [ "$INSTALL_NEOVIM" = "true" ]) && neovim_status="ON"
     (command_exists mise || [ "$INSTALL_MISE" = "true" ]) && mise_status="ON"
     (command_exists mdview || [ "$INSTALL_MDVIEW" = "true" ]) && mdview_status="ON"
+    (command_exists ollama || [ "$INSTALL_OLLAMA" = "true" ]) && ollama_status="ON"
     
     # Platform-specific checks
     if [ "$PLATFORM" = "macos" ]; then
@@ -556,6 +558,7 @@ System Tools:" 30 78 17 \
 "neovim" "Text editor [*]" "$neovim_status" \
 "mise" "mise (installs ALL tools from config.toml)" "$mise_status" \
 "mdview" "Markdown viewer (renders .md in browser)" "$mdview_status" \
+"ollama" "Ollama (local LLM with GPU)" "$ollama_status" \
 "ghostty" "Ghostty terminal (AppImage)" "$ghostty_status" \
 "cursor" "Cursor AI IDE" "$cursor_status" \
 "antigravity" "Antigravity IDE (Google)" "$antigravity_status" \
@@ -867,6 +870,69 @@ install_mdview() {
     else
         track_failed "mdview" "npm install failed"
     fi
+}
+
+install_ollama() {
+    if command_exists ollama; then
+        track_skipped "Ollama"
+        return 0
+    fi
+    
+    log_info "Installing Ollama..."
+    
+    # Install via official script
+    if ! curl -fsSL https://ollama.com/install.sh | sh >> /tmp/app_install.log 2>&1; then
+        track_failed "Ollama" "installation failed"
+        return 1
+    fi
+    
+    # Check for NVIDIA GPU
+    local has_nvidia=false
+    if command_exists nvidia-smi; then
+        if nvidia-smi &>/dev/null; then
+            has_nvidia=true
+            log_success "✅ NVIDIA GPU detected"
+            nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/dev/null | head -1
+        fi
+    fi
+    
+    # Enable and start the service
+    if command_exists systemctl; then
+        log_info "Enabling Ollama service..."
+        sudo systemctl enable ollama >> /tmp/app_install.log 2>&1 || true
+        sudo systemctl start ollama >> /tmp/app_install.log 2>&1 || true
+        
+        # Wait for service to be ready
+        sleep 2
+        
+        if systemctl is-active --quiet ollama; then
+            log_success "✅ Ollama service running"
+        else
+            log_warning "Ollama service not running - start manually with: ollama serve"
+        fi
+    fi
+    
+    # Pull a default small model for testing
+    if command_exists ollama; then
+        log_info "Pulling default model (llama3.2:1b) for testing..."
+        if ollama pull llama3.2:1b >> /tmp/app_install.log 2>&1; then
+            log_success "✅ Default model ready"
+        else
+            log_warning "Model pull failed - pull manually with: ollama pull llama3.2"
+        fi
+    fi
+    
+    if [ "$has_nvidia" = true ]; then
+        track_installed "Ollama (with NVIDIA GPU)"
+    else
+        track_installed "Ollama (CPU only)"
+    fi
+    
+    log_info "Useful commands:"
+    log_info "  ollama list          - List installed models"
+    log_info "  ollama pull <model>  - Download a model"
+    log_info "  ollama run <model>   - Chat with a model"
+    log_info "  ollama serve         - Start API server (port 11434)"
 }
 
 ################################################################################
@@ -1507,6 +1573,24 @@ uninstall_mdview() {
     if command_exists mdview; then
         npm uninstall -g mdview >> /tmp/app_install.log 2>&1
         track_uninstalled "mdview"
+    fi
+}
+
+uninstall_ollama() {
+    if command_exists ollama; then
+        # Stop service
+        sudo systemctl stop ollama 2>/dev/null || true
+        sudo systemctl disable ollama 2>/dev/null || true
+        
+        # Remove binary and service
+        sudo rm -f /usr/local/bin/ollama
+        sudo rm -f /etc/systemd/system/ollama.service
+        sudo systemctl daemon-reload 2>/dev/null || true
+        
+        # Remove models directory (optional - keep by default)
+        # rm -rf ~/.ollama
+        
+        track_uninstalled "Ollama"
     fi
 }
 
