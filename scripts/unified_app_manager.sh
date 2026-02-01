@@ -907,7 +907,7 @@ install_ghostty() {
     # Try snap as fallback (install snapd if needed)
     if ensure_snap; then
         log_info "Installing Ghostty via snap..."
-        if sudo snap install ghostty --edge >> /tmp/app_install.log 2>&1; then
+        if sudo snap install ghostty --classic >> /tmp/app_install.log 2>&1; then
             track_installed "Ghostty (snap)"
             return 0
         fi
@@ -1005,15 +1005,26 @@ install_antigravity() {
         # Create keyrings directory
         sudo mkdir -p /etc/apt/keyrings >> /tmp/app_install.log 2>&1
         
-        # Download and install signing key
+        # Download and install signing key (Google Artifact Registry key)
         curl -fsSL https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg | \
             sudo gpg --dearmor --yes -o /etc/apt/keyrings/antigravity-repo-key.gpg >> /tmp/app_install.log 2>&1
         
-        # Add repository
-        echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-apt stable main" | \
+        # Add repository (Google Artifact Registry format - no distribution/component)
+        echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg arch=amd64] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-apt apt-repo main" | \
             sudo tee /etc/apt/sources.list.d/antigravity.list > /dev/null
         
         # Update and install
+        sudo apt-get update >> /tmp/app_install.log 2>&1
+        if sudo apt-get install -y antigravity >> /tmp/app_install.log 2>&1; then
+            track_installed "Antigravity"
+            return 0
+        fi
+        
+        # If that failed, try alternate format
+        log_info "Trying alternate repository format..."
+        echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg arch=amd64] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-apt / " | \
+            sudo tee /etc/apt/sources.list.d/antigravity.list > /dev/null
+        
         sudo apt-get update >> /tmp/app_install.log 2>&1
         if sudo apt-get install -y antigravity >> /tmp/app_install.log 2>&1; then
             track_installed "Antigravity"
