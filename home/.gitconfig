@@ -123,3 +123,6 @@
 
 # [includeIf "gitdir:~/workspace/client/"]
 #     path = ~/.config/git/client.gitconfig
+[user]
+	name = Jeremy Spofford
+	email = 23528024+jeremyspofford@users.noreply.github.com
