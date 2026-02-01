@@ -323,6 +323,7 @@ select_applications() {
         [ "$INSTALL_BRAVE" = "true" ] && selections="$selections brave"
         [ "$INSTALL_NOTION" = "true" ] && selections="$selections notion"
         [ "$INSTALL_OBSIDIAN" = "true" ] && selections="$selections obsidian"
+        [ "$INSTALL_TELEGRAM" = "true" ] && selections="$selections telegram"
         [ "$INSTALL_1PASSWORD" = "true" ] && selections="$selections 1password"
         [ "$INSTALL_ORCA_SLICER" = "true" ] && selections="$selections orca_slicer"
 
@@ -388,6 +389,7 @@ sellistbox=black,cyan
     local brave_status="OFF"
     local notion_status="OFF"
     local obsidian_status="OFF"
+    local telegram_status="OFF"
     local onepassword_status="OFF"
     local orca_slicer_status="OFF"
 
@@ -409,6 +411,7 @@ sellistbox=black,cyan
         (brew list --cask brave-browser &>/dev/null || [ "$INSTALL_BRAVE" = "true" ]) && brave_status="ON"
         (brew list --cask notion &>/dev/null || [ "$INSTALL_NOTION" = "true" ]) && notion_status="ON"
         (brew list --cask obsidian &>/dev/null || [ "$INSTALL_OBSIDIAN" = "true" ]) && obsidian_status="ON"
+        (brew list --cask telegram &>/dev/null || [ "$INSTALL_TELEGRAM" = "true" ]) && telegram_status="ON"
         (brew list --cask 1password &>/dev/null || [ "$INSTALL_1PASSWORD" = "true" ]) && onepassword_status="ON"
         (brew list --cask orca-slicer &>/dev/null || [ "$INSTALL_ORCA_SLICER" = "true" ]) && orca_slicer_status="ON"
     else
@@ -422,6 +425,7 @@ sellistbox=black,cyan
         (command_exists brave-browser || [ "$INSTALL_BRAVE" = "true" ]) && brave_status="ON"
         ((snap list 2>/dev/null | grep -q "notion-snap-reborn") || [ "$INSTALL_NOTION" = "true" ]) && notion_status="ON"
         ((command_exists obsidian || snap list 2>/dev/null | grep -q "obsidian") || [ "$INSTALL_OBSIDIAN" = "true" ]) && obsidian_status="ON"
+        ((command_exists telegram-desktop || flatpak list 2>/dev/null | grep -q "org.telegram.desktop" || snap list 2>/dev/null | grep -q "telegram-desktop") || [ "$INSTALL_TELEGRAM" = "true" ]) && telegram_status="ON"
         (command_exists 1password || [ "$INSTALL_1PASSWORD" = "true" ]) && onepassword_status="ON"
         ([ -f ~/.local/bin/orca-slicer.AppImage ] || [ "$INSTALL_ORCA_SLICER" = "true" ]) && orca_slicer_status="ON"
     fi
@@ -464,6 +468,7 @@ System Tools:" 28 78 19 \
 "brave" "Brave browser" "$brave_status" \
 "notion" "Notion" "$notion_status" \
 "obsidian" "Obsidian (note-taking)" "$obsidian_status" \
+"telegram" "Telegram Desktop (messaging)" "$telegram_status" \
 "1password" "1Password" "$onepassword_status" \
 "orca_slicer" "Orca Slicer" "$orca_slicer_status" \
 3>&1 1>&2 2>&3)
@@ -1047,6 +1052,50 @@ EOF
     fi
 }
 
+install_telegram() {
+    check_wsl_gui || { track_skipped "Telegram (WSL)"; return 0; }
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "telegram" "true"
+        return
+    fi
+
+    # Check if already installed
+    if command_exists telegram-desktop || \
+       flatpak list 2>/dev/null | grep -q "org.telegram.desktop" || \
+       snap list 2>/dev/null | grep -q "telegram-desktop"; then
+        track_skipped "Telegram"
+        return 0
+    fi
+    
+    # Try flatpak first (Pop!_OS default)
+    if command_exists flatpak; then
+        log_info "Installing Telegram via Flatpak..."
+        if flatpak install -y flathub org.telegram.desktop >> /tmp/app_install.log 2>&1; then
+            track_installed "Telegram (flatpak)"
+            return 0
+        fi
+    fi
+    
+    # Try snap as fallback
+    if command_exists snap; then
+        if sudo snap install telegram-desktop >> /tmp/app_install.log 2>&1; then
+            track_installed "Telegram (snap)"
+            return 0
+        fi
+    fi
+    
+    # Try apt as last resort
+    if command_exists apt; then
+        if sudo apt-get install -y telegram-desktop >> /tmp/app_install.log 2>&1; then
+            track_installed "Telegram (apt)"
+            return 0
+        fi
+    fi
+    
+    track_failed "Telegram" "installation failed - no supported package manager"
+}
+
 install_1password() {
     check_wsl_gui || { track_skipped "1Password (WSL)"; return 0; }
     
@@ -1302,6 +1351,29 @@ uninstall_obsidian() {
         uninstalled=true
     fi
     [ "$uninstalled" = true ] && track_uninstalled "Obsidian"
+}
+
+uninstall_telegram() {
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask telegram >> /tmp/app_install.log 2>&1
+        track_uninstalled "Telegram"
+        return
+    fi
+    
+    local uninstalled=false
+    if flatpak list 2>/dev/null | grep -q "org.telegram.desktop"; then
+        flatpak uninstall -y org.telegram.desktop >> /tmp/app_install.log 2>&1
+        uninstalled=true
+    fi
+    if snap list 2>/dev/null | grep -q "telegram-desktop"; then
+        sudo snap remove telegram-desktop >> /tmp/app_install.log 2>&1
+        uninstalled=true
+    fi
+    if dpkg -l telegram-desktop 2>/dev/null | grep -q "^ii"; then
+        sudo apt-get remove -y telegram-desktop >> /tmp/app_install.log 2>&1
+        uninstalled=true
+    fi
+    [ "$uninstalled" = true ] && track_uninstalled "Telegram"
 }
 
 uninstall_vscode() {

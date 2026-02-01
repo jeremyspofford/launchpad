@@ -54,6 +54,7 @@ INSTALL_MISE=true
 INSTALL_OLLAMA=false
 INSTALL_CLAUDE_CODE=false
 INSTALL_OBSIDIAN=false
+INSTALL_TELEGRAM=false
 
 # Preferences file (XDG compliant)
 PREFERENCES_DIR="$HOME/.config/dotfiles"
@@ -930,6 +931,47 @@ install_obsidian_macos() {
     echo
 }
 
+install_telegram_linux() {
+    log_section "Installing Telegram Desktop"
+    
+    if command_exists telegram-desktop; then
+        log_success "✅ Telegram Desktop already installed"
+        return
+    fi
+    
+    # Try flatpak first (Pop!_OS default), then apt
+    if command_exists flatpak; then
+        log_info "Installing Telegram Desktop via Flatpak..."
+        flatpak install -y flathub org.telegram.desktop
+        log_success "✅ Telegram Desktop installed via Flatpak"
+    elif command_exists apt; then
+        log_info "Installing Telegram Desktop via apt..."
+        sudo apt update
+        sudo apt install -y telegram-desktop
+        log_success "✅ Telegram Desktop installed via apt"
+    else
+        log_warning "Could not install Telegram Desktop - no supported package manager found"
+        log_info "Install manually from: https://desktop.telegram.org/"
+    fi
+    
+    echo
+}
+
+install_telegram_macos() {
+    log_section "Installing Telegram Desktop"
+    
+    if [ -d "/Applications/Telegram.app" ]; then
+        log_success "✅ Telegram Desktop already installed"
+        return
+    fi
+    
+    log_info "Installing Telegram via Homebrew Cask..."
+    brew install --cask telegram
+    log_success "✅ Telegram Desktop installed"
+    
+    echo
+}
+
 select_tools_interactive() {
     log_section "Tool Selection"
     
@@ -946,6 +988,7 @@ select_tools_interactive() {
         "OLLAMA" "Ollama (local LLM)" "${INSTALL_OLLAMA:-OFF}"
         "CLAUDE_CODE" "Claude Code (AI coding assistant)" "${INSTALL_CLAUDE_CODE:-OFF}"
         "OBSIDIAN" "Obsidian (note-taking app)" "${INSTALL_OBSIDIAN:-OFF}"
+        "TELEGRAM" "Telegram Desktop (messaging)" "${INSTALL_TELEGRAM:-OFF}"
     )
     
     # Run whiptail checklist
@@ -970,6 +1013,7 @@ select_tools_interactive() {
     INSTALL_OLLAMA=false
     INSTALL_CLAUDE_CODE=false
     INSTALL_OBSIDIAN=false
+    INSTALL_TELEGRAM=false
     
     # Set selected items to true
     for selection in $selections; do
@@ -1000,6 +1044,9 @@ select_tools_interactive() {
             OBSIDIAN)
                 INSTALL_OBSIDIAN=true
                 ;;
+            TELEGRAM)
+                INSTALL_TELEGRAM=true
+                ;;
         esac
     done
     
@@ -1011,6 +1058,7 @@ select_tools_interactive() {
     [ "$INSTALL_CLI_TOOLS" = "true" ] && log_success "  ✅ CLI tools"
     [ "$INSTALL_MISE" = "true" ] && log_success "  ✅ mise"
     [ "$INSTALL_OBSIDIAN" = "true" ] && log_success "  ✅ Obsidian"
+    [ "$INSTALL_TELEGRAM" = "true" ] && log_success "  ✅ Telegram"
     echo
     
     # Save preferences
