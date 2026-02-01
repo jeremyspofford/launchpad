@@ -27,6 +27,21 @@ vim .config
 ./scripts/setup.sh --non-interactive
 ```
 
+### 🖥️ Server/Minimal Profile
+
+For headless servers and compute nodes (no GUI apps):
+```bash
+cd ~/workspace/dotfiles
+cp .config.server .config
+./scripts/setup.sh
+```
+
+This installs only:
+- Zsh + Oh My Zsh
+- Tmux
+- Neovim
+- Mise (with tools commented out - uncomment what you need in `~/.config/mise/config.toml`)
+
 ## ✨ What's Included
 
 ### Core Tools
