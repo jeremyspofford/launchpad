@@ -104,6 +104,100 @@ install_brew() {
     return 1
 }
 
+# Ensure snap is installed (for apps that need it)
+ensure_snap() {
+    if command_exists snap; then
+        return 0
+    fi
+    
+    log_info "Installing snap (snapd) package manager..."
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        log_warning "snap is not available on macOS"
+        return 1
+    fi
+    
+    # Debian/Ubuntu/Pop!_OS
+    if command_exists apt-get; then
+        if sudo apt-get install -y snapd >> /tmp/app_install.log 2>&1; then
+            # Enable and start snapd
+            sudo systemctl enable --now snapd.socket >> /tmp/app_install.log 2>&1
+            # Create classic snap symlink
+            sudo ln -sf /var/lib/snapd/snap /snap 2>/dev/null
+            log_success "✅ snapd installed"
+            # Give snapd a moment to initialize
+            sleep 2
+            return 0
+        fi
+    fi
+    
+    # Fedora/RHEL
+    if command_exists dnf; then
+        if sudo dnf install -y snapd >> /tmp/app_install.log 2>&1; then
+            sudo systemctl enable --now snapd.socket >> /tmp/app_install.log 2>&1
+            sudo ln -sf /var/lib/snapd/snap /snap 2>/dev/null
+            log_success "✅ snapd installed"
+            sleep 2
+            return 0
+        fi
+    fi
+    
+    log_warning "Could not install snapd automatically"
+    return 1
+}
+
+# Ensure flatpak is installed
+ensure_flatpak() {
+    if command_exists flatpak; then
+        return 0
+    fi
+    
+    log_info "Installing flatpak package manager..."
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        log_warning "flatpak is not available on macOS"
+        return 1
+    fi
+    
+    # Debian/Ubuntu/Pop!_OS
+    if command_exists apt-get; then
+        if sudo apt-get install -y flatpak >> /tmp/app_install.log 2>&1; then
+            # Add flathub repo
+            flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo >> /tmp/app_install.log 2>&1
+            log_success "✅ flatpak installed"
+            return 0
+        fi
+    fi
+    
+    # Fedora (usually pre-installed)
+    if command_exists dnf; then
+        if sudo dnf install -y flatpak >> /tmp/app_install.log 2>&1; then
+            flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo >> /tmp/app_install.log 2>&1
+            log_success "✅ flatpak installed"
+            return 0
+        fi
+    fi
+    
+    log_warning "Could not install flatpak automatically"
+    return 1
+}
+
+# Run npm via mise if system npm not available
+run_npm() {
+    if command_exists npm; then
+        npm "$@"
+        return $?
+    fi
+    
+    # Try via mise
+    if command_exists mise; then
+        mise exec -- npm "$@"
+        return $?
+    fi
+    
+    return 1
+}
+
 ################################################################################
 # Dashboard
 ################################################################################
@@ -760,14 +854,14 @@ install_mdview() {
     fi
     
     # Check if npm is available (either system or via mise)
-    if ! command_exists npm; then
+    if ! command_exists npm && ! command_exists mise; then
         log_warning "npm not found - install mise first or Node.js"
         track_failed "mdview" "npm not available"
         return 1
     fi
     
     log_info "Installing mdview..."
-    if npm install -g mdview >> /tmp/app_install.log 2>&1; then
+    if run_npm install -g mdview >> /tmp/app_install.log 2>&1; then
         log_success "✅ mdview installed"
         track_installed "mdview"
     else
@@ -810,8 +904,8 @@ install_ghostty() {
         fi
     fi
     
-    # Try snap as fallback
-    if command_exists snap; then
+    # Try snap as fallback (install snapd if needed)
+    if ensure_snap; then
         log_info "Installing Ghostty via snap..."
         if sudo snap install ghostty --edge >> /tmp/app_install.log 2>&1; then
             track_installed "Ghostty (snap)"
@@ -1058,6 +1152,12 @@ install_notion() {
         return 0
     fi
     
+    # Notion requires snap
+    if ! ensure_snap; then
+        track_failed "Notion" "snap not available"
+        return 1
+    fi
+    
     if sudo snap install notion-snap-reborn >> /tmp/app_install.log 2>&1; then
         track_installed "Notion"
     else
@@ -1078,7 +1178,8 @@ install_obsidian() {
         return 0
     fi
     
-    if command_exists snap; then
+    # Try snap (install snapd if needed)
+    if ensure_snap; then
         if sudo snap install obsidian --classic >> /tmp/app_install.log 2>&1; then
             track_installed "Obsidian (snap)"
             return 0
@@ -1138,8 +1239,8 @@ install_telegram() {
         fi
     fi
     
-    # Try snap as fallback
-    if command_exists snap; then
+    # Try snap as fallback (install snapd if needed)
+    if ensure_snap; then
         if sudo snap install telegram-desktop >> /tmp/app_install.log 2>&1; then
             track_installed "Telegram (snap)"
             return 0
