@@ -1166,6 +1166,10 @@ install_open_webui() {
     docker volume create open-webui >> /tmp/app_install.log 2>&1
     
     # Run Open WebUI container
+    # Pull the image first
+    log_info "Pulling Open WebUI image (this may take a minute)..."
+    docker pull ghcr.io/open-webui/open-webui:main >> /tmp/app_install.log 2>&1
+    
     if docker run -d \
         -p 3000:8080 \
         --add-host=host.docker.internal:host-gateway \
@@ -1176,14 +1180,34 @@ install_open_webui() {
         ghcr.io/open-webui/open-webui:main >> /tmp/app_install.log 2>&1; then
         
         log_success "✅ Open WebUI installed"
-        log_info "Access at: http://localhost:3000"
-        log_info "First user to sign up becomes admin"
-        track_installed "Open WebUI"
         
         # Get local IP for remote access info
         local my_ip
         my_ip=$(hostname -I | awk '{print $1}')
+        
+        # Add convenience alias
+        local shell_rc=""
+        if [ -f ~/.zshrc ]; then
+            shell_rc=~/.zshrc
+        elif [ -f ~/.bashrc ]; then
+            shell_rc=~/.bashrc
+        fi
+        
+        if [ -n "$shell_rc" ]; then
+            if ! grep -q "alias openwebui" "$shell_rc" 2>/dev/null; then
+                echo "" >> "$shell_rc"
+                echo "# Open WebUI aliases" >> "$shell_rc"
+                echo "alias openwebui='docker start open-webui 2>/dev/null; xdg-open http://localhost:3000 2>/dev/null || open http://localhost:3000'" >> "$shell_rc"
+                echo "alias webui='openwebui'" >> "$shell_rc"
+                log_success "✅ Added 'openwebui' and 'webui' aliases"
+            fi
+        fi
+        
+        log_info "Access at: http://localhost:3000"
         log_info "Remote access: http://$my_ip:3000"
+        log_info "Commands: 'openwebui' or 'webui' to launch"
+        log_info "First user to sign up becomes admin"
+        track_installed "Open WebUI"
     else
         track_failed "Open WebUI" "docker run failed"
     fi
