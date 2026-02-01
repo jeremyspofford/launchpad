@@ -932,14 +932,25 @@ This allows other devices (like a Raspberry Pi) to connect." 10 60 3>&1 1>&2 2>&
         fi
     fi
     
-    # Pull a default small model for testing
+    # Pull recommended models
     if command_exists ollama; then
-        log_info "Pulling default model (llama3.2:1b) for testing..."
-        if ollama pull llama3.2:1b >> /tmp/app_install.log 2>&1; then
-            log_success "✅ Default model ready"
-        else
-            log_warning "Model pull failed - pull manually with: ollama pull llama3.2"
-        fi
+        log_info "Pulling recommended models (this may take a while)..."
+        
+        # Fast/small model for quick tasks
+        log_info "  → gemma3:1b (fast, general purpose)..."
+        ollama pull gemma3:1b >> /tmp/app_install.log 2>&1 && log_success "    ✅ gemma3:1b"
+        
+        # Main reasoning model
+        log_info "  → qwen3:8b (reasoning, thinking)..."
+        ollama pull qwen3:8b >> /tmp/app_install.log 2>&1 && log_success "    ✅ qwen3:8b"
+        
+        # Coding model
+        log_info "  → qwen2.5-coder:7b (coding)..."
+        ollama pull qwen2.5-coder:7b >> /tmp/app_install.log 2>&1 && log_success "    ✅ qwen2.5-coder:7b"
+        
+        log_success "✅ Models ready"
+        log_info "Optional: ollama pull deepseek-r1:8b (advanced reasoning)"
+        log_info "Optional: ollama pull gemma3:4b (vision capable)"
     fi
     
     # Configure remote access (optional)
