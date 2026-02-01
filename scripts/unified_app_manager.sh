@@ -1684,6 +1684,12 @@ main() {
     done
 
     show_dashboard
+    
+    # Return exit code based on failures
+    if [ ${#FAILED_APPS[@]} -gt 0 ]; then
+        exit 2  # Exit 2 = some apps failed (not user cancel)
+    fi
+    exit 0
 }
 
 main "$@"
