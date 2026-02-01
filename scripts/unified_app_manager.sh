@@ -759,11 +759,39 @@ install_ghostty() {
         return 0
     fi
     
-    if sudo snap install ghostty --edge >> /tmp/app_install.log 2>&1; then
-        track_installed "Ghostty"
-    else
-        track_failed "Ghostty" "snap install failed"
+    # Check for Arch Linux (has official package)
+    if command_exists pacman; then
+        log_info "Installing Ghostty via pacman..."
+        if sudo pacman -S --noconfirm ghostty >> /tmp/app_install.log 2>&1; then
+            track_installed "Ghostty (pacman)"
+            return 0
+        fi
     fi
+    
+    # Try flatpak (Pop!_OS default)
+    if command_exists flatpak; then
+        log_info "Checking flatpak for Ghostty..."
+        if flatpak install -y flathub com.mitchellh.ghostty >> /tmp/app_install.log 2>&1; then
+            track_installed "Ghostty (flatpak)"
+            return 0
+        fi
+    fi
+    
+    # Try snap as fallback
+    if command_exists snap; then
+        log_info "Installing Ghostty via snap..."
+        if sudo snap install ghostty --edge >> /tmp/app_install.log 2>&1; then
+            track_installed "Ghostty (snap)"
+            return 0
+        fi
+    fi
+    
+    # If we get here, provide manual instructions
+    log_warning "Ghostty not available via package manager for your distro"
+    log_info "For Ubuntu/Debian/Pop!_OS, you may need to build from source:"
+    log_info "  https://ghostty.org/docs/install/build"
+    log_info "Or install snap first: sudo apt install snapd && sudo snap install ghostty --edge"
+    track_failed "Ghostty" "no package manager available - see instructions above"
 }
 
 install_cursor() {
