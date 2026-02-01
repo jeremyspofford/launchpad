@@ -33,9 +33,12 @@ vim .config
 
 For headless servers and compute nodes (no GUI apps):
 ```bash
+# Option 1: One-liner with --server flag
+bash <(curl -fsSL https://raw.githubusercontent.com/jeremyspofford/dotfiles/main/scripts/bootstrap.sh) --server
+
+# Option 2: If already cloned
 cd ~/workspace/dotfiles
-cp .config.server .config
-./scripts/setup.sh
+./scripts/setup.sh --server
 ```
 
 This installs only:
