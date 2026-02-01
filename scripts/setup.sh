@@ -206,6 +206,7 @@ Usage: ./scripts/setup.sh [OPTIONS]
 
 OPTIONS:
     --help                  Show this help message
+    --server                Use server/minimal config (no GUI apps)
     --minimal               Install dotfiles only, skip package installation
     --update                Re-stow dotfiles without reinstalling packages
     --revert                Restore backed-up files and remove dotfile symlinks
@@ -220,6 +221,7 @@ ENVIRONMENT VARIABLES:
 
 EXAMPLES:
     ./scripts/setup.sh                      # Full setup with interactive prompts
+    ./scripts/setup.sh --server             # Server/headless setup (no GUI apps)
     ./scripts/setup.sh --minimal            # Just symlink dotfiles
     ./scripts/setup.sh --update             # Update dotfiles after git pull
     ./scripts/setup.sh --revert             # Revert to most recent backup
@@ -283,6 +285,15 @@ parse_args() {
             --help)
                 show_help
                 exit 0
+                ;;
+            --server)
+                # Use server config (no GUI apps)
+                if [ -f "$DOTFILES_DIR/.config.server" ]; then
+                    cp "$DOTFILES_DIR/.config.server" "$DOTFILES_DIR/.config"
+                    log_info "Using server configuration (no GUI apps)"
+                else
+                    log_warning ".config.server not found, using defaults"
+                fi
                 ;;
             --minimal)
                 MINIMAL_INSTALL=true
