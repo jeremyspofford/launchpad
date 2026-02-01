@@ -475,6 +475,8 @@ sellistbox=black,cyan
     local mise_status="OFF"
     local mdview_status="OFF"
     local ollama_status="OFF"
+    local docker_status="OFF"
+    local open_webui_status="OFF"
     local ghostty_status="OFF"
     local cursor_status="OFF"
     local antigravity_status="OFF"
@@ -495,6 +497,8 @@ sellistbox=black,cyan
     (command_exists mise || [ "$INSTALL_MISE" = "true" ]) && mise_status="ON"
     (command_exists mdview || [ "$INSTALL_MDVIEW" = "true" ]) && mdview_status="ON"
     (command_exists ollama || [ "$INSTALL_OLLAMA" = "true" ]) && ollama_status="ON"
+    (command_exists docker || [ "$INSTALL_DOCKER" = "true" ]) && docker_status="ON"
+    (docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^open-webui$" || [ "$INSTALL_OPEN_WEBUI" = "true" ]) && open_webui_status="ON"
     
     # Platform-specific checks
     if [ "$PLATFORM" = "macos" ]; then
@@ -552,13 +556,15 @@ Press OK to continue..." 13 60 3>&1 1>&2 2>&3 || {
 
 [*] = May install snap/flatpak if native package unavailable
 
-System Tools:" 30 78 17 \
+System Tools:" 32 78 19 \
 "zsh" "Zsh shell" "$zsh_status" \
 "tmux" "Terminal multiplexer" "$tmux_status" \
 "neovim" "Text editor [*]" "$neovim_status" \
 "mise" "mise (installs ALL tools from config.toml)" "$mise_status" \
 "mdview" "Markdown viewer (renders .md in browser)" "$mdview_status" \
 "ollama" "Ollama (local LLM with GPU)" "$ollama_status" \
+"docker" "Docker (container runtime)" "$docker_status" \
+"open_webui" "Open WebUI (chat interface for Ollama)" "$open_webui_status" \
 "ghostty" "Ghostty terminal (AppImage)" "$ghostty_status" \
 "cursor" "Cursor AI IDE" "$cursor_status" \
 "antigravity" "Antigravity IDE (Google)" "$antigravity_status" \
@@ -1055,6 +1061,131 @@ EOF
         log_success "✅ Ollama API responding on port 11434"
     else
         log_warning "Ollama API not responding - check: sudo systemctl status ollama"
+    fi
+}
+
+install_docker() {
+    if command_exists docker; then
+        track_skipped "Docker"
+        return 0
+    fi
+    
+    log_info "Installing Docker..."
+    
+    if [ "$PLATFORM" = "macos" ]; then
+        install_brew "docker" "true"
+        return
+    fi
+    
+    # Linux installation (Debian/Ubuntu/Pop!_OS)
+    if command_exists apt-get; then
+        # Remove old versions
+        sudo apt-get remove -y docker docker-engine docker.io containerd runc >> /tmp/app_install.log 2>&1 || true
+        
+        # Install prerequisites
+        sudo apt-get update >> /tmp/app_install.log 2>&1
+        sudo apt-get install -y ca-certificates curl gnupg >> /tmp/app_install.log 2>&1
+        
+        # Add Docker's official GPG key
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg >> /tmp/app_install.log 2>&1
+        sudo chmod a+r /etc/apt/keyrings/docker.gpg
+        
+        # Add repository (use Ubuntu for Pop!_OS compatibility)
+        local distro_codename
+        distro_codename=$(. /etc/os-release && echo "$UBUNTU_CODENAME" 2>/dev/null || echo "$VERSION_CODENAME")
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $distro_codename stable" | \
+            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        
+        # Install Docker
+        sudo apt-get update >> /tmp/app_install.log 2>&1
+        if sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >> /tmp/app_install.log 2>&1; then
+            # Add user to docker group (no sudo needed for docker commands)
+            sudo usermod -aG docker "$USER"
+            
+            # Enable and start Docker
+            sudo systemctl enable docker >> /tmp/app_install.log 2>&1
+            sudo systemctl start docker >> /tmp/app_install.log 2>&1
+            
+            log_success "✅ Docker installed"
+            log_warning "⚠️  Log out and back in for docker group permissions"
+            track_installed "Docker"
+            return 0
+        fi
+    fi
+    
+    # Fedora/RHEL
+    if command_exists dnf; then
+        sudo dnf install -y dnf-plugins-core >> /tmp/app_install.log 2>&1
+        sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo >> /tmp/app_install.log 2>&1
+        if sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >> /tmp/app_install.log 2>&1; then
+            sudo usermod -aG docker "$USER"
+            sudo systemctl enable --now docker >> /tmp/app_install.log 2>&1
+            track_installed "Docker"
+            return 0
+        fi
+    fi
+    
+    track_failed "Docker" "installation failed"
+}
+
+install_open_webui() {
+    # Requires Docker
+    if ! command_exists docker; then
+        log_warning "Docker required for Open WebUI - install Docker first"
+        track_failed "Open WebUI" "Docker not installed"
+        return 1
+    fi
+    
+    # Check if already running
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^open-webui$"; then
+        # Check if container is running
+        if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^open-webui$"; then
+            track_skipped "Open WebUI (already running)"
+        else
+            log_info "Starting existing Open WebUI container..."
+            docker start open-webui >> /tmp/app_install.log 2>&1
+            track_installed "Open WebUI (restarted)"
+        fi
+        return 0
+    fi
+    
+    log_info "Installing Open WebUI..."
+    
+    # Get Ollama host - use local if running, or prompt
+    local ollama_host="http://host.docker.internal:11434"
+    
+    # Check if Ollama is running locally
+    if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+        log_info "Found local Ollama instance"
+    else
+        log_warning "Ollama not detected locally - Open WebUI will need manual Ollama configuration"
+    fi
+    
+    # Create data volume
+    docker volume create open-webui >> /tmp/app_install.log 2>&1
+    
+    # Run Open WebUI container
+    if docker run -d \
+        -p 3000:8080 \
+        --add-host=host.docker.internal:host-gateway \
+        -e OLLAMA_BASE_URL="$ollama_host" \
+        -v open-webui:/app/backend/data \
+        --name open-webui \
+        --restart unless-stopped \
+        ghcr.io/open-webui/open-webui:main >> /tmp/app_install.log 2>&1; then
+        
+        log_success "✅ Open WebUI installed"
+        log_info "Access at: http://localhost:3000"
+        log_info "First user to sign up becomes admin"
+        track_installed "Open WebUI"
+        
+        # Get local IP for remote access info
+        local my_ip
+        my_ip=$(hostname -I | awk '{print $1}')
+        log_info "Remote access: http://$my_ip:3000"
+    else
+        track_failed "Open WebUI" "docker run failed"
     fi
 }
 
@@ -1714,6 +1845,36 @@ uninstall_ollama() {
         # rm -rf ~/.ollama
         
         track_uninstalled "Ollama"
+    fi
+}
+
+uninstall_docker() {
+    if [ "$PLATFORM" = "macos" ]; then
+        brew uninstall --cask docker >> /tmp/app_install.log 2>&1
+        track_uninstalled "Docker"
+        return
+    fi
+    
+    if command_exists docker; then
+        # Stop all containers
+        docker stop $(docker ps -aq) 2>/dev/null || true
+        
+        # Remove Docker packages
+        sudo apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >> /tmp/app_install.log 2>&1 || true
+        sudo rm -rf /var/lib/docker /var/lib/containerd
+        sudo rm -f /etc/apt/sources.list.d/docker.list
+        sudo rm -f /etc/apt/keyrings/docker.gpg
+        
+        track_uninstalled "Docker"
+    fi
+}
+
+uninstall_open_webui() {
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^open-webui$"; then
+        docker stop open-webui >> /tmp/app_install.log 2>&1 || true
+        docker rm open-webui >> /tmp/app_install.log 2>&1 || true
+        docker volume rm open-webui >> /tmp/app_install.log 2>&1 || true
+        track_uninstalled "Open WebUI"
     fi
 }
 
