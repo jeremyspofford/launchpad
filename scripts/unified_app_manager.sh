@@ -510,7 +510,7 @@ sellistbox=black,cyan
         (brew list --cask orca-slicer &>/dev/null || [ "$INSTALL_ORCA_SLICER" = "true" ]) && orca_slicer_status="ON"
     else
         # Linux / WSL
-        (command_exists ghostty || [ "$INSTALL_GHOSTTY" = "true" ]) && ghostty_status="ON"
+        (command_exists ghostty || snap list 2>/dev/null | grep -q "^ghostty " || [ "$INSTALL_GHOSTTY" = "true" ]) && ghostty_status="ON"
         ((command_exists cursor || [ -f ~/.local/bin/cursor.AppImage ]) || [ "$INSTALL_CURSOR" = "true" ]) && cursor_status="ON"
         ((dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii") || [ "$INSTALL_ANTIGRAVITY" = "true" ]) && antigravity_status="ON"
         ((dpkg -l 2>/dev/null | grep -E "^ii\s+claude-desktop\s+" || snap list 2>/dev/null | grep -q "claudeai-desktop") || [ "$INSTALL_CLAUDE_DESKTOP" = "true" ]) && claude_desktop_status="ON"
@@ -881,7 +881,10 @@ install_ghostty() {
         return
     fi
 
-    if command_exists ghostty; then
+    # Check if already installed (command in PATH, snap, or flatpak)
+    if command_exists ghostty || \
+       snap list 2>/dev/null | grep -q "^ghostty " || \
+       flatpak list 2>/dev/null | grep -qi "ghostty"; then
         track_skipped "Ghostty"
         return 0
     fi
