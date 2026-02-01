@@ -1,0 +1,104 @@
+# Dotfiles Configuration - Server/Minimal Profile
+# Optimized for headless servers and compute nodes
+# No GUI apps, just core dotfiles and shell tools
+
+# ============================================================================ #
+# Git Configuration
+# ============================================================================ #
+
+GIT_USER_NAME="Jeremy Spofford"
+GIT_USER_EMAIL="jeremy@spofford.xyz"
+GIT_SIGNING="none"
+GIT_GPG_KEY=""
+GIT_SSH_KEY=""
+
+# ============================================================================ #
+# SSH Configuration
+# ============================================================================ #
+
+SSH_KEY_TYPE="ed25519"
+SSH_GENERATE_KEY="false"
+SSH_KEY_COMMENT="${GIT_USER_EMAIL}"
+
+# ============================================================================ #
+# Shell Configuration
+# ============================================================================ #
+
+DEFAULT_SHELL="zsh"
+ZSH_THEME="robbyrussell"
+
+# ============================================================================ #
+# Terminal Configuration
+# ============================================================================ #
+
+PREFERRED_TERMINAL="ghostty"
+TERMINAL_FONT="JetBrainsMono Nerd Font Mono"
+TERMINAL_FONT_SIZE="12"
+COLOR_SCHEME="catppuccin-mocha"
+
+# ============================================================================ #
+# Development Tools
+# ============================================================================ #
+
+PREFERRED_EDITOR="nvim"
+NODE_VERSION="24.10.0"
+PYTHON_VERSION="3.12.11"
+GO_VERSION="latest"
+
+# ============================================================================ #
+# Cloud & Infrastructure (Optional)
+# ============================================================================ #
+
+AWS_DEFAULT_REGION="us-east-1"
+TIMEZONE="America/New_York"
+
+# ============================================================================ #
+# Application Preferences
+# ============================================================================ #
+
+PREFERRED_BROWSER="chrome"
+INSTALL_DOCKER="false"
+INSTALL_OBSIDIAN="false"
+INSTALL_1PASSWORD="false"
+
+# ============================================================================ #
+# Application Installation - SERVER PROFILE
+# ============================================================================ #
+# Core tools only - no GUI apps
+
+# System Tools (Core - install these)
+INSTALL_ZSH="true"
+INSTALL_TMUX="true"
+INSTALL_NEOVIM="true"
+INSTALL_MISE="true"          # Mise installed, but tools are commented out in config.toml
+INSTALL_MDVIEW="false"
+
+# Terminals & IDEs (Skip for server)
+INSTALL_GHOSTTY="false"
+INSTALL_CURSOR="false"
+INSTALL_ANTIGRAVITY="false"
+INSTALL_VSCODE="false"
+
+# Desktop Applications (Skip for server)
+INSTALL_CLAUDE_DESKTOP="false"
+INSTALL_CHROME="false"
+INSTALL_BRAVE="false"
+INSTALL_NOTION="false"
+INSTALL_ORCA_SLICER="false"
+
+# ============================================================================ #
+# Privacy & Security
+# ============================================================================ #
+
+USE_GITHUB_NOREPLY="false"
+ENABLE_GIT_SIGNING="false"
+USE_1PASSWORD_SECRETS="false"
+
+# ============================================================================ #
+# System Preferences
+# ============================================================================ #
+
+CREATE_BACKUP="true"
+SKIP_SYSTEM_UPDATES="false"
+MINIMAL_MODE="true"           # Dotfiles only, skip heavy installs
+NON_INTERACTIVE="false"
