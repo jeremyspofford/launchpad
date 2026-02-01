@@ -448,27 +448,30 @@ Press OK to continue..." 13 60 3>&1 1>&2 2>&3 || {
     fi
     
     # Unified selection menu
+    # Items marked [*] may require snap or flatpak if native package unavailable
     local selections=$(whiptail --title "Application Manager ($PLATFORM)" --checklist \
 "Select applications (Space=select, Enter=confirm)
 
 ⚠️  WARNING: Unchecking installed apps will UNINSTALL them!
 
-System Tools:" 28 78 19 \
+[*] = May install snap/flatpak if native package unavailable
+
+System Tools:" 30 78 17 \
 "zsh" "Zsh shell" "$zsh_status" \
 "tmux" "Terminal multiplexer" "$tmux_status" \
-"neovim" "Text editor" "$neovim_status" \
+"neovim" "Text editor [*]" "$neovim_status" \
 "mise" "mise (installs ALL tools from config.toml)" "$mise_status" \
 "mdview" "Markdown viewer (renders .md in browser)" "$mdview_status" \
-"ghostty" "Ghostty terminal" "$ghostty_status" \
+"ghostty" "Ghostty terminal [*]" "$ghostty_status" \
 "cursor" "Cursor AI IDE" "$cursor_status" \
 "antigravity" "Antigravity IDE (Google)" "$antigravity_status" \
 "claude_desktop" "Claude Desktop" "$claude_desktop_status" \
 "chrome" "Google Chrome" "$chrome_status" \
 "vscode" "VS Code" "$vscode_status" \
 "brave" "Brave browser" "$brave_status" \
-"notion" "Notion" "$notion_status" \
-"obsidian" "Obsidian (note-taking)" "$obsidian_status" \
-"telegram" "Telegram Desktop (messaging)" "$telegram_status" \
+"notion" "Notion [*]" "$notion_status" \
+"obsidian" "Obsidian (note-taking) [*]" "$obsidian_status" \
+"telegram" "Telegram Desktop [*]" "$telegram_status" \
 "1password" "1Password" "$onepassword_status" \
 "orca_slicer" "Orca Slicer" "$orca_slicer_status" \
 3>&1 1>&2 2>&3)
@@ -483,6 +486,36 @@ System Tools:" 28 78 19 \
     if [ -z "$selections" ]; then
         log_warning "No applications selected"
         exit 0
+    fi
+    
+    # Check if any apps that may need snap/flatpak are selected
+    local needs_pkg_manager=false
+    local pkg_manager_apps=""
+    for app in neovim ghostty notion obsidian telegram; do
+        if echo "$selections" | grep -qi "$app"; then
+            needs_pkg_manager=true
+            pkg_manager_apps="$pkg_manager_apps\n  • $app"
+        fi
+    done
+    
+    # Show acknowledgment if needed
+    if [ "$needs_pkg_manager" = "true" ]; then
+        whiptail --title "📦 Package Manager Notice" --yesno \
+"The following apps may require snap or flatpak:
+$pkg_manager_apps
+
+The installer will first try your native package manager.
+If that fails, it will install snap or flatpak as needed.
+
+By continuing, you acknowledge that a new package manager
+(snap or flatpak) may be installed on your system.
+
+Continue with installation?" 18 65 3>&1 1>&2 2>&3
+        
+        if [ $? -ne 0 ]; then
+            log_warning "Installation cancelled - you can re-run and select different apps"
+            exit 0
+        fi
     fi
     
     # Handle uninstalls
