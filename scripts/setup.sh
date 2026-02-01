@@ -1590,19 +1590,35 @@ main() {
             chmod +x "$SCRIPT_DIR/unified_app_manager.sh"
 
             # Pass --non-interactive flag if in non-interactive mode
+            local app_exit_code=0
             if [ "$SKIP_INTERACTIVE" = true ]; then
-                if ! "$SCRIPT_DIR/unified_app_manager.sh" --non-interactive; then
-                    log_warning "Application installation had issues"
-                fi
+                "$SCRIPT_DIR/unified_app_manager.sh" --non-interactive
+                app_exit_code=$?
             else
                 # Call it directly to preserve terminal
-                # If user cancels (exit 1), stop the whole setup
-                if ! "$SCRIPT_DIR/unified_app_manager.sh"; then
+                "$SCRIPT_DIR/unified_app_manager.sh"
+                app_exit_code=$?
+            fi
+            
+            # Handle exit codes:
+            # 0 = all successful
+            # 1 = user cancelled
+            # 2 = some apps failed
+            case $app_exit_code in
+                0)
+                    track_completed "Applications installed"
+                    ;;
+                1)
                     log_warning "Application installation cancelled by user"
                     exit 0
-                fi
-            fi
-            track_completed "Applications installed"
+                    ;;
+                2)
+                    track_failed "Applications" "some apps failed to install"
+                    ;;
+                *)
+                    track_failed "Applications" "unexpected error (exit code: $app_exit_code)"
+                    ;;
+            esac
         else
             log_warning "Unified app manager not found at $SCRIPT_DIR/unified_app_manager.sh"
             track_failed "Applications" "manager not found"
