@@ -987,18 +987,60 @@ install_antigravity() {
     
     if [ "$PLATFORM" = "macos" ]; then
         log_warning "Antigravity installation requires manual steps on macOS."
+        log_info "Visit: https://antigravity.google/download"
         track_skipped "Antigravity (Manual)"
         return
     fi
     
-    if dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii"; then
+    # Check if already installed
+    if command_exists antigravity || dpkg -l 2>/dev/null | grep -qi "antigravity"; then
         track_skipped "Antigravity"
         return 0
     fi
     
-    log_warning "Antigravity installation requires manual download"
-    log_info "Visit: https://antigravity.google/download/linux"
-    track_failed "Antigravity" "requires manual download"
+    # Debian/Ubuntu/Pop!_OS - add apt repo
+    if command_exists apt-get; then
+        log_info "Adding Antigravity apt repository..."
+        
+        # Create keyrings directory
+        sudo mkdir -p /etc/apt/keyrings >> /tmp/app_install.log 2>&1
+        
+        # Download and install signing key
+        curl -fsSL https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg | \
+            sudo gpg --dearmor --yes -o /etc/apt/keyrings/antigravity-repo-key.gpg >> /tmp/app_install.log 2>&1
+        
+        # Add repository
+        echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-apt stable main" | \
+            sudo tee /etc/apt/sources.list.d/antigravity.list > /dev/null
+        
+        # Update and install
+        sudo apt-get update >> /tmp/app_install.log 2>&1
+        if sudo apt-get install -y antigravity >> /tmp/app_install.log 2>&1; then
+            track_installed "Antigravity"
+            return 0
+        fi
+    fi
+    
+    # Fedora/RHEL - add yum/dnf repo
+    if command_exists dnf; then
+        log_info "Adding Antigravity dnf repository..."
+        
+        sudo tee /etc/yum.repos.d/antigravity.repo > /dev/null << 'EOF'
+[antigravity-rpm]
+name=Antigravity RPM Repository
+baseurl=https://us-central1-yum.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-rpm
+enabled=1
+gpgcheck=0
+EOF
+        
+        sudo dnf makecache >> /tmp/app_install.log 2>&1
+        if sudo dnf install -y antigravity >> /tmp/app_install.log 2>&1; then
+            track_installed "Antigravity"
+            return 0
+        fi
+    fi
+    
+    track_failed "Antigravity" "installation failed - check /tmp/app_install.log"
 }
 
 install_claude_desktop() {
