@@ -510,7 +510,7 @@ sellistbox=black,cyan
         (brew list --cask orca-slicer &>/dev/null || [ "$INSTALL_ORCA_SLICER" = "true" ]) && orca_slicer_status="ON"
     else
         # Linux / WSL
-        (command_exists ghostty || snap list 2>/dev/null | grep -q "^ghostty " || [ "$INSTALL_GHOSTTY" = "true" ]) && ghostty_status="ON"
+        (command_exists ghostty || [ -f ~/.local/bin/ghostty.AppImage ] || snap list 2>/dev/null | grep -q "^ghostty " || [ "$INSTALL_GHOSTTY" = "true" ]) && ghostty_status="ON"
         ((command_exists cursor || [ -f ~/.local/bin/cursor.AppImage ]) || [ "$INSTALL_CURSOR" = "true" ]) && cursor_status="ON"
         ((dpkg -l 2>/dev/null | grep -i antigravity | grep -qE "^[^ ]*ii") || [ "$INSTALL_ANTIGRAVITY" = "true" ]) && antigravity_status="ON"
         ((dpkg -l 2>/dev/null | grep -E "^ii\s+claude-desktop\s+" || snap list 2>/dev/null | grep -q "claudeai-desktop") || [ "$INSTALL_CLAUDE_DESKTOP" = "true" ]) && claude_desktop_status="ON"
@@ -556,7 +556,7 @@ System Tools:" 30 78 17 \
 "neovim" "Text editor [*]" "$neovim_status" \
 "mise" "mise (installs ALL tools from config.toml)" "$mise_status" \
 "mdview" "Markdown viewer (renders .md in browser)" "$mdview_status" \
-"ghostty" "Ghostty terminal [*]" "$ghostty_status" \
+"ghostty" "Ghostty terminal (AppImage)" "$ghostty_status" \
 "cursor" "Cursor AI IDE" "$cursor_status" \
 "antigravity" "Antigravity IDE (Google)" "$antigravity_status" \
 "claude_desktop" "Claude Desktop" "$claude_desktop_status" \
@@ -585,7 +585,7 @@ System Tools:" 30 78 17 \
     # Check if any apps that may need snap/flatpak are selected
     local needs_pkg_manager=false
     local pkg_manager_apps=""
-    for app in neovim ghostty notion obsidian telegram; do
+    for app in neovim notion obsidian telegram; do
         if echo "$selections" | grep -qi "$app"; then
             needs_pkg_manager=true
             pkg_manager_apps="$pkg_manager_apps\n  • $app"
@@ -881,8 +881,9 @@ install_ghostty() {
         return
     fi
 
-    # Check if already installed (command in PATH, snap, or flatpak)
+    # Check if already installed
     if command_exists ghostty || \
+       [ -f ~/.local/bin/ghostty.AppImage ] || \
        snap list 2>/dev/null | grep -q "^ghostty " || \
        flatpak list 2>/dev/null | grep -qi "ghostty"; then
         track_skipped "Ghostty"
@@ -898,30 +899,73 @@ install_ghostty() {
         fi
     fi
     
-    # Try flatpak (Pop!_OS default)
+    # AppImage is most reliable for Ubuntu/Debian/Pop!_OS (no confinement issues)
+    log_info "Installing Ghostty via AppImage..."
+    mkdir -p ~/.local/bin
+    
+    # Get latest version
+    local latest_version
+    latest_version=$(curl -s https://api.github.com/repos/ghostty-org/ghostty/releases/latest 2>/dev/null | grep '"tag_name"' | cut -d'"' -f4)
+    
+    if [ -z "$latest_version" ]; then
+        latest_version="v1.2.3"  # Fallback version
+    fi
+    
+    local appimage_url="https://github.com/ghostty-org/ghostty/releases/download/${latest_version}/Ghostty-${latest_version#v}-x86_64.AppImage"
+    
+    if curl -fL "$appimage_url" -o ~/.local/bin/ghostty.AppImage >> /tmp/app_install.log 2>&1; then
+        chmod +x ~/.local/bin/ghostty.AppImage
+        
+        # Create wrapper script
+        cat > ~/.local/bin/ghostty << 'EOF'
+#!/bin/bash
+exec ~/.local/bin/ghostty.AppImage "$@"
+EOF
+        chmod +x ~/.local/bin/ghostty
+        
+        # Create .desktop file for application menu
+        mkdir -p ~/.local/share/applications
+        cat > ~/.local/share/applications/ghostty.desktop << EOF
+[Desktop Entry]
+Name=Ghostty
+Comment=Fast, native terminal emulator
+Exec=$HOME/.local/bin/ghostty
+Icon=utilities-terminal
+Type=Application
+Categories=System;TerminalEmulator;
+Keywords=terminal;shell;prompt;command;
+StartupNotify=true
+EOF
+        
+        # Update desktop database
+        update-desktop-database ~/.local/share/applications 2>/dev/null || true
+        
+        track_installed "Ghostty (AppImage)"
+        return 0
+    fi
+    
+    log_warning "AppImage download failed, trying alternatives..."
+    
+    # Fallback to flatpak
     if command_exists flatpak; then
-        log_info "Checking flatpak for Ghostty..."
+        log_info "Trying Ghostty via flatpak..."
         if flatpak install -y flathub com.mitchellh.ghostty >> /tmp/app_install.log 2>&1; then
             track_installed "Ghostty (flatpak)"
             return 0
         fi
     fi
     
-    # Try snap as fallback (install snapd if needed)
+    # Last resort: snap (may have issues on Wayland/COSMIC)
     if ensure_snap; then
-        log_info "Installing Ghostty via snap..."
+        log_info "Trying Ghostty via snap (may have issues on Wayland)..."
         if sudo snap install ghostty --classic >> /tmp/app_install.log 2>&1; then
             track_installed "Ghostty (snap)"
+            log_warning "Note: Ghostty snap may have issues on Wayland. If it doesn't work, use: sudo snap remove ghostty"
             return 0
         fi
     fi
     
-    # If we get here, provide manual instructions
-    log_warning "Ghostty not available via package manager for your distro"
-    log_info "For Ubuntu/Debian/Pop!_OS, you may need to build from source:"
-    log_info "  https://ghostty.org/docs/install/build"
-    log_info "Or install snap first: sudo apt install snapd && sudo snap install ghostty --edge"
-    track_failed "Ghostty" "no package manager available - see instructions above"
+    track_failed "Ghostty" "all installation methods failed"
 }
 
 install_cursor() {
@@ -1460,8 +1504,39 @@ uninstall_ghostty() {
     if [ "$PLATFORM" = "macos" ]; then
         brew uninstall --cask ghostty >> /tmp/app_install.log 2>&1
         track_uninstalled "Ghostty"
-    elif command_exists ghostty; then
+        return
+    fi
+    
+    local uninstalled=false
+    
+    # Remove AppImage
+    if [ -f ~/.local/bin/ghostty.AppImage ]; then
+        rm -f ~/.local/bin/ghostty.AppImage
+        rm -f ~/.local/bin/ghostty
+        rm -f ~/.local/share/applications/ghostty.desktop
+        update-desktop-database ~/.local/share/applications 2>/dev/null || true
+        uninstalled=true
+    fi
+    
+    # Remove snap
+    if snap list 2>/dev/null | grep -q "^ghostty "; then
         sudo snap remove ghostty >> /tmp/app_install.log 2>&1
+        uninstalled=true
+    fi
+    
+    # Remove flatpak
+    if flatpak list 2>/dev/null | grep -qi "ghostty"; then
+        flatpak uninstall -y com.mitchellh.ghostty >> /tmp/app_install.log 2>&1
+        uninstalled=true
+    fi
+    
+    # Remove pacman
+    if command_exists pacman && pacman -Q ghostty &>/dev/null; then
+        sudo pacman -R --noconfirm ghostty >> /tmp/app_install.log 2>&1
+        uninstalled=true
+    fi
+    
+    if [ "$uninstalled" = true ]; then
         track_uninstalled "Ghostty"
     fi
 }
