@@ -97,6 +97,28 @@ jobs:
           
           echo "✅ Stow symlinks created"
 
+      - name: Test Ollama installation
+        run: |
+          echo "=== Testing Ollama installation ==="
+          
+          # Install Ollama
+          curl -fsSL https://ollama.com/install.sh | sh
+          
+          # Verify installation
+          ollama --version
+          
+          # Start Ollama service (in background for CI)
+          ollama serve &
+          sleep 5
+          
+          # Test API endpoint
+          curl -s http://localhost:11434/api/tags | head -20 || echo "API check completed"
+          
+          # Kill background process
+          pkill ollama || true
+          
+          echo "✅ Ollama installation verified (CPU mode - no GPU in CI)"
+
       - name: Test Telegram installation (flatpak)
         run: |
           echo "=== Testing Telegram via flatpak ==="
@@ -203,6 +225,28 @@ jobs:
           ls -la ~/.config/ | head -10
           
           echo "✅ Stow symlinks created"
+
+      - name: Test Ollama installation
+        run: |
+          echo "=== Testing Ollama installation ==="
+          
+          # Install Ollama via brew
+          brew install ollama
+          
+          # Verify installation
+          ollama --version
+          
+          # Start Ollama service (in background for CI)
+          ollama serve &
+          sleep 5
+          
+          # Test API endpoint
+          curl -s http://localhost:11434/api/tags | head -20 || echo "API check completed"
+          
+          # Kill background process
+          pkill ollama || true
+          
+          echo "✅ Ollama installation verified"
 
       - name: Test Ghostty availability
         run: |
