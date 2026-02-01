@@ -1,5 +1,7 @@
 # 🚀 Modern Dotfiles
 
+[![Test Dotfiles Installation](https://github.com/jeremyspofford/dotfiles/actions/workflows/test-install.yml/badge.svg)](https://github.com/jeremyspofford/dotfiles/actions/workflows/test-install.yml)
+
 Cross-platform dotfiles for macOS, Linux, and WSL. Automated setup with interactive or non-interactive installation.
 
 ## ⚡ Quick Start
