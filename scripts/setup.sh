@@ -42,6 +42,7 @@ UPDATE_ONLY=false
 REVERT=false
 LIST_BACKUPS=false
 SKIP_INTERACTIVE=false
+SKIP_RESTORE_POINT=false
 CREATE_RESTORE_POINT=false
 SKIP_RESTORE_PROMPT=false
 
@@ -213,8 +214,8 @@ OPTIONS:
     --revert=BACKUP         Restore from specific backup (e.g., --revert=20260111_143022)
     --list-backups          List available backups
     --non-interactive       Skip interactive tool selection, use defaults/saved preferences
-    --create-restore-point  Create system restore point before changes
-    --skip-restore-prompt   Don't prompt for restore point creation
+    --skip-restore-point    Skip creating Timeshift restore point (Linux only)
+    --skip-restore-prompt   Don't prompt for restore point creation (deprecated)
 
 ENVIRONMENT VARIABLES:
     DOTFILES_DIR            Override dotfiles location (default: ~/workspace/dotfiles)
@@ -314,7 +315,11 @@ parse_args() {
             --non-interactive)
                 SKIP_INTERACTIVE=true
                 ;;
+            --skip-restore-point)
+                SKIP_RESTORE_POINT=true
+                ;;
             --create-restore-point)
+                # Deprecated, now default on Linux
                 CREATE_RESTORE_POINT=true
                 ;;
             --skip-restore-prompt)
@@ -1512,28 +1517,48 @@ main() {
     echo
     
     if [ "$UPDATE_ONLY" = false ]; then
-        # Prompt for system restore point ONLY if explicitly requested
-        if [ "$CREATE_RESTORE_POINT" = true ]; then
-            prompt_restore_point
-            if create_package_manifest && create_timeshift_snapshot; then
-                track_completed "System restore point created"
-            else
-                track_failed "System restore point" "creation failed"
-            fi
-        else
-            # Always create lightweight package manifest (no prompt needed)
-            if create_package_manifest; then
-                track_completed "Package manifest created"
-            else
-                track_failed "Package manifest" "creation failed"
-            fi
-        fi
-        
-        # Install prerequisites (stow, core utils)
+        # Install prerequisites first (stow, core utils)
         if install_prerequisites; then
             track_completed "Prerequisites installed"
         else
             track_failed "Prerequisites" "installation failed"
+        fi
+        
+        # On Linux: Install Timeshift and create restore point by default
+        local platform=$(detect_platform)
+        if [ "$platform" = "linux" ] && [ "$SKIP_RESTORE_POINT" != true ]; then
+            # Install Timeshift if not present
+            if ! command_exists timeshift; then
+                log_section "Installing Timeshift"
+                log_info "Installing Timeshift for system restore points..."
+                sudo apt-get update && sudo apt-get install -y timeshift
+                if command_exists timeshift; then
+                    log_success "✅ Timeshift installed"
+                else
+                    log_warning "Failed to install Timeshift, continuing without restore point"
+                fi
+            fi
+            
+            # Create restore point before any other software installation
+            if command_exists timeshift; then
+                log_section "Creating System Restore Point"
+                log_info "Creating Timeshift snapshot before software installation..."
+                log_warning "This may take a few minutes..."
+                if sudo timeshift --create --comments "Before dotfiles setup - $BACKUP_TIMESTAMP" --tags D; then
+                    log_success "✅ Timeshift snapshot created"
+                    track_completed "System restore point created"
+                else
+                    log_warning "Timeshift snapshot failed, continuing anyway"
+                    track_failed "System restore point" "creation failed"
+                fi
+            fi
+        fi
+        
+        # Always create lightweight package manifest
+        if create_package_manifest; then
+            track_completed "Package manifest created"
+        else
+            track_failed "Package manifest" "creation failed"
         fi
         
         # Update system packages
