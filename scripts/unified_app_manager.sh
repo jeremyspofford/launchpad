@@ -1009,22 +1009,11 @@ install_antigravity() {
         curl -fsSL https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg | \
             sudo gpg --dearmor --yes -o /etc/apt/keyrings/antigravity-repo-key.gpg >> /tmp/app_install.log 2>&1
         
-        # Add repository (Google Artifact Registry format - no distribution/component)
-        echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg arch=amd64] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-apt apt-repo main" | \
+        # Add repository
+        echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/ antigravity-debian main" | \
             sudo tee /etc/apt/sources.list.d/antigravity.list > /dev/null
         
         # Update and install
-        sudo apt-get update >> /tmp/app_install.log 2>&1
-        if sudo apt-get install -y antigravity >> /tmp/app_install.log 2>&1; then
-            track_installed "Antigravity"
-            return 0
-        fi
-        
-        # If that failed, try alternate format
-        log_info "Trying alternate repository format..."
-        echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg arch=amd64] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-apt / " | \
-            sudo tee /etc/apt/sources.list.d/antigravity.list > /dev/null
-        
         sudo apt-get update >> /tmp/app_install.log 2>&1
         if sudo apt-get install -y antigravity >> /tmp/app_install.log 2>&1; then
             track_installed "Antigravity"
