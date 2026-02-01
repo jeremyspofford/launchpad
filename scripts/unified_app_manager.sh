@@ -884,6 +884,7 @@ install_ghostty() {
     # Check if already installed
     if command_exists ghostty || \
        [ -f ~/.local/bin/ghostty.AppImage ] || \
+       dpkg -l ghostty 2>/dev/null | grep -q "^ii" || \
        snap list 2>/dev/null | grep -q "^ghostty " || \
        flatpak list 2>/dev/null | grep -qi "ghostty"; then
         track_skipped "Ghostty"
@@ -899,19 +900,28 @@ install_ghostty() {
         fi
     fi
     
-    # AppImage is most reliable for Ubuntu/Debian/Pop!_OS (no confinement issues)
+    # For Ubuntu/Debian/Pop!_OS - use community .deb package (most reliable)
+    if command_exists apt-get; then
+        log_info "Installing Ghostty via Ubuntu community package..."
+        if /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/mkasberg/ghostty-ubuntu/HEAD/install.sh)" >> /tmp/app_install.log 2>&1; then
+            track_installed "Ghostty (deb)"
+            return 0
+        fi
+        log_warning "Ubuntu package failed, trying AppImage..."
+    fi
+    
+    # AppImage fallback (works on any distro)
     log_info "Installing Ghostty via AppImage..."
     mkdir -p ~/.local/bin
     
-    # Get latest version
-    local latest_version
-    latest_version=$(curl -s https://api.github.com/repos/ghostty-org/ghostty/releases/latest 2>/dev/null | grep '"tag_name"' | cut -d'"' -f4)
+    # Get latest AppImage from pkgforge-dev repo
+    local appimage_url
+    appimage_url=$(curl -s https://api.github.com/repos/pkgforge-dev/ghostty-appimage/releases/latest 2>/dev/null | grep "browser_download_url.*x86_64.*[Aa]pp[Ii]mage\"" | head -1 | cut -d'"' -f4)
     
-    if [ -z "$latest_version" ]; then
-        latest_version="v1.2.3"  # Fallback version
+    if [ -z "$appimage_url" ]; then
+        # Fallback URL
+        appimage_url="https://github.com/pkgforge-dev/ghostty-appimage/releases/latest/download/Ghostty-x86_64.AppImage"
     fi
-    
-    local appimage_url="https://github.com/ghostty-org/ghostty/releases/download/${latest_version}/Ghostty-${latest_version#v}-x86_64.AppImage"
     
     if curl -fL "$appimage_url" -o ~/.local/bin/ghostty.AppImage >> /tmp/app_install.log 2>&1; then
         chmod +x ~/.local/bin/ghostty.AppImage
