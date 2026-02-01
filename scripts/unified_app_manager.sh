@@ -966,17 +966,30 @@ You'll be prompted to enter allowed IP addresses or hostnames." 12 65 3>&1 1>&2 
 configure_ollama_remote_access() {
     log_info "Configuring Ollama for remote access..."
     
-    # Prompt for allowed hosts
+    # Get current device's IP for display
+    local my_ip
+    my_ip=$(hostname -I | awk '{print $1}')
+    
+    # Load existing config if present
+    local existing_hosts=""
+    if [ -f ~/.config/ollama/allowed-hosts.conf ]; then
+        existing_hosts=$(grep "^ALLOWED_HOSTS=" ~/.config/ollama/allowed-hosts.conf 2>/dev/null | cut -d'"' -f2)
+    fi
+    
+    # Prompt for allowed hosts (pre-filled with existing or suggested)
+    local default_hosts="${existing_hosts:-192.168.0.204}"  # Default to Pi's IP
     local allowed_hosts
     allowed_hosts=$(whiptail --title "Allowed Hosts" --inputbox \
-"Enter IP addresses or hostnames to allow (space-separated).
+"This device's IP: $my_ip
+
+Enter IP addresses or hostnames to allow (space-separated).
 
 Examples:
-  192.168.1.100
-  192.168.1.0/24
-  pi.local myserver.home
+  192.168.0.204        (single IP - the Pi)
+  192.168.0.0/24       (entire subnet)
+  pi.local             (hostname)
 
-Leave blank to allow ALL hosts (not recommended):" 14 65 3>&1 1>&2 2>&3)
+Leave blank to allow ALL hosts (not recommended):" 16 65 "$default_hosts" 3>&1 1>&2 2>&3)
     
     if [ $? -ne 0 ]; then
         log_warning "Remote access configuration cancelled"
