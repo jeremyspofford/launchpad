@@ -133,3 +133,7 @@ export PATH="/Users/jeremyspofford/.antigravity/antigravity/bin:$HOME/.npm-globa
 # eval "$(op signin)"
 
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
+
+# Open WebUI aliases
+alias openwebui='docker start open-webui 2>/dev/null; xdg-open http://localhost:3000 2>/dev/null || open http://localhost:3000'
+alias webui='openwebui'
