@@ -1,5 +1,6 @@
-repos:
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.24.3
-    hooks:
-      - id: gitleaks
+# Gitleaks configuration
+# Uses default rules from gitleaks
+# See: https://github.com/gitleaks/gitleaks
+
+[extend]
+useDefault = true
